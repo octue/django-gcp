@@ -1,0 +1,9 @@
+[paths]
+source =
+    rabid_armadillo/
+
+[run]
+omit =
+    env/*
+    */tests/*
+    */migrations/*

@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "rabid-armadillo"
+version = "0.0.1"
+description = "An app to save the armadillos"
+authors = ["Tom Clark <you@youraddress.com>"]
+license = "MIT"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Operating System :: OS Independent",
+]
+repository = "https://github.com/<your_github_handle>/django-rabid-armadillo"
+keywords = ["django", "app", "template", "armadillos"]
+packages = [{ include = "rabid_armadillo" },]
+
+
+[tool.poetry.dependencies]
+Django = "^3.0"
+python = "^3.8"
+
+
+[tool.poetry.dev-dependencies]
+channels = "^3.0.4"
+coverage = "^6.2"
+pre-commit = "^2.17.0"
+pytest-sugar = "^0.9.4"
+pytest-django = "^4.5.2"
+pytest-asyncio = "^0.17.2"
+pytest = "^6.2.5"
+tox = "^3.24.5"
+tox-gh-actions = "^2.9.1"
+tox-poetry = "^0.4.1"
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

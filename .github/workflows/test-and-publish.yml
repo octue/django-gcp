@@ -1,0 +1,121 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions.
+#
+# On successful test, the package will be published. For candidate releases, the package will be
+#  published to test.pypi.org server (to ensure the process works). For merges to main, the
+#  package will be published live.
+
+on: [push]
+
+jobs:
+  check-semantic-version:
+    if: "!contains(github.event.head_commit.message, 'skipci')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          # Set fetch-depth to 0 to fetch all tags (necessary for git-mkver to determine the correct semantic version).
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Install git-mkver
+        run: |
+          curl -L https://github.com/idc101/git-mkver/releases/download/v1.2.1/git-mkver-linux-amd64-1.2.1.tar.gz \
+          | tar xvz \
+          && sudo mv git-mkver /usr/local/bin
+
+      - name: Install semantic version checker
+        run: pip install git+https://github.com/octue/conventional-commits
+
+      - name: Check version
+        run: check-semantic-version pyproject.toml
+
+  run-tests:
+    if: "!contains(github.event.head_commit.message, 'skipci')"
+    strategy:
+      fail-fast: true
+      matrix:
+        python: ["3.6", "3.7", "3.8", "3.9"]
+        django: ["2.2", "3.0", "3.1"]
+        os: [ubuntu-latest] # [ubuntu-latest, windows-latest, macos-latest] for full coverage but this gets expensive quickly
+    runs-on: ${{ matrix.os }}
+    services:
+      # See: https://docs.github.com/en/actions/using-containerized-services/creating-postgresql-service-containers
+      pg_host:
+        image: postgres:13.0
+        env:
+          POSTGRES_DB: pg_db
+          POSTGRES_USER: pg_user
+          POSTGRES_PASSWORD: pg_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python ${{ matrix.python }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+        # See the repo of this action for way more advanced caching strategies than used here
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+        # For more advanced configuration see https://github.com/ymyzk/tox-gh-actions
+      - name: Install tox and plugins
+        run: |
+          pip install --upgrade pip
+          pip install tox@^3.24.5 tox-gh-actions@^2.9.1 tox-poetry@^0.4.1
+
+      - name: Run tests using tox
+        run: tox
+        env:
+          DATABASE_URL: postgresql://pg_user:pg_password@pg_host/pg_db
+
+      - name: Upload coverage to Codecov
+        # This seems redundant inside the test matrix but actually isn't, since different
+        # dependency combinations may cause different lines of code to be hit (e.g. backports)
+        uses: codecov/codecov-action@v1
+        with:
+          file: coverage.xml
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  test-publish:
+    if: "!contains(github.event.head_commit.message, 'skipci')"
+    runs-on: ubuntu-latest
+    needs: [check-semantic-version, run-tests]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Test package is publishable with PyPI test server
+        uses: JRubics/poetry-publish@v1.9
+        with:
+          python_version: "3.9"
+          pypi_token: ${{ secrets.TEST_PYPI_TOKEN }}
+          repository_name: "testpypi"
+          repository_url: "https://test.pypi.org/legacy/"
+          skip_existing: true
+
+  publish:
+    if: "contains(github.ref, 'main') && !contains(github.event.head_commit.message, 'skipci')"
+    runs-on: ubuntu-latest
+    needs: [test-publish]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Publish latest package to PyPI
+        uses: JRubics/poetry-publish@v1.9
+        with:
+          python_version: "3.9"
+          poetry_version: "==1.1.12" # (PIP version specifier syntax)
+          pypi_token: ${{ secrets.PYPI_TOKEN }}
+          ignore_dev_requirements: "yes"
