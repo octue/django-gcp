@@ -5,7 +5,7 @@ def get_db_conf():
     """
     Configures database according to the DATABASE_ENGINE environment
     variable. Defaults to SQlite.
-    This method is used to let Travis run against different database backends.
+    This method is used to let tests run against different database backends.
     """
     database_engine = os.environ.get("DATABASE_ENGINE", "sqlite")
     if database_engine == "sqlite":
@@ -13,11 +13,11 @@ def get_db_conf():
     elif database_engine == "postgres":
         return {
             "ENGINE": "django.db.backends.postgresql_psycopg2",
-            "NAME": "travis_ci_test",
-            "USER": "postgres",
-            "PASSWORD": "",
-            "HOST": "127.0.0.1",
-            "PORT": "",
+            "NAME": "postgres_db",
+            "USER": "postgres_user",
+            "PASSWORD": "postgres_password",
+            "HOST": "localhost",
+            "PORT": "5432",
         }
 
 
@@ -33,8 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "channels",
-    "rabid_armadillo",
+    "django_gcp",
     "tests",
 ]
 
@@ -69,6 +68,7 @@ DATABASES = {"default": get_db_conf()}
 ROOT_URLCONF = "tests.urls"
 
 STATIC_URL = "static_test/"
+MEDIA_URL = "media_test/"
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"

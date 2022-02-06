@@ -1,6 +1,5 @@
-
 from django.db.models import CharField
-from rabid_armadillo.models import MyAbstractModel
+from django_gcp.models import MyAbstractModel
 
 
 class Armadillo(MyAbstractModel):
@@ -10,11 +9,12 @@ class Armadillo(MyAbstractModel):
        python manage.py makemigrations tests
 
     """
+
     name = CharField(max_length=32)
 
     class Meta:
-        app_label = 'tests'
+        app_label = "tests"
 
     def __str__(self):
         # Ensures that the abstract class __str__ method is covered in testing
-        return super(Armadillo, self).__str__() + ' ("{}")'.format(self.name)
+        return super(Armadillo, self).__str__() + f' ("{self.name}")'
