@@ -34,7 +34,7 @@ Each covers a little bit of functionality, and we put in a lot of time to:
 
 Lots of the maintainers of those libraries have given up or are snowed under, which we have a lot of compassion for.
 Some, like django-storages, are (admirably) maintaining a uniform API across many compute providers,
-whereas we don't change providers often enough to need that... 
+whereas we don't change providers often enough to need that...
 
 We'll be using GCP for the foreseeable future, so can accept a platform-specific API in order to use latest GCP features and best practices.
 
@@ -66,8 +66,3 @@ Also, this library boilerplate is from the ``django-rabid-armadillo`` project...
     :align: center
     :figclass: align-center
     :alt: Unhappy armadillo
-
-    
-
-
-

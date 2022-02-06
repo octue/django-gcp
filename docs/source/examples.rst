@@ -29,4 +29,3 @@ Tabs with different examples
              "thats": "right",
              "code": "goes in tabs too",
          }
-

@@ -4,7 +4,7 @@
 Version History
 ===============
 
-We used to recommend people create version histories. But we now do it automatically using 
+We used to recommend people create version histories. But we now do it automatically using
 our `conventional commits tools <https://github/octue/conventional-commits>`_
 for completely automating code versions, release numbering and release history.
 

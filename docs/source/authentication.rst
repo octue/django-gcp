@@ -47,7 +47,7 @@ So you should totally try that (please submit a PR here to show the process if y
 - Create the key and download `your-project-XXXXX.json` file.
 
 .. DANGER::
-    
+
     It's best not to store this in your project, to prevent accidentally committing it or building it into a docker image layer.
     Instead, bind monut it into docker images and devcontainers from somewhere else on your local system.
 
@@ -56,4 +56,3 @@ So you should totally try that (please submit a PR here to show the process if y
 - If you're developing in a container (like a VSCode ``.devcontainer``), mount the file into the container. You can make gcloud available too - check out `this tutorial <https://medium.com/datamindedbe/application-default-credentials-477879e31cb5>`_.
 
 - Set an environment variable of GOOGLE_APPLICATION_CREDENTIALS to the path of the json file.
-
