@@ -55,8 +55,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"rabid_armadillo"
-copyright = u"2013-2021 <copyright_owner>"
+project = "django_gcp"
+copyright = "2022 Octue Ltd"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -180,7 +180,7 @@ html_show_copyright = True
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "rabid_armadillo_doc"
+htmlhelp_basename = "django_gcp_doc"
 
 # -- Options for LaTeX output --------------------------------------------------
 
@@ -196,7 +196,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "rabid_armadillo.tex", u"Rabid Armadillo", u"<copyright_owner>", "manual"),
+    ("index", "django_gcp.tex", "Django GCP", "Octue Ltd", "manual"),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -224,7 +224,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "rabid_armadillo", u"Rabid Armadillo", [u"<copyright_owner>"], 1)]
+man_pages = [("index", "django_gcp", "Django GCP", ["Octue Ltd"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -238,11 +238,11 @@ man_pages = [("index", "rabid_armadillo", u"Rabid Armadillo", [u"<copyright_owne
 texinfo_documents = [
     (
         "index",
-        "rabid_armadillo",
-        u"Rabid Armadillo",
-        u"<copyright_owner>",
-        "Rabid Armadillo",
-        "Rabid Armadillo is a library to help armadillos with their rabies problems.",
+        "django_gcp",
+        "Django GCP",
+        "Octue Ltd",
+        "Django GCP",
+        "Django GCP is a library to help GCP run django",
         "Miscellaneous",
     ),
 ]
