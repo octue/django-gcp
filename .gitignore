@@ -1,3 +1,6 @@
+# Apple system files
+*.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -130,6 +133,9 @@ dmypy.json
 
 # Jetbrains stuff. Supposedly you can commit some settings but they inevitably make a hash of it
 .idea/
+
+# Local vscode setitngs
+.vscode/
 
 # Sphinx docs built locally
 docs/html

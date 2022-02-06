@@ -13,7 +13,7 @@ RUN if [ "${INSTALL_NODE}" = "true" ]; then su vscode -c "umask 0002 && . /usr/l
 #    - af-magic theme (because it looks closest to the github theme I use in VSCode, change to your preference)
 #    - git, ssh and command history searching enabled (add more plugins as you wish)
 #    - command history file mapped into the .devcontainer folder to enable reuse between container builds
-ENV HISTFILE="/workspaces/wake-service/.devcontainer/.zsh_history"
+ENV HISTFILE="/workspace/.devcontainer/.zsh_history"
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.1.1/zsh-in-docker.sh)" -- \
     -t af-magic \
     -p git -p ssh-agent -p 'history-substring-search' \
@@ -22,7 +22,7 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 
 # The non-root user defined in the devcontainer.json file needs write permission to /usr/local/src
 # in order for poetry to install git dependencies (this is where it clones them).
-# Other installers (e.g. the austing profiling tool) will also require access to this directory
+# Other installers (e.g. the austin profiling tool) will also require access to this directory
 RUN mkdir -p /usr/local && chown -R vscode /usr/local
 
 # Install austin for code profiling
@@ -33,11 +33,6 @@ RUN cd /usr/local/src && \
     ./configure && \
     make && \
     make install
-
-# Install the specific version of prettier that we have in pre-commit-config to avoid style flip-flopping
-#  Note that the devcontainer settings require a static path to resolve the prettier module, so we add a symlink here
-RUN npm install -g prettier@2.2.1 && \
-    ln -s $(npm root -g)/prettier /usr/local/prettier
 
 # Make sure that if you install requests, it can find the Certificate Authority bundle.
 # Overcomes this issue: https://github.com/python-poetry/poetry/issues/1012
@@ -52,9 +47,6 @@ RUN export PYTHON_VERSION=`python -c 'import sys; print("{0}.{1}".format(*sys.ve
 # [Optional] Uncomment this line to install global node packages.
 # RUN su vscode -c "source /usr/local/share/nvm/nvm.sh && npm install -g <your-package-here>" 2>&1
 
-
-# Tell zsh where you want to store history#
-ENV HISTFILE="/workspace/.devcontainer/.zsh_history"
 
 # Install poetry, cache poetry dependencies
 #

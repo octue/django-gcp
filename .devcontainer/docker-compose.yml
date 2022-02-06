@@ -10,12 +10,14 @@ services:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
+      args:
+        VARIANT: "3.9"
+        INSTALL_NODE: "true"
+        NODE_VERSION: "lts/*"
 
     environment:
       - DATABASE_URL=postgres://postgres_user:postgres_password@localhost/postgres_db
-
-    env_file:
-      - ../.env
+      - DJANGO_SETTINGS_MODULE=tests.settings
 
     # Map the current directory containing code
     volumes:
@@ -43,15 +45,19 @@ services:
       - db
 
   db:
-    image: postgis:13.0
+    image: postgres:13.0
     environment:
       - POSTGRES_DB=postgres_db
       - POSTGRES_USER=postgres_user
       - POSTGRES_PASSWORD=postgres_password
-    volumes:
-      - postgres_data:/var/lib/postgresql
+    # volumes:
+    #   - postgres_data:/var/lib/postgresql
     restart: unless-stopped
-
-volumes:
-  postgres_data:
-    driver: local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+# volumes:
+#   postgres_data:
+#     driver: local
