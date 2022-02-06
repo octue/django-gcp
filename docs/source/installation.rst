@@ -4,12 +4,12 @@
 Installation
 ============
 
-**django-rabid-armadillo** is available on `pypi <https://pypi.org/>`_, so installation into your python virtual environment is dead
+**django-gcp** is available on `pypi <https://pypi.org/>`_, so installation into your python virtual environment is dead
 simple:
 
 .. code-block:: py
 
-    poetry add django-rabid-armadillo
+    poetry add django-gcp
 
 Not using poetry? It's highly opinionated, but it's your friend. Google it.
 
@@ -19,7 +19,7 @@ Next, you'll need to install this as an app in your django settings:
 
     INSTALLED_APPS = [
         ...
-        'rabid_armadillo'
+        'django_gcp'
         ...
 
 Then run migrations:
@@ -27,11 +27,3 @@ Then run migrations:
 .. code-block:: bash
 
     python manage.py makemigrations
-
-
-.. _compilation:
-
-Compilation
-============
-
-There is presently no need to compile **django-rabid-armadillo**, as it's written entirely in python. Yay.
