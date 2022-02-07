@@ -15,6 +15,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Test package is publishable with PyPI test server
+        uses: JRubics/poetry-publish@v1.9
+        with:
+          python_version: "3.9"
+          pypi_token: ${{ secrets.TEST_PYPI_TOKEN }}
+          repository_name: "testpypi"
+          repository_url: "https://test.pypi.org/legacy/"
+
       - name: Publish latest package to PyPI
         uses: JRubics/poetry-publish@v1.9
         with:
@@ -36,14 +44,15 @@ jobs:
         run: pip install poetry
 
       - name: Get package version
-        run: echo "PACKAGE_VERSION=$(poetry version -s)" >> $GITHUB_ENV
+        id: version
+        run: echo "::set-output name=package_version::$(poetry version -s)"
 
       - name: Create release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, no need to create your own.
         with:
-          tag_name: ${{ env.PACKAGE_VERSION }}
+          tag_name: ${{ steps.version.outputs.package_version }}
           release_name: ${{ github.event.pull_request.title }}
           body: ${{ github.event.pull_request.body }}
           draft: false
