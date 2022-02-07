@@ -4,7 +4,7 @@
 # outside these in the description is left untouched. Auto-generated updates can be skipped for a commit if
 # "skipci" is in the commit message body.
 
-name: update-pull-request
+name: update-pr
 
 on: [pull_request]
 
