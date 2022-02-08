@@ -7,15 +7,16 @@ from datetime import timedelta
 from tempfile import SpooledTemporaryFile
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import File
+from django.core.files.storage import Storage
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
+from django_gcp.settings import DjangoGCPSettings
 from google.cloud.exceptions import NotFound
 from google.cloud.storage import Blob, Client
 from google.cloud.storage.blob import _quote
 
-from .base import BaseStorage
 from .compress import CompressedFileMixin, CompressStorageMixin
-from .utils import check_location, clean_name, get_available_overwrite_name, safe_join, setting, to_bytes
+from .utils import clean_name, get_available_overwrite_name, safe_join, setting, to_bytes
 
 
 CONTENT_ENCODING = "content_encoding"
@@ -32,7 +33,7 @@ class GoogleCloudFile(CompressedFileMixin, File):
         self._storage = storage
         self.blob = storage.bucket.get_blob(name)
         if not self.blob and "w" in mode:
-            self.blob = Blob(self.name, storage.bucket, chunk_size=storage.blob_chunk_size)
+            self.blob = Blob(self.name, storage.bucket, chunk_size=storage.settings.blob_chunk_size)
         self._file = None
         self._is_dirty = False
 
@@ -42,13 +43,15 @@ class GoogleCloudFile(CompressedFileMixin, File):
     def _get_file(self):
         if self._file is None:
             self._file = SpooledTemporaryFile(
-                max_size=self._storage.max_memory_size, suffix=".GSStorageFile", dir=setting("FILE_UPLOAD_TEMP_DIR")
+                max_size=self._storage.settings.max_memory_size,
+                suffix=".GSStorageFile",
+                dir=setting("FILE_UPLOAD_TEMP_DIR"),
             )
             if "r" in self._mode:
                 self._is_dirty = False
                 self.blob.download_to_file(self._file)
                 self._file.seek(0)
-            if self._storage.gzip and self.blob.content_encoding == "gzip":
+            if self._storage.settings.gzip and self.blob.content_encoding == "gzip":
                 self._file = self._decompress_file(mode=self._mode, file=self._file)
         return self._file
 
@@ -83,21 +86,20 @@ class GoogleCloudFile(CompressedFileMixin, File):
                     self.file,
                     rewind=True,
                     content_type=self.mime_type,
-                    predefined_acl=blob_params.get("acl", self._storage.default_acl),
+                    predefined_acl=blob_params.get("acl", self._storage.settings.default_acl),
                 )
             self._file.close()
             self._file = None
 
 
 @deconstructible
-class GoogleCloudStorage(CompressStorageMixin, BaseStorage):
+class GoogleCloudStorage(CompressStorageMixin, Storage):
     """Storage class allowing django to use GCS as an object store"""
 
-    def __init__(self, **settings):
-        super().__init__(**settings)
+    def __init__(self, **overrides):
+        super().__init__()
 
-        check_location(self)
-
+        self.settings = DjangoGCPSettings(overrides=overrides)
         self._bucket = None
         self._client = None
 
@@ -144,14 +146,14 @@ class GoogleCloudStorage(CompressStorageMixin, BaseStorage):
     def client(self):
         """The google-storage client for this store"""
         if self._client is None:
-            self._client = Client(project=self.project_id, credentials=self.credentials)
+            self._client = Client(project=self.settings.project_id, credentials=self.settings.credentials)
         return self._client
 
     @property
     def bucket(self):
         """The google-storage bucket object for this store"""
         if self._bucket is None:
-            self._bucket = self.client.bucket(self.bucket_name)
+            self._bucket = self.client.bucket(self.settings.bucket_name)
         return self._bucket
 
     def _normalize_name(self, name):
@@ -162,7 +164,7 @@ class GoogleCloudStorage(CompressStorageMixin, BaseStorage):
         to is not outside the directory specified by the LOCATION setting.
         """
         try:
-            return safe_join(self.location, name)
+            return safe_join(self.settings.location, name)
         except ValueError:
             raise SuspiciousOperation("Attempted access to '%s' denied." % name)
 
@@ -182,10 +184,14 @@ class GoogleCloudStorage(CompressStorageMixin, BaseStorage):
 
         upload_params = {}
         blob_params = self.get_object_parameters(name)
-        upload_params["predefined_acl"] = blob_params.pop("acl", self.default_acl)
+        upload_params["predefined_acl"] = blob_params.pop("acl", self.settings.default_acl)
         upload_params[CONTENT_TYPE] = blob_params.pop(CONTENT_TYPE, file_object.mime_type)
 
-        if self.gzip and upload_params[CONTENT_TYPE] in self.gzip_content_types and CONTENT_ENCODING not in blob_params:
+        if (
+            self.settings.gzip
+            and upload_params[CONTENT_TYPE] in self.settings.gzip_content_types
+            and CONTENT_ENCODING not in blob_params
+        ):
             content = self._compress_content(content)
             blob_params[CONTENT_ENCODING] = "gzip"
 
@@ -198,18 +204,18 @@ class GoogleCloudStorage(CompressStorageMixin, BaseStorage):
     def get_object_parameters(self, name):
         """Override this to return a dictionary of overwritable blob-property to value.
 
-        Returns GS_OBJECT_PARAMETRS by default. See the docs for all possible options.
+        Returns GS_OBJECT_PARAMETERS by default. See the docs for all possible options.
         """
-        object_parameters = self.object_parameters.copy()
+        object_parameters = self.settings.object_parameters.copy()  # pylint: disable=no-member
 
-        if "cache_control" not in object_parameters and self.cache_control:
+        if "cache_control" not in object_parameters and self.settings.cache_control is not None:
             warnings.warn(
                 "The GS_CACHE_CONTROL setting is deprecated. Use GS_OBJECT_PARAMETERS to set any "
                 "writable blob property or override GoogleCloudStorage.get_object_parameters to "
                 "vary the parameters per object.",
                 DeprecationWarning,
             )
-            object_parameters["cache_control"] = self.cache_control
+            object_parameters["cache_control"] = self.settings.cache_control
 
         return object_parameters
 
@@ -298,26 +304,28 @@ class GoogleCloudStorage(CompressStorageMixin, BaseStorage):
         name = self._normalize_name(clean_name(name))
         blob = self.bucket.blob(name)
         blob_params = self.get_object_parameters(name)
-        no_signed_url = blob_params.get("acl", self.default_acl) == "publicRead" or not self.querystring_auth
+        no_signed_url = (
+            blob_params.get("acl", self.settings.default_acl) == "publicRead" or not self.settings.querystring_auth
+        )
 
-        if not self.custom_endpoint and no_signed_url:
+        if not self.settings.custom_endpoint and no_signed_url:
             return blob.public_url
         elif no_signed_url:
             return "{storage_base_url}/{quoted_name}".format(
-                storage_base_url=self.custom_endpoint,
+                storage_base_url=self.settings.custom_endpoint,
                 quoted_name=_quote(name, safe=b"/~"),
             )
-        elif not self.custom_endpoint:
-            return blob.generate_signed_url(expiration=self.expiration, version="v4")
+        elif not self.settings.custom_endpoint:
+            return blob.generate_signed_url(expiration=self.settings.expiration, version="v4")
         else:
             return blob.generate_signed_url(
-                bucket_bound_hostname=self.custom_endpoint,
-                expiration=self.expiration,
+                bucket_bound_hostname=self.settings.custom_endpoint,
+                expiration=self.settings.expiration,
                 version="v4",
             )
 
     def get_available_name(self, name, max_length=None):
         name = clean_name(name)
-        if self.file_overwrite:
+        if self.settings.file_overwrite:
             return get_available_overwrite_name(name, max_length)
         return super().get_available_name(name, max_length)

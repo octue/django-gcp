@@ -89,24 +89,27 @@ class GCloudStorageTests(GCloudTestCase):
         """
         Test opening a file and writing to it
         """
-        data = "This is some test write data."
+        with override_settings(GS_DEFAULT_ACL="projectPrivate"):
+            data = "This is some test write data."
 
-        # Simulate the file not existing before the write
-        self.storage._bucket = mock.MagicMock()
-        self.storage._bucket.get_blob.return_value = None
-        self.storage.default_acl = "projectPrivate"
+            # Simulate the file not existing before the write
+            self.storage._bucket = mock.MagicMock()
+            self.storage._bucket.get_blob.return_value = None
 
-        f = self.storage.open(self.filename, "wb")
-        MockBlob.assert_called_with(self.filename, self.storage._bucket, chunk_size=None)
+            f = self.storage.open(self.filename, "wb")
+            MockBlob.assert_called_with(self.filename, self.storage._bucket, chunk_size=None)
 
-        f.write(data)
-        tmpfile = f._file
-        # File data is not actually written until close(), so do that.
-        f.close()
+            f.write(data)
+            tmpfile = f._file
+            # File data is not actually written until close(), so do that.
+            f.close()
 
-        MockBlob().upload_from_file.assert_called_with(
-            tmpfile, rewind=True, content_type=mimetypes.guess_type(self.filename)[0], predefined_acl="projectPrivate"
-        )
+            MockBlob().upload_from_file.assert_called_with(
+                tmpfile,
+                rewind=True,
+                content_type=mimetypes.guess_type(self.filename)[0],
+                predefined_acl="projectPrivate",
+            )
 
     def test_save(self):
         data = "This is some test content."
@@ -140,21 +143,16 @@ class GCloudStorageTests(GCloudTestCase):
         filename = "ủⓝï℅ⅆℇ.txt"
         content = ContentFile(data)
 
-        # ACL Options
-        # 'projectPrivate', 'bucketOwnerRead', 'bucketOwnerFullControl',
-        # 'private', 'authenticatedRead', 'publicRead', 'publicReadWrite'
-        self.storage.default_acl = "publicRead"
-
-        self.storage.save(filename, content)
-
-        self.storage._client.bucket.assert_called_with(self.bucket_name)
-        self.storage._bucket.get_blob().upload_from_file.assert_called_with(
-            content,
-            rewind=True,
-            size=len(data),
-            content_type=mimetypes.guess_type(filename)[0],
-            predefined_acl="publicRead",
-        )
+        with override_settings(GS_DEFAULT_ACL="publicRead"):
+            self.storage.save(filename, content)
+            self.storage._client.bucket.assert_called_with(self.bucket_name)
+            self.storage._bucket.get_blob().upload_from_file.assert_called_with(
+                content,
+                rewind=True,
+                size=len(data),
+                content_type=mimetypes.guess_type(filename)[0],
+                predefined_acl="publicRead",
+            )
 
     def test_delete(self):
         self.storage.delete(self.filename)
@@ -324,16 +322,17 @@ class GCloudStorageTests(GCloudTestCase):
 
     def test_url_public_object(self):
         url = f"https://example.com/mah-bukkit/{self.filename}"
-        self.storage.default_acl = "publicRead"
 
-        self.storage._bucket = mock.MagicMock()
-        blob = mock.MagicMock()
-        blob.public_url = url
-        blob.generate_signed_url = "not called"
-        self.storage._bucket.blob.return_value = blob
+        with override_settings(GS_DEFAULT_ACL="publicRead"):
 
-        self.assertEqual(self.storage.url(self.filename), url)
-        self.storage._bucket.blob.assert_called_with(self.filename)
+            self.storage._bucket = mock.MagicMock()
+            blob = mock.MagicMock()
+            blob.public_url = url
+            blob.generate_signed_url = "not called"
+            self.storage._bucket.blob.return_value = blob
+
+            self.assertEqual(self.storage.url(self.filename), url)
+            self.storage._bucket.blob.assert_called_with(self.filename)
 
     def test_url_not_public_file(self):
         secret_filename = "secret_file.txt"
@@ -350,52 +349,52 @@ class GCloudStorageTests(GCloudTestCase):
         blob.generate_signed_url.assert_called_with(expiration=timedelta(seconds=86400), version="v4")
 
     def test_url_not_public_file_with_custom_expires(self):
-        secret_filename = "secret_file.txt"
-        self.storage._bucket = mock.MagicMock()
-        blob = mock.MagicMock()
-        generate_signed_url = mock.MagicMock(return_value="http://signed_url")
-        blob.generate_signed_url = generate_signed_url
-        self.storage._bucket.blob.return_value = blob
 
-        self.storage.expiration = timedelta(seconds=3600)
-
-        url = self.storage.url(secret_filename)
-        self.storage._bucket.blob.assert_called_with(secret_filename)
-        self.assertEqual(url, "http://signed_url")
-        blob.generate_signed_url.assert_called_with(expiration=timedelta(seconds=3600), version="v4")
+        expiration = timedelta(seconds=3600)
+        with override_settings(GS_EXPIRATION=expiration):
+            secret_filename = "secret_file.txt"
+            self.storage._bucket = mock.MagicMock()
+            blob = mock.MagicMock()
+            generate_signed_url = mock.MagicMock(return_value="http://signed_url")
+            blob.generate_signed_url = generate_signed_url
+            self.storage._bucket.blob.return_value = blob
+            url = self.storage.url(secret_filename)
+            self.storage._bucket.blob.assert_called_with(secret_filename)
+            self.assertEqual(url, "http://signed_url")
+            blob.generate_signed_url.assert_called_with(expiration=expiration, version="v4")
 
     def test_custom_endpoint(self):
-        self.storage.custom_endpoint = "https://example.com"
 
-        self.storage.default_acl = "publicRead"
-        url = "{}/{}".format(self.storage.custom_endpoint, self.filename)
-        self.assertEqual(self.storage.url(self.filename), url)
+        with override_settings(GS_CUSTOM_ENDPOINT="https://example.com", GS_DEFAULT_ACL="publicRead"):
 
-        bucket_name = "hyacinth"
-        self.storage.default_acl = "projectPrivate"
-        self.storage._bucket = mock.MagicMock()
-        blob = mock.MagicMock()
-        generate_signed_url = mock.MagicMock()
-        blob.bucket = mock.MagicMock()
-        type(blob.bucket).name = mock.PropertyMock(return_value=bucket_name)
-        blob.generate_signed_url = generate_signed_url
-        self.storage._bucket.blob.return_value = blob
-        self.storage.url(self.filename)
-        blob.generate_signed_url.assert_called_with(
-            bucket_bound_hostname=self.storage.custom_endpoint,
-            expiration=timedelta(seconds=86400),
-            version="v4",
-        )
+            url = f"{self.storage.settings.custom_endpoint}/{self.filename}"
+            self.assertEqual(self.storage.url(self.filename), url)
+
+        with override_settings(GS_CUSTOM_ENDPOINT="https://example.com", GS_DEFAULT_ACL="projectPrivate"):
+            bucket_name = "hyacinth"
+            self.storage._bucket = mock.MagicMock()
+            blob = mock.MagicMock()
+            generate_signed_url = mock.MagicMock()
+            blob.bucket = mock.MagicMock()
+            type(blob.bucket).name = mock.PropertyMock(return_value=bucket_name)
+            blob.generate_signed_url = generate_signed_url
+            self.storage._bucket.blob.return_value = blob
+            self.storage.url(self.filename)
+            blob.generate_signed_url.assert_called_with(
+                bucket_bound_hostname=self.storage.settings.custom_endpoint,
+                expiration=timedelta(seconds=86400),
+                version="v4",
+            )
 
     def test_get_available_name(self):
-        self.storage.file_overwrite = True
-        self.assertEqual(self.storage.get_available_name(self.filename), self.filename)
+        with override_settings(GS_FILE_OVERWRITE=True):
+            self.assertEqual(self.storage.get_available_name(self.filename), self.filename)
+            self.storage._bucket = mock.MagicMock()
+            self.storage._bucket.get_blob.return_value = None
 
-        self.storage._bucket = mock.MagicMock()
-        self.storage._bucket.get_blob.return_value = None
-        self.storage.file_overwrite = False
-        self.assertEqual(self.storage.get_available_name(self.filename), self.filename)
-        self.storage._bucket.get_blob.assert_called_with(self.filename)
+        with override_settings(GS_FILE_OVERWRITE=False):
+            self.assertEqual(self.storage.get_available_name(self.filename), self.filename)
+            self.storage._bucket.get_blob.assert_called_with(self.filename)
 
     def test_get_available_name_unicode(self):
         filename = "ủⓝï℅ⅆℇ.txt"
@@ -406,13 +405,11 @@ class GCloudStorageTests(GCloudTestCase):
         filename = "cache_control_file.txt"
         content = ContentFile(data)
         cache_control = "public, max-age=604800"
-
-        self.storage.cache_control = cache_control
-        self.storage.save(filename, content)
-
-        bucket = self.storage.client.bucket(self.bucket_name)
-        blob = bucket.get_blob(filename)
-        self.assertEqual(blob.cache_control, cache_control)
+        with override_settings(GS_CACHE_CONTROL=cache_control):
+            self.storage.save(filename, content)
+            bucket = self.storage.client.bucket(self.bucket_name)
+            blob = bucket.get_blob(filename)
+            self.assertEqual(blob.cache_control, cache_control)
 
     def test_storage_save_gzipped(self):
         """
@@ -438,53 +435,52 @@ class GCloudStorageTests(GCloudTestCase):
         """
         Test saving a file with gzip enabled.
         """
-        self.storage.gzip = True
-        name = "test_storage_save.css"
-        content = ContentFile("I should be gzip'd")
-        self.storage.save(name, content)
-        self.storage._client.bucket.assert_called_with(self.bucket_name)
-        obj = self.storage._bucket.get_blob()
-        self.assertEqual(obj.content_encoding, "gzip")
-        obj.upload_from_file.assert_called_with(
-            mock.ANY,
-            rewind=True,
-            size=None,
-            predefined_acl=None,
-            content_type="text/css",
-        )
-        args, _ = obj.upload_from_file.call_args
-        content = args[0]
-        zfile = gzip.GzipFile(mode="rb", fileobj=content)
-        self.assertEqual(zfile.read(), b"I should be gzip'd")
+        with override_settings(GS_GZIP=True):
+            name = "test_storage_save.css"
+            content = ContentFile("I should be gzip'd")
+            self.storage.save(name, content)
+            self.storage._client.bucket.assert_called_with(self.bucket_name)
+            obj = self.storage._bucket.get_blob()
+            self.assertEqual(obj.content_encoding, "gzip")
+            obj.upload_from_file.assert_called_with(
+                mock.ANY,
+                rewind=True,
+                size=None,
+                predefined_acl=None,
+                content_type="text/css",
+            )
+            args, _ = obj.upload_from_file.call_args
+            content = args[0]
+            zfile = gzip.GzipFile(mode="rb", fileobj=content)
+            self.assertEqual(zfile.read(), b"I should be gzip'd")
 
     def test_storage_save_gzip_twice(self):
         """
         Test saving the same file content twice with gzip enabled.
         """
-        # Given
-        self.storage.gzip = True
-        name = "test_storage_save.css"
-        content = ContentFile("I should be gzip'd")
+        with override_settings(GS_GZIP=True):
+            name = "test_storage_save.css"
+            content = ContentFile("I should be gzip'd")
 
-        # When
-        self.storage.save(name, content)
-        self.storage.save("test_storage_save_2.css", content)
+            # When
+            self.storage.save(name, content)
+            self.storage.save("test_storage_save_2.css", content)
 
-        # Then
-        self.storage._client.bucket.assert_called_with(self.bucket_name)
-        obj = self.storage._bucket.get_blob()
-        self.assertEqual(obj.content_encoding, "gzip")
-        obj.upload_from_file.assert_called_with(
-            mock.ANY,
-            rewind=True,
-            size=None,
-            predefined_acl=None,
-            content_type="text/css",
-        )
-        args, _ = obj.upload_from_file.call_args
-        content = args[0]
-        zfile = gzip.GzipFile(mode="rb", fileobj=content)
-        self.assertEqual(zfile.read(), b"I should be gzip'd")
+            # Then
+            self.storage._client.bucket.assert_called_with(self.bucket_name)
+            obj = self.storage._bucket.get_blob()
+            self.assertEqual(obj.content_encoding, "gzip")
+            obj.upload_from_file.assert_called_with(
+                mock.ANY,
+                rewind=True,
+                size=None,
+                predefined_acl=None,
+                content_type="text/css",
+            )
+            args, _ = obj.upload_from_file.call_args
+            content = args[0]
+            zfile = gzip.GzipFile(mode="rb", fileobj=content)
+            self.assertEqual(zfile.read(), b"I should be gzip'd")
 
     def test_compress_content_len(self):
         """
@@ -496,20 +492,22 @@ class GCloudStorageTests(GCloudTestCase):
         self.assertTrue(len(content.read()) > 0)
 
     def test_location_leading_slash(self):
-        msg = "GoogleCloudStorage.location cannot begin with a leading slash. Found '/'. Use '' instead."
+        msg = "GS_LOCATION cannot begin with a leading slash. Found '/'. Use '' instead."
         with self.assertRaises(ImproperlyConfigured, msg=msg):
-            gcloud.GoogleCloudStorage(location="/")
+            with override_settings(GS_LOCATION="/"):
+                storage = gcloud.GoogleCloudStorage()
+                storage.settings.check()
 
     def test_override_settings(self):
         with override_settings(GS_LOCATION="foo1"):
             storage = gcloud.GoogleCloudStorage()
-            self.assertEqual(storage.location, "foo1")
+            self.assertEqual(storage.settings.location, "foo1")
         with override_settings(GS_LOCATION="foo2"):
             storage = gcloud.GoogleCloudStorage()
-            self.assertEqual(storage.location, "foo2")
+            self.assertEqual(storage.settings.location, "foo2")
 
     def test_override_init_argument(self):
         storage = gcloud.GoogleCloudStorage(location="foo1")
-        self.assertEqual(storage.location, "foo1")
+        self.assertEqual(storage.settings.location, "foo1")
         storage = gcloud.GoogleCloudStorage(location="foo2")
-        self.assertEqual(storage.location, "foo2")
+        self.assertEqual(storage.settings.location, "foo2")

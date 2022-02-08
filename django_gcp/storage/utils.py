@@ -1,7 +1,7 @@
 import os
 import posixpath
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, SuspiciousFileOperation
+from django.core.exceptions import SuspiciousFileOperation
 from django.utils.encoding import force_bytes
 
 
@@ -80,18 +80,6 @@ def safe_join(base, *paths):
         raise ValueError("the joined path is located outside of the base path" " component")
 
     return final_path.lstrip("/")
-
-
-def check_location(storage):
-    if storage.location.startswith("/"):
-        correct = storage.location.lstrip("/")
-        raise ImproperlyConfigured(
-            "{}.location cannot begin with a leading slash. Found '{}'. Use '{}' instead.".format(
-                storage.__class__.__name__,
-                storage.location,
-                correct,
-            )
-        )
 
 
 def get_available_overwrite_name(name, max_length):
