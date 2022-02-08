@@ -5,24 +5,17 @@ import mimetypes
 import warnings
 from datetime import timedelta
 from tempfile import SpooledTemporaryFile
-from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
+from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import File
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
+from google.cloud.exceptions import NotFound
+from google.cloud.storage import Blob, Client
+from google.cloud.storage.blob import _quote
 
 from .base import BaseStorage
 from .compress import CompressedFileMixin, CompressStorageMixin
 from .utils import check_location, clean_name, get_available_overwrite_name, safe_join, setting, to_bytes
-
-
-try:
-    from google.cloud.exceptions import NotFound
-    from google.cloud.storage import Blob, Client
-    from google.cloud.storage.blob import _quote
-except ImportError as e:
-    raise ImproperlyConfigured(
-        "Could not load Google Cloud Storage bindings.\n" "See https://github.com/GoogleCloudPlatform/gcloud-python"
-    ) from e
 
 
 CONTENT_ENCODING = "content_encoding"
