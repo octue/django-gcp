@@ -44,12 +44,12 @@ repos:
       - id: check-branch-name
         args:
           - "^main$"
-          - "^devops/([a-z][a-z0-9]*)(-[a-z0-9]+)*$"
-          - "^doc/([a-z][a-z0-9]*)(-[a-z0-9]+)*$"
-          - "^feature/([a-z][a-z0-9]*)(-[a-z0-9]+)*$"
-          - "^fix/([a-z][a-z0-9]*)(-[a-z0-9]+)*$"
-          - "^refactor/([a-z][a-z0-9]*)(-[a-z0-9]+)*$"
-          - "^review/([a-z][a-z0-9]*)(-[a-z0-9]+)*$"
+          - "^devops/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
+          - "^test/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
+          - "^doc/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
+          - "^feature/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
+          - "^fix/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
+          - "^refactor/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: "v2.2.1"
