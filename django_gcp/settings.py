@@ -77,29 +77,29 @@ class DjangoGCPSettings(AppSettings):
     # DjangoGCPSettings.check() is already called in django.apps.AppConfig's ready method, to check for valid settings on app start.
     """
 
-    # TODO set prefixes to storage-specific variables like:
-    # prefixed_setting = StringSetting(prefix="gcp_storage_")
-    #: GCP_SETTINGS
+    # App-wide settings
     project_id = StringSetting(default=None)
     credentials = ObjectSetting(default=None)
-    bucket_name = StringSetting(default="test_bucket")
-    custom_endpoint = StringSetting(default=None)
-    location = NoLeadingSlashStringSetting(default="")
-    default_acl = StringSetting(default=None)
-    querystring_auth = BooleanSetting(default=True)
-    expiration = Setting(default=timedelta(seconds=86400))
-    gzip = BooleanSetting(default=False)
-    gzip_content_types = TupleSetting(default=DEFAULT_GZIP_CONTENT_TYPES)
-    file_overwrite = BooleanSetting(default=True)
-    cache_control = StringSetting(default=None)
-    object_parameters = ObjectSetting(default=DEFAULT_OBJECT_PARAMETERS)
-    max_memory_size = PositiveIntegerSetting(default=0)
-    blob_chunk_size = PositiveIntegerSetting(default=None)
+
+    # GCS settings
+    bucket_name = StringSetting(prefix="gcp_storage_", default="test_bucket")
+    custom_endpoint = StringSetting(prefix="gcp_storage_", default=None)
+    location = NoLeadingSlashStringSetting(prefix="gcp_storage_", default="")
+    default_acl = StringSetting(prefix="gcp_storage_", default=None)
+    querystring_auth = BooleanSetting(prefix="gcp_storage_", default=True)
+    expiration = Setting(prefix="gcp_storage_", default=timedelta(seconds=86400))
+    gzip = BooleanSetting(prefix="gcp_storage_", default=False)
+    gzip_content_types = TupleSetting(prefix="gcp_storage_", default=DEFAULT_GZIP_CONTENT_TYPES)
+    file_overwrite = BooleanSetting(prefix="gcp_storage_", default=True)
+    cache_control = StringSetting(prefix="gcp_storage_", default=None)
+    object_parameters = ObjectSetting(prefix="gcp_storage_", default=DEFAULT_OBJECT_PARAMETERS)
+    max_memory_size = PositiveIntegerSetting(prefix="gcp_storage_", default=0)
+    blob_chunk_size = PositiveIntegerSetting(prefix="gcp_storage_", default=None)
 
     class Meta:
         """Defines default settings behaviour"""
 
-        setting_prefix = "gs_"
+        setting_prefix = "gcp_"
 
     def __init__(self, *args, overrides=None, **kwargs):
         self._overrides = overrides if overrides is not None else dict()
