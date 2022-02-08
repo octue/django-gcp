@@ -1,5 +1,5 @@
 [![PyPI version](https://badge.fury.io/py/django_gcp.svg)](https://badge.fury.io/py/django_gcp)
-[![codecov](https://codecov.io/gh/octue/django_gcp/branch/master/graph/badge.svg)](https://codecov.io/gh/octue/django_gcp)
+[![codecov](https://codecov.io/gh/octue/django-gcp/branch/main/graph/badge.svg?token=H2QLSCF3DU)](https://codecov.io/gh/octue/django-gcp)
 [![Documentation](https://readthedocs.org/projects/django_gcp/badge/?version=latest)](https://django_gcp.readthedocs.io/en/latest/?badge=latest)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
@@ -20,9 +20,7 @@ If so, get in touch for a chat. We're doing fun things with Google Cloud. Way fu
 
 ## All the :heart:
 
-This app is based heavily on [django-storages](), [django-cloud-tasks]() and uses on the [django-rabid-armadillo]() template. Big love.
-
-- Template django app, with:
+This app is based heavily on [django-storages](https://django-storages.readthedocs.io/en/latest/), [django-google-cloud-tasks](https://github.com/flamingo-run/django-cloud-tasks) and uses the [django-rabid-armadillo](https://github.com/thclark/django-rabid-armadillo) template. Big love.
 
 ## Contributing
 
