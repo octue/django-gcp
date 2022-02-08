@@ -36,7 +36,6 @@ class GoogleCloudFile(CompressedFileMixin, File):
         self._file = None
         self._is_dirty = False
 
-    @property
     def size(self):
         return self.blob.size
 
