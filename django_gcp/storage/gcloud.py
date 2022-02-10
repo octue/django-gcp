@@ -2,20 +2,18 @@
 # pylint: disable=arguments-renamed
 
 import mimetypes
-import warnings
-from datetime import timedelta
 from tempfile import SpooledTemporaryFile
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import File
 from django.core.files.storage import Storage
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
-from django_gcp.settings import DjangoGCPSettings
 from google.cloud.exceptions import NotFound
 from google.cloud.storage import Blob, Client
 from google.cloud.storage.blob import _quote
 
 from .compress import CompressedFileMixin, CompressStorageMixin
+from .settings import StorageSettings
 from .utils import clean_name, get_available_overwrite_name, safe_join, setting, to_bytes
 
 
@@ -26,7 +24,7 @@ CONTENT_TYPE = "content_type"
 class GoogleCloudFile(CompressedFileMixin, File):
     """A django File object representing a GCP storage object"""
 
-    def __init__(self, name, mode, storage):
+    def __init__(self, name, mode, storage):  # pylint: disable=super-init-not-called
         self.name = name
         self.mime_type = mimetypes.guess_type(name)[0]
         self._mode = mode
@@ -94,53 +92,34 @@ class GoogleCloudFile(CompressedFileMixin, File):
 
 @deconstructible
 class GoogleCloudStorage(CompressStorageMixin, Storage):
-    """Storage class allowing django to use GCS as an object store"""
+    """Storage class allowing django to use GCS as an object store
 
-    def __init__(self, **overrides):
+    Instantiates as the `media` store by default. Pass `media`, `static` or any of the keys in"""
+
+    def __init__(self, store_key="media", **overrides):
         super().__init__()
 
-        self.settings = DjangoGCPSettings(overrides=overrides)
+        self.settings = StorageSettings(store_key, **overrides)
         self._bucket = None
         self._client = None
 
     def get_accessed_time(self, *args, **kwargs):
-        """Not implemented yet"""
-        raise NotImplementedError("Need to override the abstract base class for this method")
+        """Get the last accessed time of the file
+
+        This value is ALWAYS None because we cannot know the last accessed time on a cloud file.
+
+        This method is here for API compatibility with django's Storage class.
+        """
+        return None
 
     def path(self, *args, **kwargs):
-        """Not implemented yet"""
-        raise NotImplementedError("Need to override the abstract base class for this method")
+        """Get the local path of the file
 
-    def get_default_settings(self):
-        return {
-            "project_id": setting("GS_PROJECT_ID"),
-            "credentials": setting("GS_CREDENTIALS"),
-            "bucket_name": setting("GS_BUCKET_NAME"),
-            "custom_endpoint": setting("GS_CUSTOM_ENDPOINT", None),
-            "location": setting("GS_LOCATION", ""),
-            "default_acl": setting("GS_DEFAULT_ACL"),
-            "querystring_auth": setting("GS_QUERYSTRING_AUTH", True),
-            "expiration": setting("GS_EXPIRATION", timedelta(seconds=86400)),
-            "gzip": setting("GS_IS_GZIPPED", False),
-            "gzip_content_types": setting(
-                "GZIP_CONTENT_TYPES",
-                (
-                    "text/css",
-                    "text/javascript",
-                    "application/javascript",
-                    "application/x-javascript",
-                    "image/svg+xml",
-                ),
-            ),
-            "file_overwrite": setting("GS_FILE_OVERWRITE", True),
-            "cache_control": setting("GS_CACHE_CONTROL"),
-            "object_parameters": setting("GS_OBJECT_PARAMETERS", {}),
-            # The max amount of memory a returned file can take up before being
-            # rolled over into a temporary file on disk. Default is 0: Do not
-            # roll over.
-            "max_memory_size": setting("GS_MAX_MEMORY_SIZE", 0),
-            "blob_chunk_size": setting("GS_BLOB_CHUNK_SIZE"),
-        }
+        This value is ALWAYS None because the path is not necessarily distinct for an object
+        not on the local filesystem.
+
+        This method is here for API compatibility with django's Storage class.
+        """
 
     @property
     def client(self):
@@ -206,18 +185,7 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):
 
         Returns GS_OBJECT_PARAMETERS by default. See the docs for all possible options.
         """
-        object_parameters = self.settings.object_parameters.copy()  # pylint: disable=no-member
-
-        if "cache_control" not in object_parameters and self.settings.cache_control is not None:
-            warnings.warn(
-                "The GS_CACHE_CONTROL setting is deprecated. Use GS_OBJECT_PARAMETERS to set any "
-                "writable blob property or override GoogleCloudStorage.get_object_parameters to "
-                "vary the parameters per object.",
-                DeprecationWarning,
-            )
-            object_parameters["cache_control"] = self.settings.cache_control
-
-        return object_parameters
+        return self.settings.object_parameters.copy()
 
     def delete(self, name):
         name = self._normalize_name(clean_name(name))
@@ -329,3 +297,35 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):
         if self.settings.file_overwrite:
             return get_available_overwrite_name(name, max_length)
         return super().get_available_name(name, max_length)
+
+
+class GoogleCloudMediaStorage(GoogleCloudStorage):
+    """Storage whose bucket name is taken from the GCP_STORAGE_MEDIA_NAME setting
+
+    This actually behaves exactly as a default instantitation of the base
+    ``GoogleCloudStorage`` class, but is there to make configuration more
+    explicit for first-timers.
+
+    """
+
+    def __init__(self, **overrides):
+        if overrides.pop("store_key", "media") != "media":
+            raise ValueError("You cannot instantiate GoogleCloudMediaStorage with a store_key other than 'media'")
+        super().__init__(store_key="media", **overrides)
+
+
+class GoogleCloudStaticStorage(GoogleCloudStorage):
+    """Storage defined with an appended bucket name (called "<bucket>-static")
+
+    We define that static files are stored in a different bucket than the (private) media files, which:
+        1. gives us less risk of accidentally setting private files as public
+        2. allows us easier visual inspection in the console of what's private and what's public static
+        3. allows us to set blanket public ACLs on the static bucket
+        4. makes it easier to clean up private files with no entry in the DB
+
+    """
+
+    def __init__(self, **overrides):
+        if overrides.pop("store_key", "static") != "static":
+            raise ValueError("You cannot instantiate GoogleCloudStaticStorage with a store_key other than 'static'")
+        super().__init__(store_key="static", **overrides)

@@ -48,6 +48,7 @@ Contents
    self
    installation
    authentication
+   storage
    license
    version_history
 
