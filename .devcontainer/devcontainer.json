@@ -38,6 +38,9 @@
     "python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
     "python.pythonPath": "/usr/local/bin/python",
     "restructuredtext.confPath": "${workspaceFolder}/docs/source",
+    // Scrolling the editor is a nice idea but it doesn't work, always out of sync and impossible to manage
+    "restructuredtext.preview.scrollEditorWithPreview": false,
+    "restructuredtext.preview.scrollPreviewWithEditor": false,
     "terminal.integrated.defaultProfile.linux": "zsh"
   },
 
