@@ -101,8 +101,8 @@ you can buy his very interesting book (Pro Django).
 ## django-google-cloud-tasks
 
 We've brought code from
-[here]() (the original repo) and [here]() (a fork), neither of which have a
-valid license file because the copyright isn't entered. Hoever, they've attempted
+[here](https://github.com/flamingo-run/django-cloud-tasks) (the original repo) and [here](https://github.com/valyagolev/django-cloud-tasks) (a fork), neither of which have a
+valid license file because the copyright isn't entered. However, they've attempted
 to use Apache 2.0 so here is our best effort to comply:
 
 <details>
