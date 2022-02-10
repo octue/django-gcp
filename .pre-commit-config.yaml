@@ -61,6 +61,8 @@ repos:
     hooks:
       - id: check-commit-message-is-conventional
         stages: [commit-msg]
+        args:
+          - --maximum-body-line-length=2000
 
   - repo: https://github.com/thclark/pre-commit-sphinx
     rev: 0.0.1

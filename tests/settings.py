@@ -67,6 +67,12 @@ DATABASES = {"default": get_db_conf()}
 
 ROOT_URLCONF = "tests.urls"
 
+DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
+GCP_STORAGE_MEDIA = {"bucket_name": "test-media"}
+
+STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
+GCP_STORAGE_STATIC = {"bucket_name": "test-static"}
+
 STATIC_URL = "static_test/"
 MEDIA_URL = "media_test/"
 
