@@ -12,6 +12,11 @@ from django.test import TestCase
 from django.urls import reverse
 
 
+def raise_error(*args, **kwargs):
+    """Mock to simulate an error during signal handling"""
+    raise Exception("An error of some unknown kind, which may happen during signal handling")
+
+
 class GCloudEventTests(TestCase):
     @patch("django_gcp.events.signals.event_received.send")
     def test_valid_event_is_signalled(self, mock):
@@ -50,3 +55,16 @@ class GCloudEventTests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 405)
+
+    @patch("django_gcp.events.signals.event_received.send", new=raise_error)
+    def test_handling_errors_are_returned_unhandleable(self):
+        """Ensure that 400 errors are returned if the payload causes an internal error.
+        This might not be obvious (since it masks genuine 500 errors), but since the
+        payload can be completely arbitrary"""
+
+        response = self.client.post(
+            reverse("gcp-events", args=["the-event-kind", "the-event-reference"]),
+            data="{}",
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
