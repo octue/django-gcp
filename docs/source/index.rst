@@ -49,6 +49,7 @@ Contents
    installation
    authentication
    storage
+   events
    license
    version_history
 

@@ -6,7 +6,8 @@
 # If you alter these, you must also alter the dependencies in .pre-commit-config.yaml because
 # frustratingly, pre-commit can't be pointed to a file.
 
-Sphinx>=2,<3
-sphinx-rtd-theme==0.5.0
-sphinx-tabs==1.2.1
-sphinx-charts==0.0.4
+Sphinx>=4,<5
+sphinx-rtd-theme==1.0.0
+sphinx-tabs==3.2.0
+sphinx-charts==0.1.2
+sphinx-math-dollar==1.2.0
