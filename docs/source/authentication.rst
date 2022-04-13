@@ -40,7 +40,7 @@ You'll want to avoid injecting a service account json file into your github acti
 Locally
 -------
 
-We're working on using service account impersonation, but it's not fully available for all the SDKs yet, still a lot of teething problems (like `this one, solved 6 days ago at the time of writing<https://github.com/googleapis/google-auth-library-python/issues/762>`_.
+We're working on using service account impersonation, but it's not fully available for all the SDKs yet, still a lot of teething problems (like `this one, solved 6 days ago at the time of writing <https://github.com/googleapis/google-auth-library-python/issues/762>`_).
 
 So you should totally try that (please submit a PR here to show the process if you get it to work!!). In the meantime...
 

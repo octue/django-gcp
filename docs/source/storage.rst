@@ -16,8 +16,9 @@ tools built for the purpose, like terraform or Deployment Manager.
 
 If you're setting up for the first time and don't want to get into that kind of infrastructure-as-code stuff, then
 manually create two buckets in your project:
- - One with **object-level** permissions for **media** files.
- - One with **uniform, public** permissions for **static** files.
+
+- One with **object-level** permissions for **media** files.
+- One with **uniform, public** permissions for **static** files.
 
 .. TIP::
     Having two buckets like this means it's easier to configure which files are public and which aren't.

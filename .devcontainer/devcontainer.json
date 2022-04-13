@@ -12,6 +12,8 @@
     "austin.mode": "Wall time",
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
+    "esbonio.server.enabled": true,
+    "esbonio.sphinx.confDir": "${workspaceFolder}/docs/source",
     "jupyter.widgetScriptSources": ["jsdelivr.com", "unpkg.com"],
     "prettier.prettierPath": "/usr/local/prettier",
     "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
@@ -37,10 +39,10 @@
     "python.linting.pylintEnabled": true,
     "python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
     "python.pythonPath": "/usr/local/bin/python",
-    "restructuredtext.confPath": "${workspaceFolder}/docs/source",
     // Scrolling the editor is a nice idea but it doesn't work, always out of sync and impossible to manage
     "restructuredtext.preview.scrollEditorWithPreview": false,
     "restructuredtext.preview.scrollPreviewWithEditor": false,
+    "restructuredtext.linter.doc8.extraArgs": ["--max-line-length 180"],
     "terminal.integrated.defaultProfile.linux": "zsh"
   },
 
