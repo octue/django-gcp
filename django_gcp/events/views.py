@@ -23,11 +23,13 @@ class GoogleCloudEventsView(View):
         """Handle a POSTed event"""
         try:
             event_payload = json.loads(request.body)
+            event_parameters = request.GET.dict()
             event_received.send(
                 sender=self.__class__,
                 event_kind=event_kind,
                 event_reference=event_reference,
                 event_payload=event_payload,
+                event_parameters=event_parameters,
             )
             return self._prepare_response(status=201, payload={})
 

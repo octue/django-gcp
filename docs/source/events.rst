@@ -19,7 +19,7 @@ About Authentication
    In the meantime, it's your responsibility to ensure that your handlers are protected (or otherwise wrap the
    urls in a decorator to manage authentication).
 
-   The best way of doing this is to scramble/unscramble ``event_reference`` using the itsdangerous library.
+   The best way of doing this is to generate a single use token and supply it as an event parameter (see `Generating Endpoint URLs`_).
 
    As always, if you want us to help, find us on GitHub!
 
@@ -49,7 +49,7 @@ So, if you ``POST`` data to ``https://your-server.com/django-gcp/events/my-kind/
 with ``event_kind="my-event"`` and ``event_reference="my-reference"``.
 
 Creating A Receiver
------------------
+-------------------
 
 This is how you attach your handler. In ``your-app/signals.py`` file, do:
 
@@ -69,6 +69,7 @@ This is how you attach your handler. In ``your-app/signals.py`` file, do:
        :param event_kind (str): A kind/variety allowing you to determine the handler to use (eg "something-update"). Required.
        :param event_reference (str): A reference value provided by the client allowing events to be sorted/filtered. Required.
        :param event_payload (dict, array): The event payload to process, already decoded.
+       :param event_parameters (dict): Extra parameters passed to the endpoint using URL query parameters
        :return: None
        """
        # There could be many different event types, from your own or other apps, and
@@ -87,6 +88,48 @@ This is how you attach your handler. In ``your-app/signals.py`` file, do:
 
       if event_kind.startswith("my-"):
           my_handler(event_kind, event_reference, event_payload)
+
+Generating Endpoint URLs
+------------------------
+
+A utility is provided to help generate URLs for the events endpoint.
+This is similar to, but easier than, generating URLs with django's built-in ``reverse()`` function.
+
+It generates absolute URLs by default, because integration with external systems is the most common use case.
+
+.. code-block:: python
+
+   import logging
+   from django_gcp.events.utils import get_event_url
+
+   logger = logging.getLogger(__name__)
+
+   get_event_url(
+       'the-kind',
+       'the-reference',
+       event_parameters={"a":"parameter"},  # These get encoded as a querystring, and are decoded back to a dict by the events endpoint. Keep it short!
+       url_namespace="gcp-events",  # You only need to edit this if you define your own urlpatterns with a different namespace
+   )
+
+.. tip::
+
+   By default, ``get_event_url`` generates an absolute URL, using the configured ``settings.BASE_URL``.
+   To specify a different base url, you can pass it explicitly:
+
+   .. code-block:: python
+
+      relative_url = get_event_url(
+          'the-kind',
+          'the-reference',
+          base_url=''
+      )
+
+      non_default_base_url = get_event_url(
+          'the-kind',
+          'the-reference',
+          base_url='https://somewhere.else.com'
+      )
+
 
 
 Exception Handling
