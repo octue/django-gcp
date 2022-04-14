@@ -64,7 +64,7 @@ This is how you attach your handler. In ``your-app/signals.py`` file, do:
 
 
    @receiver(event_received)
-   def receive_event(sender, event_kind, event_reference, event_payload):
+   def receive_event(sender, event_kind, event_reference, event_payload, event_parameters):
        """Handle question updates received via pubsub
        :param event_kind (str): A kind/variety allowing you to determine the handler to use (eg "something-update"). Required.
        :param event_reference (str): A reference value provided by the client allowing events to be sorted/filtered. Required.
