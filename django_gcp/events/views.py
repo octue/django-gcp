@@ -1,5 +1,6 @@
 import json
 import logging
+from django.conf import settings
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -34,9 +35,12 @@ class GoogleCloudEventsView(View):
             return self._prepare_response(status=201, payload={})
 
         except Exception as e:  # pylint: disable=broad-except
-            msg = f"Unable to handle event of kind {event_kind} with reference {event_reference}"
-            logger.warning("%s. Exception: %s", msg, str(e))
-            return self._prepare_response(status=400, payload={"error": msg})
+            if getattr(settings, "DEBUG", False):
+                raise e
+            else:
+                msg = f"Unable to handle event of kind {event_kind} with reference {event_reference}"
+                logger.warning("%s. Exception: %s", msg, str(e))
+                return self._prepare_response(status=400, payload={"error": msg})
 
     def _prepare_response(self, status, payload):
         return HttpResponse(status=status, content=json.dumps(payload), content_type="application/json")
