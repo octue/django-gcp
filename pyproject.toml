@@ -10,7 +10,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
@@ -22,7 +21,7 @@ packages = [{ include = "django_gcp" },]
 
 [tool.poetry.dependencies]
 Django = "^3.0"
-python = ">=3.8,<3.11"
+python = ">=3.9,<3.11"
 google-cloud-storage = "^2.1.0"
 google-auth = "^2.6.0"
 django-app-settings = "^0.7.1"
