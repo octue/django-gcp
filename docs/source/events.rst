@@ -58,6 +58,7 @@ This is how you attach your handler. In ``your-app/signals.py`` file, do:
    import logging
    from django.dispatch import receiver
    from django_gcp.events.signals import event_received
+   from django_gcp.events.utils import decode_pubsub_message
 
 
    logger = logging.getLogger(__name__)
@@ -79,6 +80,12 @@ This is how you attach your handler. In ``your-app/signals.py`` file, do:
            # Here is where you handle the event using whatever logic you want
            # CAREFUL: See the tip above about authentication (verifying the payload is not malicious)
            print("DO SOMETHING IMPORTANT WITH THE PAYLOAD:", event_payload)
+           #
+           # Your payload can be from any arbitrary source, and is in the form of decoded json.
+           # However, if the source is Eventarc or Pub/Sub, the payload contains a formatted message
+           # with base64 encoded data; we provide a utility to further decode this into something sensible:
+           message = decode_pubsub_message(event_payload)
+           print("DECODED PUBSUB MESSAGE:" message)
 
 .. tip::
 
