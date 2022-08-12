@@ -1,12 +1,23 @@
 import base64
 import json
 import logging
+from datetime import timezone
+from dateutil.parser import isoparse
 from django.conf import settings
 from django.urls import reverse
 from django.utils.http import urlencode
 
 
 logger = logging.getLogger(__name__)
+
+
+def _make_naive_utc(value):
+    """Converts a timezone-aware datetime.datetime to UTC then makes it naive.
+    Used for strictly formatting the UTC-in-nanoseconds publish time of pub/sub messages
+    """
+    if value.tzinfo is not None:
+        value = value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
 
 
 def get_event_url(event_kind, event_reference, event_parameters=None, url_namespace="gcp-events", base_url=None):
@@ -61,7 +72,8 @@ def make_pubsub_message(
     out["data"] = base64.b64encode(json.dumps(data).encode()).decode()
 
     if publish_time is not None:
-        iso_us = publish_time.isoformat()
+        publish_time_utc_naive = _make_naive_utc(publish_time)
+        iso_us = publish_time_utc_naive.isoformat()
         iso_ns = f"{iso_us}000Z"
         out["publishTime"] = iso_ns
 
@@ -85,3 +97,23 @@ def make_pubsub_message(
         out["orderingKey"] = ordering_key
 
     return out
+
+
+def decode_pubsub_message(message):
+    """Decode data within a pubsub message
+    :parameter dict message: The Pub/Sub message, which should already be decoded from a raw JSON string to a dict.
+    :return: None
+    """
+
+    decoded = {
+        "data": json.loads(base64.b64decode(message["data"])),
+        "attributes": message.get("attributes", None),
+        "message_id": message.get("messageId", None),
+        "ordering_key": message.get("orderingKey", None),
+        "publish_time": message.get("publishTime", None),
+    }
+
+    if decoded["publish_time"] is not None:
+        decoded["publish_time"] = isoparse(decoded["publish_time"])
+
+    return decoded

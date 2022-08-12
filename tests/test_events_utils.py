@@ -6,11 +6,12 @@
 # Disabled because gcloud api dynamically constructed
 # pylint: disable=no-member
 
-import datetime
 import json
+from datetime import datetime, timezone
 from unittest.mock import patch
 from django.test import TestCase
-from django_gcp.events.utils import get_event_url, make_pubsub_message
+from django_gcp.events.utils import decode_pubsub_message, get_event_url, make_pubsub_message
+from zoneinfo import ZoneInfo
 
 
 class GCloudEventUtilsTests(TestCase):
@@ -58,7 +59,7 @@ class GCloudEventUtilsTests(TestCase):
         self.assertIn("data", msg)
 
     def test_make_full_pubsub_message(self):
-        dt = datetime.datetime(2022, 8, 12, 9, 0, 25, 226743)
+        dt = datetime(2022, 8, 12, 9, 0, 25, 226743)
         msg = make_pubsub_message(
             {"my": "data"},
             attributes={"one": "two"},
@@ -105,3 +106,38 @@ class GCloudEventUtilsTests(TestCase):
                 ordering_key=2,
             )
         self.assertEqual(e.exception.args[0], "The ordering_key, if given, must be a string")
+
+    def test_make_pubsub_message_adjusts_to_utc(self):
+        """Ensure that non-naive publish_time datetimes are correctly converted"""
+
+        # LA 7 hours behind UTC at this datetime
+        dt = datetime(2022, 8, 12, 9, 0, 25, 226743, tzinfo=ZoneInfo("America/Los_Angeles"))
+        utc_dt = datetime(2022, 8, 12, 16, 0, 25, 226743, tzinfo=timezone.utc)
+
+        msg = make_pubsub_message(
+            {"my": "data"},
+            attributes={"one": "two"},
+            message_id="myid",
+            ordering_key="one",
+            publish_time=dt,
+        )
+
+        decoded = decode_pubsub_message(msg)
+
+        self.assertEqual(decoded["publish_time"], utc_dt)
+
+    def test_decode_pubsub_message(self):
+        dt = datetime(2022, 8, 12, 9, 0, 25, 226743, tzinfo=timezone.utc)
+        msg = make_pubsub_message(
+            {"my": "data"},
+            attributes={"one": "two"},
+            message_id="myid",
+            ordering_key="one",
+            publish_time=dt,
+        )
+
+        decoded = decode_pubsub_message(msg)
+        self.assertIn("data", decoded)
+        self.assertIn("my", decoded["data"])
+        self.assertIn("publish_time", decoded)
+        self.assertEqual(decoded["publish_time"], dt)

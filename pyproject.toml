@@ -27,6 +27,7 @@ google-cloud-storage = "^2.1.0"
 google-auth = "^2.6.0"
 django-app-settings = "^0.7.1"
 gcp-pilot = "^0.40.0"
+python-dateutil = "^2.8.2"
 
 
 [tool.poetry.dev-dependencies]
