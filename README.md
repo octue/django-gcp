@@ -26,11 +26,17 @@ This app is based heavily on [django-storages](https://django-storages.readthedo
 
 It's pretty straightforward to get going, but it's good to get in touch first, especially if you're planning a big feature.
 
-Open the project in codespaces, a vscode .devcontainer or your favourite IDE or editor (if the latter you'll need to set up docker-compose yourself), then:
+### Set up
+
+Open the project in codespaces, a vscode .devcontainer (which is configured out of the box for you) or your favourite IDE or editor (if the latter you'll need to set up `docker compose` yourself).
+
+Make sure all the dependencies are installed:
 
 ```
 poetry install
 ```
+
+### Run the tests
 
 Run the tests:
 
@@ -39,3 +45,23 @@ pytest .
 ```
 
 We use pre-commit to ensure code quality standards (and to help us automate releases using conventional-commits). If you can get on board with this that's really helpful - if not, don't fret, we can help.
+
+### Use the example app
+
+You can start the example app (which is useful for seeing how `django-gcp` looks in the admin.
+
+Initially, do:
+
+```
+python manage.py migrate
+python manage.py createsuperuser
+# make yourself a user account at the prompt
+```
+
+Then to run the app, do:
+
+```
+python manage.py runserver
+```
+
+...and visit [http://localhost:8000/admin/](http://localhost:8000/admin/) to sign in.
