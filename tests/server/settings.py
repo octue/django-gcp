@@ -33,8 +33,9 @@ INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_extensions",  # Gives us shell_plus and reset_db for manipulating the test server
     "django_gcp",
-    "tests",
+    "tests.server.example",
 ]
 
 MIDDLEWARE = [
@@ -46,7 +47,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(PROJECT_DIR, "rabid_armadillo", "templates")],
+        "DIRS": [os.path.join(PROJECT_DIR, "django_gcp", "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -65,7 +66,7 @@ TEMPLATES = [
 
 DATABASES = {"default": get_db_conf()}
 
-ROOT_URLCONF = "tests.urls"
+ROOT_URLCONF = "tests.server.urls"
 
 DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
 GCP_STORAGE_MEDIA = {"bucket_name": "test-media"}
@@ -84,4 +85,4 @@ USE_TZ = True
 
 SECRET_KEY = "secretkey"
 
-ASGI_APPLICATION = "tests.asgi.application"
+ASGI_APPLICATION = "tests.server.asgi.application"
