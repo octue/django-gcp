@@ -15,6 +15,11 @@ RUN apt-get update -y
 #     to your .gitignore file.
 ENV HISTFILE="/workspace/.devcontainer/.zsh_history"
 
+# Install the gcloud CLI
+#    Required for dev builds only
+#    See https://cloud.google.com/sdk/docs/install#deb
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-cli -y
+
 # Install poetry, cache poetry dependencies
 #
 #    Poetry usage in docker: https://stackoverflow.com/a/54763270/3556110

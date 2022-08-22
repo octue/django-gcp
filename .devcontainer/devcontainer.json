@@ -2,8 +2,7 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.187.0/containers/python-3
 {
   "name": "Django GCP",
-
-  "dockerComposeFile": ["docker-compose.yml"],
+  "dockerComposeFile": ["docker-compose.yml", "docker-compose.developer.yml"],
   "service": "web",
   "workspaceFolder": "/workspace",
 
@@ -64,7 +63,8 @@
     "shamanu4.django-intellisense",
     "thebarkman.vscode-djaneiro",
     "trond-snekvik.simple-rst",
-    "ms-azuretools.vscode-docker"
+    "ms-azuretools.vscode-docker",
+    "GoogleCloudTools.cloudcode"
   ],
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.

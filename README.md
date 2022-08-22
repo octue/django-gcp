@@ -30,10 +30,30 @@ It's pretty straightforward to get going, but it's good to get in touch first, e
 
 Open the project in codespaces, a vscode .devcontainer (which is configured out of the box for you) or your favourite IDE or editor (if the latter you'll need to set up `docker compose` yourself).
 
-Make sure all the dependencies are installed:
+Create a file `.devcontainer/docker-compose.developer.yml`. This allows you to customise extra services and volumes you make available to the container.
+For example, you can map your own gcloud config folder into the container to use your own credentials. This example will get you going, but you can just leave the services key empty.
 
 ```
-poetry install
+version: "3.8"
+
+services:
+  web:
+    volumes:
+      - ..:/workspace:cached
+      - $HOME/.config/gcloud:/gcp/config
+
+    environment:
+      - CLOUDSDK_CONFIG=/gcp/config
+      - GOOGLE_APPLICATION_CREDENTIALS=/gcp/config/your-credentials-file.json
+```
+
+### Initialise gcloud CLI
+
+To sign in (enabling use of the gcloud CLI tool), do:
+
+```
+gcloud config set project octue-django-gcp
+gcloud auth login
 ```
 
 ### Run the tests
