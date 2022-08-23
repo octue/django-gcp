@@ -68,14 +68,20 @@ DATABASES = {"default": get_db_conf()}
 
 ROOT_URLCONF = "tests.server.urls"
 
+GOOGLE_STORAGE_BASE_URL = "https://storage.googleapis.com"
+
+# MEDIA FILES
 DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
-GCP_STORAGE_MEDIA = {"bucket_name": "test-media"}
+GCP_STORAGE_MEDIA = {"bucket_name": "example-media-assets"}
+MEDIA_URL = f"{GOOGLE_STORAGE_BASE_URL}/{GCP_STORAGE_MEDIA['bucket_name']}/"
+MEDIA_ROOT = "/media/"
 
+# STATIC FILES
 STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
-GCP_STORAGE_STATIC = {"bucket_name": "test-static"}
+GCP_STORAGE_STATIC = {"bucket_name": "example-static-assets"}
+STATIC_URL = f"{GOOGLE_STORAGE_BASE_URL}/{GCP_STORAGE_STATIC['bucket_name']}/"
+STATIC_ROOT = "/static/"
 
-STATIC_URL = "static_test/"
-MEDIA_URL = "media_test/"
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
