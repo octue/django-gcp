@@ -58,6 +58,7 @@ This is how you attach your handler. In ``your-app/signals.py`` file, do:
    import logging
    from django.dispatch import receiver
    from django_gcp.events.signals import event_received
+   from django_gcp.events.utils import decode_pubsub_message
 
 
    logger = logging.getLogger(__name__)
@@ -78,7 +79,13 @@ This is how you attach your handler. In ``your-app/signals.py`` file, do:
        if event_kind is "something-important":
            # Here is where you handle the event using whatever logic you want
            # CAREFUL: See the tip above about authentication (verifying the payload is not malicious)
-           print("DO SOMETHING IMPORTANT")
+           print("DO SOMETHING IMPORTANT WITH THE PAYLOAD:", event_payload)
+           #
+           # Your payload can be from any arbitrary source, and is in the form of decoded json.
+           # However, if the source is Eventarc or Pub/Sub, the payload contains a formatted message
+           # with base64 encoded data; we provide a utility to further decode this into something sensible:
+           message = decode_pubsub_message(event_payload)
+           print("DECODED PUBSUB MESSAGE:" message)
 
 .. tip::
 
@@ -130,6 +137,35 @@ It generates absolute URLs by default, because integration with external systems
           base_url='https://somewhere.else.com'
       )
 
+
+Generating and Consuming Pub/Sub Messages
+-----------------------------------------
+
+When hooked up to GCP Pub/Sub or eventarc, the event payload is in the form of a Pub/Sub message.
+
+These messages have a specific format (see https://cloud.google.com/pubsub/docs/reference/rest/v1/PubsubMessage).
+
+To allow you to interact directly with Pub/Sub (i.e. publish messages to a topic), or for the purposes of testing your signals,
+``django-gcp`` includes a `make_pubsub_message` utility that provides an easy and pythonic way of constructing a Pub/Sub message.
+
+For example, to test the signal receiver above with a replica of a real pubsub message payload, you might do:
+
+.. code-block:: python
+
+    from django_gcp.events.utils import make_pubsub_message
+    from datetime import datetime
+
+    class YourTests(TestCase):
+        def test_your_code_handles_a_payload_from_pubsub(self):
+            payload = make_pubsub_message({"my": "data"}, publish_time=datetime.now())
+
+            response = self.client.post(
+                reverse("gcp-events", args=["the-event-kind", "the-event-reference"]),
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 201)
 
 
 Exception Handling
