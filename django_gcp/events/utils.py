@@ -6,6 +6,7 @@ from dateutil.parser import isoparse
 from django.conf import settings
 from django.urls import reverse
 from django.utils.http import urlencode
+from django_gcp.exceptions import InvalidPubSubMessageError
 
 
 logger = logging.getLogger(__name__)
@@ -43,39 +44,42 @@ def get_event_url(event_kind, event_reference, event_parameters=None, url_namesp
 
     url = base_url + url
 
-    logger.debug("Generated webhook endpoitn url %s", url)
+    logger.debug("Generated webhook endpoint url %s", url)
 
     return url
 
 
 def make_pubsub_message(
     data,
+    subscription,
     attributes=None,
     message_id=None,
     ordering_key=None,
     publish_time=None,
 ):
-    """Make a json-encodable message replicating the GCP Pub/Sub v1 format
+    """Make a bytes object containing a message replicating the GCP Pub/Sub v1 format
 
     For more details see: https://cloud.google.com/pubsub/docs/reference/rest/v1/PubsubMessage
+
+    Duplicated snake case keys found in "real" pubsub messages are not added, since they appear to be deprecated:
+    https://stackoverflow.com/questions/73477187/why-do-gcp-pub-sub-messages-have-duplicated-message-id-and-publish-time-values
 
     :param Union[dict, list] data: JSON-serialisable data to form the body of the message
     :param Union[dict, None] attributes: Dict of attributes to attach to the message. Contents must be flat, containing only string keys with string values.
     :param Union[str, None] message_id: An optional id for the message.
     :param Union[str, None] ordering_key: A string used to order messages.
     :param Union[datetime, None] publish_time: If sending a message to PubSub, this will be set by the server on receipt so generally should be left as `None`. However, for the purposes of mocking messages for testing, supply a python datetime specifying the publish time of the message, which will be converted to a string timestamp with nanosecond accuracy.
-    :return dict: A dict containing a fully composed PubSub message
-
+    :return bytes: A bytes object containing a fully composed PubSub message
     """
-    out = dict()
+    message = dict()
 
-    out["data"] = base64.b64encode(json.dumps(data).encode()).decode()
+    message["data"] = base64.b64encode(json.dumps(data).encode()).decode()
 
     if publish_time is not None:
         publish_time_utc_naive = _make_naive_utc(publish_time)
         iso_us = publish_time_utc_naive.isoformat()
         iso_ns = f"{iso_us}000Z"
-        out["publishTime"] = iso_ns
+        message["publishTime"] = iso_ns
 
     if attributes is not None:
         # Check all attributes are k-v pairs of strings
@@ -84,34 +88,62 @@ def make_pubsub_message(
                 raise ValueError("All attribute keys must be strings")
             if v.__class__ != str:
                 raise ValueError("All attribute values must be strings")
-        out["attributes"] = attributes
+        message["attributes"] = attributes
 
     if message_id is not None:
         if message_id.__class__ != str:
             raise ValueError("The message_id, if given, must be a string")
-        out["messageId"] = message_id
+        message["messageId"] = message_id
 
     if ordering_key is not None:
         if ordering_key.__class__ != str:
             raise ValueError("The ordering_key, if given, must be a string")
-        out["orderingKey"] = ordering_key
+        message["orderingKey"] = ordering_key
 
-    return out
+    if subscription.__class__ != str:
+        raise ValueError(
+            "The subscription must be a string, like 'projects/my-project/subscriptions/my-subscription-name'"
+        )
+
+    return json.dumps({"message": message, "subscription": subscription}).encode("utf-8")
 
 
-def decode_pubsub_message(message):
-    """Decode data within a pubsub message
-    :parameter dict message: The Pub/Sub message, which should already be decoded from a raw JSON string to a dict.
-    :return: None
+def decode_pubsub_message(body):
+    """Decode data from a pubsub message body
+
+    If the message data is json-decodable, then the decoded object's data field will contain the decoded object or array.
+    Otherwise, the data field will contain a decoded string (pubsub messages comprising just a string are valid).
+
+    :parameter Union[bytes, dict] body: The Pub/Sub message as a bytes object or as a decoded object
+    :return: dict A flattened data structure containing message data and other information
     """
+    if isinstance(body, bytes):
+        body = json.loads(body)
 
-    decoded = {
-        "data": json.loads(base64.b64decode(message["data"])),
-        "attributes": message.get("attributes", None),
-        "message_id": message.get("messageId", None),
-        "ordering_key": message.get("orderingKey", None),
-        "publish_time": message.get("publishTime", None),
-    }
+    try:
+        message = body["message"]
+        subscription = body["subscription"]
+        data = base64.b64decode(message["data"])
+
+        # If data is json-decodable then do it. If it's just a string (which can be a valid message) accept that and decode it from bytes
+        try:
+            data = json.loads(data)
+        except json.decoder.JSONDecodeError:
+            data = data.decode("utf-8")
+
+        decoded = {
+            "data": data,
+            "attributes": message.get("attributes", None),
+            "message_id": message.get("messageId", None),
+            "ordering_key": message.get("orderingKey", None),
+            "publish_time": message.get("publishTime", None),
+            "subscription": subscription,
+        }
+
+    except KeyError as e:
+        raise InvalidPubSubMessageError(
+            f"Failed to decode Pub/Sub message (check the message conforms to Pub/Sub requirements: {body}"
+        ) from e
 
     if decoded["publish_time"] is not None:
         decoded["publish_time"] = isoparse(decoded["publish_time"])
