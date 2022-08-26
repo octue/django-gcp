@@ -1,4 +1,4 @@
-FROM windpioneers/gdal-python:long-goldfish-gdal-2.4.1-python-3.9-dev
+FROM windpioneers/gdal-python:mid-swan-gdal-2.4.1-python-3.9-dev
 
 # Bust any pre-existing apt cache
 #     Solves: https://askubuntu.com/questions/1388000/failed-to-fetch-deb-debian-org-debian-pool-main-l-linux-linux-libc-dev-5-10-70-1
