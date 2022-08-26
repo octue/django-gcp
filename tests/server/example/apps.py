@@ -8,3 +8,7 @@ class ExampleAppConfig(AppConfig):
     name = "tests.server.example"
     label = "example"
     verbose_name = _("Example App using Django GCP")
+
+    def ready(self):
+        # Import the tasks only once the app is ready, in order to register them
+        from . import tasks  # noqa: F401, pylint: disable=unused-import, import-outside-toplevel

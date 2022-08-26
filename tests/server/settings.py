@@ -21,6 +21,10 @@ def get_db_conf():
         }
 
 
+# ---------------------------------------------------------------------------
+# GENERIC DJANGO SETTINGS FOR THE TEST APP (scroll down for the good stuff)
+# ---------------------------------------------------------------------------
+
 DEBUG = True
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,24 +68,14 @@ TEMPLATES = [
     },
 ]
 
+ALLOWED_HOSTS = [
+    "localhost",
+    ".loca.lt",
+]  # Adding loca.lt allows developers to expose the example server using localtunnel
+
 DATABASES = {"default": get_db_conf()}
 
 ROOT_URLCONF = "tests.server.urls"
-
-GOOGLE_STORAGE_BASE_URL = "https://storage.googleapis.com"
-
-# MEDIA FILES
-DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
-GCP_STORAGE_MEDIA = {"bucket_name": "example-media-assets"}
-MEDIA_URL = f"{GOOGLE_STORAGE_BASE_URL}/{GCP_STORAGE_MEDIA['bucket_name']}/"
-MEDIA_ROOT = "/media/"
-
-# STATIC FILES
-STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
-GCP_STORAGE_STATIC = {"bucket_name": "example-static-assets"}
-STATIC_URL = f"{GOOGLE_STORAGE_BASE_URL}/{GCP_STORAGE_STATIC['bucket_name']}/"
-STATIC_ROOT = "/static/"
-
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -92,3 +86,37 @@ USE_TZ = True
 SECRET_KEY = "secretkey"
 
 ASGI_APPLICATION = "tests.server.asgi.application"
+
+
+# ---------------------------------------------------------------------------
+# HERE'S HOW TO SET UP STATIC AND MEDIA STORAGE
+# ---------------------------------------------------------------------------
+
+GCP_STORAGE_BASE_URL = "https://storage.googleapis.com"
+
+# MEDIA FILES
+DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
+GCP_STORAGE_MEDIA = {"bucket_name": "example-media-assets"}
+MEDIA_URL = f"{GCP_STORAGE_BASE_URL}/{GCP_STORAGE_MEDIA['bucket_name']}/"
+MEDIA_ROOT = "/media/"
+
+# STATIC FILES
+STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
+GCP_STORAGE_STATIC = {"bucket_name": "example-static-assets"}
+STATIC_URL = f"{GCP_STORAGE_BASE_URL}/{GCP_STORAGE_STATIC['bucket_name']}/"
+STATIC_ROOT = "/static/"
+
+
+# ---------------------------------------------------------------------------
+# HERE'S HOW TO SET UP TASKS
+# ---------------------------------------------------------------------------
+
+GCP_TASKS_DEFAULT_QUEUE_NAME = "example-primary"
+GCP_TASKS_DELIMITER = "--"
+# This is the domain on which the worker app can receive requests
+# You can use localtunnel to easily create your own public domain to
+# run end-to-end integration tests with a real GCP project
+GCP_TASKS_DOMAIN = "https://outrageous-horny-giraffe.loca.lt"
+GCP_TASKS_EAGER_EXECUTE = False
+GCP_TASKS_REGION = "europe-west1"
+GCP_TASKS_RESOURCE_PREFIX = "django-gcp"

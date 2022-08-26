@@ -10,6 +10,6 @@ admin.autodiscover()
 
 urlpatterns = [
     re_path(r"^admin/", admin.site.urls),
-    re_path(r"^test-django-gcp/", include(django_gcp_urls)),
+    re_path(r"^example-django-gcp/", include(django_gcp_urls)),
     re_path(r"^", RedirectView.as_view(url="admin/")),
 ]
