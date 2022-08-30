@@ -1,13 +1,13 @@
 .. _storage:
 
 Storage
-====================
+=======
 
 This module provides a Django File API for `Google Cloud Storage <https://cloud.google.com/storage/>`_.
 
 Installation and Authentication
 -------------------------------
-First, follow the instructions to :ref:`install <installation>`, :ref:`authenticate <authentication>` and :ref:`set your project <projects>`.
+First, follow the instructions to :ref:`install <getting_started>`, :ref:`authenticate <authentication>` and (if necessary) :ref:`set your project <projects>`.
 
 Create bucket(s)
 ----------------
@@ -200,8 +200,8 @@ Usage
          <FieldFile: tests/django_test_.txt>
 
 
-Storage Setting Options
------------------------
+Storage Settings Options
+------------------------
 
 Each store can be set up with different options, passed within the dict given to ``GCP_STORAGE_MEDIA``, ``GCP_STORAGE_STATIC`` or within the dicts given to ``GCP_STORAGE_EXTRA_STORES``.
 
@@ -217,24 +217,24 @@ For example, to set the media storage up so that files go to a different locatio
 
 The full range of options (and their defaults, which apply to all stores) is as follows:
 
-gzip
-^^^^
+``gzip``
+^^^^^^^^
 Type: ``boolean``
 
 Default: ``False``
 
 Whether or not to enable gzipping of content types specified by ``GZIP_CONTENT_TYPES``
 
-gzip_content_types
-^^^^^^^^^^^^^^^^^^
+``gzip_content_types``
+^^^^^^^^^^^^^^^^^^^^^^
 Type: ``tuple``
 
 Default: (``text/css``, ``text/javascript``, ``application/javascript``, ``application/x-javascript``, ``image/svg+xml``)
 
 Content types which will be gzipped when ``GCP_STORAGE_IS_GZIPPED`` is ``True``
 
-default_acl
-^^^^^^^^^^^
+``default_acl``
+^^^^^^^^^^^^^^^
 Type: ``string or None``
 
 Default: ``None``
@@ -262,8 +262,8 @@ ACL Options are: ``projectPrivate``, ``bucketOwnerRead``, ``bucketOwnerFullContr
     already have a bucket with ``Uniform`` access control set to public read, please keep
     ``GCP_STORAGE_DEFAULT_ACL`` to ``None`` and set ``GCP_STORAGE_QUERYSTRING_AUTH`` to ``False``.
 
-querystring_auth
-^^^^^^^^^^^^^^^^
+``querystring_auth``
+^^^^^^^^^^^^^^^^^^^^
 Type: ``boolean``
 Default: ``True``
 
@@ -271,23 +271,23 @@ If set to ``False`` it forces the url not to be signed. This setting is useful i
 bucket configured with ``Uniform`` access control configured with public read. In that case you should
 force the flag ``GCP_STORAGE_QUERYSTRING_AUTH = False`` and ``GCP_STORAGE_DEFAULT_ACL = None``
 
-file_overwrite
-^^^^^^^^^^^^^^
+``file_overwrite``
+^^^^^^^^^^^^^^^^^^
 Type: ``boolean``
 Default: ``True``
 
 By default files with the same name will overwrite each other. Set this to ``False`` to have extra characters appended.
 
-max_memory_size
-^^^^^^^^^^^^^^^
+``max_memory_size``
+^^^^^^^^^^^^^^^^^^^
 Type: ``integer``
 Default: ``0`` (do not roll over)
 
 The maximum amount of memory a returned file can take up (in bytes) before being
 rolled over into a temporary file on disk. Default is 0: Do not roll over.
 
-blob_chunk_size
-^^^^^^^^^^^^^^^
+``blob_chunk_size``
+^^^^^^^^^^^^^^^^^^^
 Type: ``integer`` or ``None``
 Default  ``None``
 
@@ -298,8 +298,8 @@ must fit in memory. Recommended if you are going to be uploading large files.
 
    This must be a multiple of 256K (1024 * 256)
 
-object_parameters
-^^^^^^^^^^^^^^^^^
+``object_parameters``
+^^^^^^^^^^^^^^^^^^^^^
 Type: ``dict``
 Default: ``{}``
 
@@ -321,30 +321,30 @@ The valid property names are ::
 
 If not set, the ``content_type`` property will be guessed.
 
-If set, ``acl`` overrides :ref:`GCP_STORAGE_DEFAULT_ACL <gs-default-acl>`.
+If set, ``acl`` overrides :ref:`GCP_STORAGE_DEFAULT_ACL <gs_default_acl>`.
 
 .. warning::
 
    Do not set ``name``. This is set automatically based on the filename.
 
-custom_endpoint
-^^^^^^^^^^^^^^^
+``custom_endpoint``
+^^^^^^^^^^^^^^^^^^^
 Type: ``string`` or ``None``
 Default: ``None``
 
 Sets a `custom endpoint <https://cloud.google.com/storage/docs/request-endpoints>`_,
 that will be used instead of ``https://storage.googleapis.com`` when generating URLs for files.
 
-location
-^^^^^^^^
+``location``
+^^^^^^^^^^^^
 Type: ``string``
 Default: ``""``
 
 Subdirectory in which the files will be stored.
 Defaults to the root of the bucket.
 
-expiration
-^^^^^^^^^^
+``expiration``
+^^^^^^^^^^^^^^
 Type: ``datetime.timedelta`` ``datetime.datetime``, ``integer`` (seconds since epoch)
 Default: ``timedelta(seconds=86400)``
 

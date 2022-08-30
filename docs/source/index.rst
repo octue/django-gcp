@@ -1,5 +1,6 @@
 .. ATTENTION::
-    This library is in very early stages. Like the idea of it? Please
+    This library is used for a few apps in production, but it is still early in development.
+    Like the idea of it? Please
     `star us on GitHub <https://github.com/octue/django-gcp>`_ and contribute via the
     `issues board <https://github.com/octue/django-gcp/issues>`_ and
     `roadmap <https://github.com/octue/django-gcp/projects/1>`_.
@@ -9,21 +10,33 @@ Django GCP
 ==========
 
 **django-gcp** is a library of tools to help you deploy and use django on Google Cloud Platform.
+Integrations provided by ``django-gcp``:
+
+* `Google Cloud Storage <https://cloud.google.com/storage>`_,
+* `PubSub and EventArc <https://cloud.google.com/pubsub>`_,
+* `Cloud Tasks <https://cloud.google.com/tasks>`_ and
+* `Cloud Scheduler <https://cloud.google.com/scheduler>`_.
+
 
 .. _aims:
 
 Aims
 ====
 
-It collects together several different aspects and tools, with the ultimate goals to:
+The ultimate goals are to:
 
-- **Easily do serverless django** (for actual apps, not toybox tutorials).
+- **Allow serverless django** (for actual fully-fledged apps, not toybox tutorials).
 
 - **Enable event-based integration** between django and various GCP services.
 
-.. TIP::
-    For example, if we have *both* a Store and a PubSub subscription to events on that store, we can do smart things in django when files or their metadata change.
+- **Simplify the use of GCP resources in django** including Storage, PubSub, Tasks and Scheduler.
 
+.. TIP::
+    For example, if we have *both* a Store *and* a PubSub subscription to events on that store, we can do smart things in django when files or their metadata change.
+
+
+Background
+----------
 
 To run a "reasonably comprehensive" django server on GCP, we have been using 4-5 libraries.
 Each covers a little bit of functionality, and we put in a lot of time to:
@@ -34,7 +47,8 @@ Each covers a little bit of functionality, and we put in a lot of time to:
 
 Lots of the maintainers of those libraries have given up or are snowed under, which we have a lot of compassion for.
 Some, like django-storages, are (admirably) maintaining a uniform API across many compute providers,
-whereas we don't change providers often enough to need that...
+whereas we don't change providers often enough to need that, so would rather have the flexibility to do
+platform-specific things.
 
 We'll be using GCP for the foreseeable future, so can accept a platform-specific API in order to use latest GCP features and best practices.
 
@@ -46,10 +60,12 @@ Contents
    :maxdepth: 2
 
    self
-   installation
+   getting_started
    authentication
    storage
    events
+   tasks
+   projects
    license
    version_history
 
