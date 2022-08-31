@@ -85,3 +85,17 @@ python manage.py runserver
 ```
 
 ...and visit [http://localhost:8000/admin/](http://localhost:8000/admin/) to sign in.
+
+### Update the docs
+
+We're pretty good on keeping the docs helpful, friendly and up to date. Any contributions should be
+fully documented.
+
+To help develop the docs quickly, we set up a watcher that rebuilds the docs on save. Start it with:
+
+```
+python docs/watch.py
+```
+
+Once docs are building, the the vscode live server extension (or whatever the equivalent is in your IDE)
+to live-reload `docs/html/index.html` in your browser, then get started!
