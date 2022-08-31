@@ -569,11 +569,11 @@ class GCloudStorageClassTests(GCloudTestCase):
 
     def test_media_storage_instantiation(self):
         storage = gcloud.GoogleCloudMediaStorage()
-        self.assertEqual(storage.settings.bucket_name, "test-media")
+        self.assertEqual(storage.settings.bucket_name, "example-media-assets")
 
     def test_static_storage_instantiation(self):
         storage = gcloud.GoogleCloudStaticStorage()
-        self.assertEqual(storage.settings.bucket_name, "test-static")
+        self.assertEqual(storage.settings.bucket_name, "example-static-assets")
 
     def test_instiantiation_with_store_key_raises_exception(self):
         with self.assertRaises(ValueError):
