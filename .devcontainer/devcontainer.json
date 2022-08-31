@@ -49,7 +49,6 @@
   "extensions": [
     "esbenp.prettier-vscode@2.2.1",
     "irongeek.vscode-env",
-    "lextudio.restructuredtext",
     "me-dutour-mathieu.vscode-github-actions",
     "mikestead.dotenv",
     "ms-python.python",
@@ -63,8 +62,7 @@
     "shamanu4.django-intellisense",
     "thebarkman.vscode-djaneiro",
     "trond-snekvik.simple-rst",
-    "ms-azuretools.vscode-docker",
-    "GoogleCloudTools.cloudcode"
+    "ms-azuretools.vscode-docker"
   ],
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
