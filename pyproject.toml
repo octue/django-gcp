@@ -20,7 +20,7 @@ packages = [{ include = "django_gcp" },]
 
 
 [tool.poetry.dependencies]
-Django = "^3.0"
+Django = ">=3.0,<5"
 python = ">=3.9,<3.11"
 google-cloud-storage = "^2.1.0"
 google-auth = "^2.6.0"
