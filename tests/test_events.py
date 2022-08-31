@@ -38,14 +38,16 @@ class GCloudEventTests(TestCase):
         self.assertIn("event_payload", mock.call_args.kwargs)
 
     def test_post_with_no_reference(self):
-        """Ensure that posts with no reference will be Not Found"""
+        """Ensure that posts with no reference will not be matched"""
         endpoint = reverse("gcp-events", args=["the-event-kind", "anything"]).replace("anything", "")
         response = self.client.post(
             endpoint,
             data="{}",
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 404)
+        # A catch-all redirect to /admin/ URL comes after the installed urlpatterns, redirecting the user
+        # to the admin (for convenience using the test server)
+        self.assertEqual(response.status_code, 302)
 
     def test_non_post_http_methods_disallowed(self):
         """Ensure that methods other than POST are not allowed"""
