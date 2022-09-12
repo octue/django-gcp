@@ -43,3 +43,6 @@ RUN poetry config virtualenvs.create false
 #     poetry install --no-interaction --no-ansi
 #
 # However, at present it seems more reliable to do poetry install as a postcreate command (see devcontainer.json)
+
+# Install localtunnel
+RUN npm install localtunnel
