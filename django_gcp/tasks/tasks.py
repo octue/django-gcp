@@ -3,6 +3,7 @@
 # pylint: disable=missing-function-docstring
 # pylint: disable=no-member
 import hashlib
+import logging
 from abc import abstractmethod
 from datetime import datetime, timedelta
 from django.apps import apps
@@ -10,14 +11,18 @@ from django.template.defaultfilters import slugify
 from django.urls import reverse
 from django.utils.timezone import now
 from django_gcp.events.utils import decode_pubsub_message
-from django_gcp.exceptions import IncorrectTaskUsageError
+from django_gcp.exceptions import DuplicateTaskError, IncorrectTaskUsageError
 from gcp_pilot.pubsub import CloudPublisher, CloudSubscriber
+from google.api_core.exceptions import AlreadyExists
 from google.cloud import pubsub_v1
 
 from ._patch_cloud_scheduler import CloudScheduler
 from ._patch_cloud_tasks import CloudTasks
 from .helpers import run_coroutine
 from .serializers import deserialize, serialize
+
+
+logger = logging.getLogger(__name__)
 
 
 def apply_resource_affix(value, suffix=False):
@@ -101,10 +106,17 @@ class Task(metaclass=TaskMeta):
 
     def execute(self, request_body):
         """Deserialises the received request and calls the run() method"""
-        task_kwargs = self._body_to_kwargs(request_body=request_body)
-        output = self.run(**task_kwargs)
-        status = 200  # TODO Capture some exceptions and set status code
-        return output, status
+        try:
+            task_kwargs = self._body_to_kwargs(request_body=request_body)
+        except Exception as e:
+            logger.warning(e, exc_info=True)
+            return f"Unable to parse request arguments. Error was: {e}", 400
+
+        try:
+            return self.run(**task_kwargs), 200
+        except Exception as e:
+            logger.error(e, exc_info=True)
+            return "Error running task", 500
 
     @property
     def manager(self):
@@ -182,7 +194,14 @@ class Task(metaclass=TaskMeta):
                 )
             )
 
-        return run_coroutine(handler=self.__client.push, **api_kwargs)
+            try:
+                return run_coroutine(handler=self.__client.push, **api_kwargs)
+            except AlreadyExists as e:
+                raise DuplicateTaskError(
+                    "Duplicate task detected (task already exists with this name and payload sha). You can trigger the same task repeatedly with different payloads, but attempting to repeat a task with the same payload will fail for ~1hour after the original task was deleted or executed."
+                ) from e
+        else:
+            return run_coroutine(handler=self.__client.push, **api_kwargs)
 
     @property
     def __client(self):
