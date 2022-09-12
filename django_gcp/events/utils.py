@@ -50,12 +50,7 @@ def get_event_url(event_kind, event_reference, event_parameters=None, url_namesp
 
 
 def make_pubsub_message(
-    data,
-    subscription,
-    attributes=None,
-    message_id=None,
-    ordering_key=None,
-    publish_time=None,
+    data, subscription, attributes=None, message_id=None, ordering_key=None, publish_time=None, as_dict=False
 ):
     """Make a bytes object containing a message replicating the GCP Pub/Sub v1 format
 
@@ -69,6 +64,7 @@ def make_pubsub_message(
     :param Union[str, None] message_id: An optional id for the message.
     :param Union[str, None] ordering_key: A string used to order messages.
     :param Union[datetime, None] publish_time: If sending a message to PubSub, this will be set by the server on receipt so generally should be left as `None`. However, for the purposes of mocking messages for testing, supply a python datetime specifying the publish time of the message, which will be converted to a string timestamp with nanosecond accuracy.
+    :param bool as_dict: If true, return the message as a dict instead of a utf-8-encoded json string
     :return bytes: A bytes object containing a fully composed PubSub message
     """
     message = dict()
@@ -105,6 +101,9 @@ def make_pubsub_message(
             "The subscription must be a string, like 'projects/my-project/subscriptions/my-subscription-name'"
         )
 
+    if as_dict:
+        return {"message": message, "subscription": subscription}
+
     return json.dumps({"message": message, "subscription": subscription}).encode("utf-8")
 
 
@@ -126,6 +125,8 @@ def decode_pubsub_message(body):
         data = base64.b64decode(message["data"])
 
         # If data is json-decodable then do it. If it's just a string (which can be a valid message) accept that and decode it from bytes
+        #   TODO determine if this try/catch is required. It was put there to handle raw strings coming in from pubsub, but unit tests show
+        #   that the decoder will handle a single string
         try:
             data = json.loads(data)
         except json.decoder.JSONDecodeError:

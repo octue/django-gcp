@@ -27,6 +27,21 @@ class MyOnDemandTask(Task):
         )
 
 
+class DeduplicatedOnDemandTask(BaseAbstractTask):
+    """Demonstrates what happens when a task fails due to an exception in the task
+    (also shows inheritance from your custom BaseAbstractTask class)
+    """
+
+    deduplicate = True
+
+    def run(self, **kwargs):
+        print(
+            "Received message from Cloud Tasks on FailingOnDemandTask:\n",
+            kwargs,
+        )
+        return 1 / 0
+
+
 class FailingOnDemandTask(BaseAbstractTask):
     """Demonstrates what happens when a task fails due to an exception in the task
     (also shows inheritance from your custom BaseAbstractTask class)
@@ -51,7 +66,7 @@ class MyPeriodicTask(PeriodicTask):
         print("Received message from Cloud Scheduler on MyPeriodicTask:\n", kwargs)
 
 
-class PleaseNotifyMeTask(SubscriberTask):
+class MySubscriberTask(SubscriberTask):
     """Demonstrates how to create a task that triggers on a message to a particular Pub/Sub topic"""
 
     enable_message_ordering = True
@@ -61,4 +76,4 @@ class PleaseNotifyMeTask(SubscriberTask):
         return "potato"
 
     def run(self, **kwargs):  # pylint: disable=arguments-differ
-        print("Received message from Pub/Sub on PleaseNotifyMeTask:\n", kwargs)
+        print("Received message from Pub/Sub on MySubscriberTask:\n", kwargs)

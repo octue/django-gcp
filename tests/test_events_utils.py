@@ -6,6 +6,7 @@
 # Disabled because gcloud api dynamically constructed
 # pylint: disable=no-member
 
+import base64
 import json
 from datetime import datetime, timezone
 from unittest.mock import patch
@@ -124,6 +125,17 @@ class GCloudEventUtilsTests(TestCase):
             )
         self.assertEqual(e.exception.args[0], "The ordering_key, if given, must be a string")
 
+    def test_make_pubsub_message_fails_with_invalid_subscription(self):
+        with self.assertRaises(ValueError) as e:
+            make_pubsub_message(
+                {"my": "data"},
+                {"subscription-is-not": "a-string"},
+            )
+        self.assertEqual(
+            e.exception.args[0],
+            "The subscription must be a string, like 'projects/my-project/subscriptions/my-subscription-name'",
+        )
+
     def test_make_pubsub_message_adjusts_to_utc(self):
         """Ensure that non-naive publish_time datetimes are correctly converted"""
 
@@ -160,6 +172,27 @@ class GCloudEventUtilsTests(TestCase):
         self.assertIn("my", decoded["data"])
         self.assertIn("publish_time", decoded)
         self.assertEqual(decoded["publish_time"], dt)
+
+    def test_decode_pubsub_message_with_non_decodable_string_data(self):
+        """Test that raw strings in pub/sub messages can be decoded.
+
+        A single string is a valid token in JSON, but it has to be encoded with its quotation marks.
+        However, a string that's base-64 encoded directly without being jumped to JSON first is still a valid
+        PubSub message.
+
+        That is, endpoints could receive data that's the base 64 encoded verison of:
+            b'"stuff"' or
+            b'stuff'
+
+        So the decoder has to handle them both the same. We test here that it can.
+        """
+
+        body = make_pubsub_message("stuff", DEFAULT_SUBSCRIPTION, as_dict=True)
+        body["message"]["data"] = base64.b64encode("stuff".encode()).decode()
+
+        decoded = decode_pubsub_message(body)
+        self.assertIn("data", decoded)
+        self.assertEqual("stuff", decoded["data"])
 
     def test_decode_invalid_pubsub_message_raises_value_error(self):
 
