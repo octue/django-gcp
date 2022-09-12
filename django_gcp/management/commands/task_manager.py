@@ -1,4 +1,4 @@
-from django_gcp.exceptions import UnknownResourceKindError
+from django_gcp.exceptions import UnknownActionError
 
 from ._base import BaseCommand
 
@@ -23,12 +23,11 @@ class Command(BaseCommand):
             help="Clean up unused resources whose name is affixed with GCP_TASKS_RESOURCE_AFFIX",
         )
 
-    def handle(self, *actions, **options):
+    def handle(self, actions, **options):
 
         cleanup = options["cleanup"]
 
         for action in actions:
-
             if action == "create_scheduler_jobs":
                 updated, deleted = self.task_manager.create_scheduler_jobs(cleanup=cleanup)
                 report = [f"[+] {name}" for name in updated] + [f"[-] {name}" for name in deleted]
@@ -40,6 +39,6 @@ class Command(BaseCommand):
                 self.display_task_report(report, "create", "pubsub subscriptions")
 
             else:
-                raise UnknownResourceKindError(
+                raise UnknownActionError(
                     f"Unknown action {action}. Use `python manage.py task_manager --help` to see all options"
                 )

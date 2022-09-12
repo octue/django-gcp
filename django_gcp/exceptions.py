@@ -22,5 +22,9 @@ class InvalidPubSubMessageError(ValueError):
     """Raised when attempting to decode a Pub/Sub message without valid fields"""
 
 
-class UnknownResourceKindError(ValueError):
+class UnknownActionError(ValueError):
     """Raised when attempting to create or use a resource not known to django-gcp"""
+
+
+class DuplicateTaskError(Exception):
+    """Raised when a unique (non-duplicatable) task is enqueued but already present in the queue"""
