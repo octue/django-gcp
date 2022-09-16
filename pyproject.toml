@@ -45,12 +45,12 @@ tox-poetry = "^0.4.1"
 sphinx-rtd-theme = "^1.0.0"
 sphinx-tabs = "^3.2.0"
 Sphinx = "^4.4.0"
-psycopg2 = "^2.9.3"
 django-test-migrations = "^1.2.0"
 django-extensions = "^3.2.0"
 pylint-django = "^2.5.3"
 watchdog = "^2.1.9"
 throttle = "^0.2.2"
+psycopg2-binary = "^2.9.3"
 
 
 [build-system]
