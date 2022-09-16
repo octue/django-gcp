@@ -11,8 +11,13 @@ class DjangoGCPAppConfig(AppConfig):
     name = "django_gcp"
     label = "django_gcp"
     verbose_name = _("Django GCP")
+    task_manager = None
 
     def ready(self):
         from django_gcp.signals import register_signal_handlers
 
         register_signal_handlers()
+
+        from django_gcp.tasks import TaskManager
+
+        self.task_manager = TaskManager()

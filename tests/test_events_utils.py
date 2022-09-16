@@ -6,12 +6,16 @@
 # Disabled because gcloud api dynamically constructed
 # pylint: disable=no-member
 
+import base64
 import json
 from datetime import datetime, timezone
 from unittest.mock import patch
 from django.test import TestCase
 from django_gcp.events.utils import decode_pubsub_message, get_event_url, make_pubsub_message
 from zoneinfo import ZoneInfo
+
+
+DEFAULT_SUBSCRIPTION = "projects/my-project/subscriptions/my-subscription"
 
 
 class GCloudEventUtilsTests(TestCase):
@@ -52,34 +56,45 @@ class GCloudEventUtilsTests(TestCase):
 
         with self.settings(BASE_URL="https://something.com"):
             event_url = get_event_url("the-kind", "the-reference")
-            self.assertEqual(event_url, "https://something.com/test-django-gcp/events/the-kind/the-reference")
+            self.assertEqual(event_url, "https://something.com/example-django-gcp/events/the-kind/the-reference")
 
     def test_make_bare_pubsub_message(self):
-        msg = make_pubsub_message({"my": "data"})
-        self.assertIn("data", msg)
+        msg = make_pubsub_message({"my": "data"}, DEFAULT_SUBSCRIPTION)
+        decoded = json.loads(msg)
+        self.assertIn("message", decoded)
+        self.assertIn("subscription", decoded)
+        self.assertIn("data", decoded["message"])
+        self.assertNotIn("publishTime", decoded["message"])
+        self.assertNotIn("orderingKey", decoded["message"])
+        self.assertNotIn("messageId", decoded["message"])
 
     def test_make_full_pubsub_message(self):
         dt = datetime(2022, 8, 12, 9, 0, 25, 226743)
         msg = make_pubsub_message(
             {"my": "data"},
+            DEFAULT_SUBSCRIPTION,
             attributes={"one": "two"},
             message_id="myid",
             ordering_key="one",
             publish_time=dt,
         )
-        self.assertIn("data", msg)
-        self.assertEqual(msg["publishTime"], "2022-08-12T09:00:25.226743000Z")
-        self.assertEqual(msg["orderingKey"], "one")
-        self.assertEqual(msg["messageId"], "myid")
-
-        # Ensure the message is json dumpable with no special encoder
-        serialised_msg = json.dumps(msg)
-        self.assertIn('"data": "eyJteSI6ICJkYXRhIn0="', serialised_msg)
+        decoded = json.loads(msg)
+        self.assertIn("message", decoded)
+        self.assertIn("subscription", decoded)
+        self.assertIn("data", decoded["message"])
+        self.assertIn("publishTime", decoded["message"])
+        self.assertIn("orderingKey", decoded["message"])
+        self.assertIn("messageId", decoded["message"])
+        self.assertEqual(decoded["message"]["data"], "eyJteSI6ICJkYXRhIn0=")
+        self.assertEqual(decoded["message"]["publishTime"], "2022-08-12T09:00:25.226743000Z")
+        self.assertEqual(decoded["message"]["orderingKey"], "one")
+        self.assertEqual(decoded["message"]["messageId"], "myid")
 
     def test_make_pubsub_message_fails_with_invalid_attributes(self):
         with self.assertRaises(ValueError) as e:
             make_pubsub_message(
                 {"my": "data"},
+                DEFAULT_SUBSCRIPTION,
                 attributes={2: "a"},
             )
         self.assertEqual(e.exception.args[0], "All attribute keys must be strings")
@@ -87,6 +102,7 @@ class GCloudEventUtilsTests(TestCase):
         with self.assertRaises(ValueError) as e:
             make_pubsub_message(
                 {"my": "data"},
+                DEFAULT_SUBSCRIPTION,
                 attributes={"a": 2},
             )
         self.assertEqual(e.exception.args[0], "All attribute values must be strings")
@@ -95,6 +111,7 @@ class GCloudEventUtilsTests(TestCase):
         with self.assertRaises(ValueError) as e:
             make_pubsub_message(
                 {"my": "data"},
+                DEFAULT_SUBSCRIPTION,
                 message_id=2,
             )
         self.assertEqual(e.exception.args[0], "The message_id, if given, must be a string")
@@ -103,9 +120,21 @@ class GCloudEventUtilsTests(TestCase):
         with self.assertRaises(ValueError) as e:
             make_pubsub_message(
                 {"my": "data"},
+                DEFAULT_SUBSCRIPTION,
                 ordering_key=2,
             )
         self.assertEqual(e.exception.args[0], "The ordering_key, if given, must be a string")
+
+    def test_make_pubsub_message_fails_with_invalid_subscription(self):
+        with self.assertRaises(ValueError) as e:
+            make_pubsub_message(
+                {"my": "data"},
+                {"subscription-is-not": "a-string"},
+            )
+        self.assertEqual(
+            e.exception.args[0],
+            "The subscription must be a string, like 'projects/my-project/subscriptions/my-subscription-name'",
+        )
 
     def test_make_pubsub_message_adjusts_to_utc(self):
         """Ensure that non-naive publish_time datetimes are correctly converted"""
@@ -116,6 +145,7 @@ class GCloudEventUtilsTests(TestCase):
 
         msg = make_pubsub_message(
             {"my": "data"},
+            DEFAULT_SUBSCRIPTION,
             attributes={"one": "two"},
             message_id="myid",
             ordering_key="one",
@@ -128,16 +158,46 @@ class GCloudEventUtilsTests(TestCase):
 
     def test_decode_pubsub_message(self):
         dt = datetime(2022, 8, 12, 9, 0, 25, 226743, tzinfo=timezone.utc)
-        msg = make_pubsub_message(
+        body = make_pubsub_message(
             {"my": "data"},
+            DEFAULT_SUBSCRIPTION,
             attributes={"one": "two"},
             message_id="myid",
             ordering_key="one",
             publish_time=dt,
         )
 
-        decoded = decode_pubsub_message(msg)
+        decoded = decode_pubsub_message(body)
         self.assertIn("data", decoded)
         self.assertIn("my", decoded["data"])
         self.assertIn("publish_time", decoded)
         self.assertEqual(decoded["publish_time"], dt)
+
+    def test_decode_pubsub_message_with_non_decodable_string_data(self):
+        """Test that raw strings in pub/sub messages can be decoded.
+
+        A single string is a valid token in JSON, but it has to be encoded with its quotation marks.
+        However, a string that's base-64 encoded directly without being jumped to JSON first is still a valid
+        PubSub message.
+
+        That is, endpoints could receive data that's the base 64 encoded verison of:
+            b'"stuff"' or
+            b'stuff'
+
+        So the decoder has to handle them both the same. We test here that it can.
+        """
+
+        body = make_pubsub_message("stuff", DEFAULT_SUBSCRIPTION, as_dict=True)
+        body["message"]["data"] = base64.b64encode("stuff".encode()).decode()
+
+        decoded = decode_pubsub_message(body)
+        self.assertIn("data", decoded)
+        self.assertEqual("stuff", decoded["data"])
+
+    def test_decode_invalid_pubsub_message_raises_value_error(self):
+
+        with self.assertRaises(ValueError) as e:
+            body = json.dumps({"has_no_message": {}, "or_subscription": {}}).encode("utf-8")
+            decode_pubsub_message(body)
+
+        self.assertIn("Failed to decode Pub/Sub message", e.exception.args[0])

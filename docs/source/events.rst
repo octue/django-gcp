@@ -8,40 +8,14 @@ This module provides a simple interface allowing django to absorb events, eg fro
 Events are communicated using django's signals framework. They can be handled by any app (not just django-gcp) simply by
 creating a signal receiver.
 
-About Authentication
---------------------
+.. WARNING::
+    Please see :ref:`authenticating_webhooks_and_pubsub_messages` to learn about authenticating incoming messages
 
-.. warning::
-
-   We are yet to add the ability to accept JWT-authenticated push subscriptions from PubSub/EventArc
-   so that authentication is handled out of the box.
-
-   In the meantime, it's your responsibility to ensure that your handlers are protected (or otherwise wrap the
-   urls in a decorator to manage authentication).
-
-   The best way of doing this is to generate a single use token and supply it as an event parameter (see `Generating Endpoint URLs`_).
-
-   As always, if you want us to help, find us on GitHub!
-
-
-Adding Endpoints
+Events Endpoints
 ----------------
 
-In ``your_app/urls.py`` you'll want to include the django-gcp URLs:
-
-.. code-block:: python
-
-   from django.urls import include, re_path
-   from django_gcp import urls as django_gcp_urls
-
-
-   urlpatterns = [
-      # ...other routes
-      # Use whatever regex you want:
-      re_path(r"^django-gcp/", include(django_gcp_urls))
-   ]
-
-Using ``python manage.py show_urls`` you can see the endpoint appear in your app.
+If you have ``django_gcp`` installed correctly (see :ref:`add_the_endpoints`), using ``python manage.py show_urls``
+will show the endpoints for events.
 
 Endpoints are ``POST``-only and require two URL parameters, an ``event_kind`` and an ``event_reference``. The body of the ``POST`` request forms the ``event_payload``.
 
@@ -95,6 +69,9 @@ This is how you attach your handler. In ``your-app/signals.py`` file, do:
 
       if event_kind.startswith("my-"):
           my_handler(event_kind, event_reference, event_payload)
+
+
+.. _generating_endpoint_urls:
 
 Generating Endpoint URLs
 ------------------------
@@ -161,7 +138,7 @@ For example, to test the signal receiver above with a replica of a real pubsub m
 
             response = self.client.post(
                 reverse("gcp-events", args=["the-event-kind", "the-event-reference"]),
-                data=json.dumps(payload),
+                data=payload,
                 content_type="application/json",
             )
 
