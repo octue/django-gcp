@@ -560,7 +560,7 @@ protobuf = ["grpcio-tools (>=1.49.0)"]
 
 [[package]]
 name = "grpcio-status"
-version = "1.48.0"
+version = "1.49.0"
 description = "Status proto mapping for gRPC"
 category = "main"
 optional = false
@@ -568,8 +568,8 @@ python-versions = ">=3.6"
 
 [package.dependencies]
 googleapis-common-protos = ">=1.5.5"
-grpcio = ">=1.48.0"
-protobuf = ">=3.12.0"
+grpcio = ">=1.49.0"
+protobuf = ">=4.21.3"
 
 [[package]]
 name = "httplib2"
@@ -1883,8 +1883,8 @@ grpcio = [
     {file = "grpcio-1.49.0.tar.gz", hash = "sha256:90ec337f36db26fbc70a4c032bcbabb2008f950f4194e99385118a12688fdf92"},
 ]
 grpcio-status = [
-    {file = "grpcio-status-1.48.0.tar.gz", hash = "sha256:afac961fc3713889d3c48c11461aba49842ca62a54dfe8f346442046036e9856"},
-    {file = "grpcio_status-1.48.0-py3-none-any.whl", hash = "sha256:34808aa954e829c4600de3324ec53b5fa2c934f58c3d55586959b9d6989f0d5b"},
+    {file = "grpcio-status-1.49.0.tar.gz", hash = "sha256:91c4ba698aec928c807d0163ba6981614d201b7929dd96125082f5a4576885b2"},
+    {file = "grpcio_status-1.49.0-py3-none-any.whl", hash = "sha256:9daff44251a3df615dcfe2f79e5d5842099d2e86353a3cfb7d193b31552d0d88"},
 ]
 httplib2 = [
     {file = "httplib2-0.20.4-py3-none-any.whl", hash = "sha256:8b6a905cb1c79eefd03f8669fd993c36dc341f7c558f056cb5a33b5c2f458543"},
