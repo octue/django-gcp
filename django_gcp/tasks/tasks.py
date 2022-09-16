@@ -61,7 +61,7 @@ class TaskMeta(type):
         if getattr(klass, "abstract", False) and "abstract" not in attrs:
             setattr(klass, "abstract", False)
 
-        if klass.__name__ not in ["Task", "PeriodicTask", "SubscriberTask"]:
+        if klass.__name__ not in ["Task", "OnDemandTask", "PeriodicTask", "SubscriberTask"]:
             apps.get_app_config("django_gcp").task_manager.register_task(task_class=klass)
 
         return klass
@@ -70,7 +70,7 @@ class TaskMeta(type):
         """Override a task's __call__ method to check that it's been appropriately subclassed
         This catches the most common usage error.
         """
-        if cls.__name__ in ["Task", "PeriodicTask", "SubscriberTask"]:
+        if cls.__name__ in ["Task", "OnDemandTask", "PeriodicTask", "SubscriberTask"]:
             raise IncorrectTaskUsageError(f"Do not instantiate a {cls.__name__}. Inherit and create your own.")
 
         return super().__call__(*args, **kwargs)
@@ -206,6 +206,24 @@ class Task(metaclass=TaskMeta):
     @property
     def __client(self):
         return CloudTasks(location=self.manager.region)
+
+
+class OnDemandTask(Task):
+    """Inherit from here to enable on-demand tasks
+
+    This class is empty right now, but is here to avoid a breaking change later when we refactor
+    the Task class. You should inherit from this.
+
+    """
+
+    abstract = True
+
+    # TODO refactor the functionality specific to on-demand tasks to here from the Task class, because
+    #  currently the Task class functions both as a base and as a specific variant class.
+
+    @abstractmethod
+    def run(self, **kwargs):
+        raise NotImplementedError()
 
 
 class PeriodicTask(Task):

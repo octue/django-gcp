@@ -96,7 +96,7 @@ class TaskManager:
                 logger.debug("Registering Periodic Task %s", name)
                 self.periodic_tasks[name] = task_class
 
-            elif issubclass(task_class, tasks.Task):
+            elif issubclass(task_class, tasks.OnDemandTask):
                 logger.debug("Registering On Demand Task %s", name)
                 self.on_demand_tasks[name] = task_class
         else:

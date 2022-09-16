@@ -1,11 +1,11 @@
-from django_gcp.tasks import PeriodicTask, SubscriberTask, Task
+from django_gcp.tasks import OnDemandTask, PeriodicTask, SubscriberTask
 
 
 # NOTE: See the following link for a discussion on disabling pylint when overriding the `run` method.
 # https://stackoverflow.com/questions/73454704/how-to-define-keyword-variadic-arguments-in-a-notimplementedyet-abc-method-avoi
 
 
-class BaseAbstractTask(Task):
+class BaseAbstractTask(OnDemandTask):
     """Demonstrates how to create an abstract task class for your own use
 
     This still inherits from the Task class so can be used to generate other subclasses of Task.
@@ -17,7 +17,7 @@ class BaseAbstractTask(Task):
         raise NotImplementedError()
 
 
-class MyOnDemandTask(Task):
+class MyOnDemandTask(OnDemandTask):
     """Demonstrates how to create an on-demand task (by directly inheriting from Task)"""
 
     def run(self, **kwargs):

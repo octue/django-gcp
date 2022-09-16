@@ -12,7 +12,7 @@ from django.test import SimpleTestCase
 from django.urls import reverse
 from django_gcp.events.utils import make_pubsub_message
 from django_gcp.exceptions import DuplicateTaskError, IncorrectTaskUsageError
-from django_gcp.tasks import Task
+from django_gcp.tasks import OnDemandTask
 from google.api_core.exceptions import AlreadyExists
 
 from tests.server.example.tasks import DeduplicatedOnDemandTask, MyOnDemandTask
@@ -22,7 +22,7 @@ from .test_events_utils import DEFAULT_SUBSCRIPTION
 class TasksEnqueueingTest(SimpleTestCase):
     def test_instantiate_task_directly(self):
         with self.assertRaises(IncorrectTaskUsageError):
-            Task()
+            OnDemandTask()
 
     def test_enqueue_duplicatable_on_demand_task(self):
 

@@ -1,10 +1,10 @@
 from .manager import TaskManager
-from .tasks import PeriodicTask, SubscriberTask, Task
+from .tasks import OnDemandTask, PeriodicTask, SubscriberTask
 
 
 __all__ = (
     "PeriodicTask",
     "SubscriberTask",
-    "Task",
+    "OnDemandTask",
     "TaskManager",
 )
