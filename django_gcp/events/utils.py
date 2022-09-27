@@ -60,6 +60,7 @@ def make_pubsub_message(
     https://stackoverflow.com/questions/73477187/why-do-gcp-pub-sub-messages-have-duplicated-message-id-and-publish-time-values
 
     :param Union[dict, list] data: JSON-serialisable data to form the body of the message
+    :param str subscription: a subscription path which indicates the subscription that caused this message to be delivered, eg 'projects/my-project/subscriptions/my-subscription-name'
     :param Union[dict, None] attributes: Dict of attributes to attach to the message. Contents must be flat, containing only string keys with string values.
     :param Union[str, None] message_id: An optional id for the message.
     :param Union[str, None] ordering_key: A string used to order messages.
