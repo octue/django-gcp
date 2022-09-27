@@ -15,6 +15,7 @@
     "esbonio.sphinx.confDir": "${workspaceFolder}/docs/source",
     "jupyter.widgetScriptSources": ["jsdelivr.com", "unpkg.com"],
     "prettier.prettierPath": "/usr/local/prettier",
+    "python.defaultInterpreterPath": "/usr/local/bin/python",
     "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
     "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
     "python.formatting.provider": "black",

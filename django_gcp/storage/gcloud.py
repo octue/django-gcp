@@ -155,6 +155,16 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):
         return file_object
 
     def _save(self, name, content):
+
+        # # cleaned_name = clean_name(name)
+        # # name = self._normalize_name(cleaned_name)
+        # # content.name = cleaned_name
+        # # file = GoogleCloudFile(name, "rw", self)
+        # file.blob.upload_from_file(
+        #     content, rewind=True, size=content.size, content_type=file.mime_type, predefined_acl=self.default_acl
+        # )
+        # return cleaned_name
+
         cleaned_name = clean_name(name)
         name = self._normalize_name(cleaned_name)
 
@@ -162,7 +172,7 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):
         file_object = GoogleCloudFile(name, "rw", self)
 
         upload_params = {}
-        blob_params = self.get_object_parameters(name)
+        blob_params = self.get_object_parameters(content)
         upload_params["predefined_acl"] = blob_params.pop("acl", self.settings.default_acl)
         upload_params[CONTENT_TYPE] = blob_params.pop(CONTENT_TYPE, file_object.mime_type)
 
@@ -180,12 +190,26 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):
         file_object.blob.upload_from_file(content, rewind=True, size=getattr(content, "size", None), **upload_params)
         return cleaned_name
 
-    def get_object_parameters(self, name):
-        """Override this to return a dictionary of overwritable blob-property to value.
+    def get_object_parameters(self, content):
+        """Add object-specific parameters to the uploaded blob.
 
-        Returns GS_OBJECT_PARAMETERS by default. See the docs for all possible options.
+        Override this to return a dictionary of blob-specific parameters for the upload.
+
+        By default, this uses any object_parameters configured on the store, except:
+
+            - A `custom_time` attribute on the `content` object will override a `custom_time` property in the store settings
+            - Any `metadata` on the `content` object will be merged with any `metadata` in the store settings, with fields
+              from the `content` object taking precedence over the store metadata where duplicate fields exist.
+
         """
-        return self.settings.object_parameters.copy()
+        object_parameters = self.settings.object_parameters.copy()
+        store_metadata = getattr(object_parameters, "metadata", dict())
+        store_custom_time = getattr(object_parameters, "custom_time", None)
+        object_metadata = getattr(content, "metadata", dict())
+        object_parameters["custom_time"] = getattr(content, "custom_time", store_custom_time)
+        object_parameters["metadata"] = {**store_metadata, **object_metadata}
+
+        return object_parameters
 
     def delete(self, name):
         name = self._normalize_name(clean_name(name))
