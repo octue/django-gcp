@@ -135,6 +135,15 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):
             self._bucket = self.client.bucket(self.settings.bucket_name)
         return self._bucket
 
+    @property
+    def bucket_name(self):
+        """The name of the bucket corresponding to this store
+
+        A convenience property referring to self.settings.bucket_name but here for backward compatibility
+        with django_storages and ease of general use
+        """
+        return self.settings.bucket_name
+
     def _normalize_name(self, name):
         """
         Normalizes the name so that paths like /path/to/ignored/../something.txt
