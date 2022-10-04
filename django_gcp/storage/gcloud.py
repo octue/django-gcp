@@ -112,15 +112,6 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):
         """
         return None
 
-    def path(self, *args, **kwargs):
-        """Get the local path of the file
-
-        This value is ALWAYS None because the path is not necessarily distinct for an object
-        not on the local filesystem.
-
-        This method is here for API compatibility with django's Storage class.
-        """
-
     @property
     def client(self):
         """The google-storage client for this store"""
