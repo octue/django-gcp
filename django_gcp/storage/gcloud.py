@@ -1,6 +1,6 @@
 # TODO Remove this pylint disable and clean up methods
 # pylint: disable=arguments-renamed
-
+import logging
 import mimetypes
 from tempfile import SpooledTemporaryFile
 from django.core.exceptions import SuspiciousOperation
@@ -19,6 +19,9 @@ from .utils import clean_name, get_available_overwrite_name, safe_join, setting,
 
 CONTENT_ENCODING = "content_encoding"
 CONTENT_TYPE = "content_type"
+
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleCloudFile(CompressedFileMixin, File):
@@ -90,11 +93,20 @@ class GoogleCloudFile(CompressedFileMixin, File):
             self._file = None
 
 
+# Note on disabling plyint's abstract-method:
+#   "Method 'path' is abstract in class 'Storage' but is not overridden"
+#   But, collectstatic checks presence of the path method on this class,
+#   so we can't trivially override it. See
+#      - https://github.com/octue/django-gcp/releases/tag/0.7.3
+#      - https://github.com/octue/django-gcp/issues/21
+#
 @deconstructible
-class GoogleCloudStorage(CompressStorageMixin, Storage):
+class GoogleCloudStorage(CompressStorageMixin, Storage):  # pylint: disable=abstract-method
     """Storage class allowing django to use GCS as an object store
 
-    Instantiates as the `media` store by default. Pass `media`, `static` or any of the keys in"""
+    Instantiates as the `media` store by default.
+    Pass `media`, `static` or any of the keys in.
+    """
 
     def __init__(self, store_key="media", **overrides):
         super().__init__()
@@ -103,7 +115,7 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):
         self._bucket = None
         self._client = None
 
-    def get_accessed_time(self, *args, **kwargs):
+    def get_accessed_time(self, *_, **__):
         """Get the last accessed time of the file
 
         This value is ALWAYS None because we cannot know the last accessed time on a cloud file.
@@ -144,30 +156,22 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):
         """
         try:
             return safe_join(self.settings.location, name)
-        except ValueError:
-            raise SuspiciousOperation("Attempted access to '%s' denied." % name)
+        except ValueError as e:
+            logger.warning(e, stack_info=True)
+            # Disable pylint recommendation to avoid attaching further information to any SuspiciousOperation
+            raise SuspiciousOperation(f"Attempted access to '{name}' denied.")  # pylint: disable=raise-missing-from
 
     def _open(self, name, mode="rb"):
         name = self._normalize_name(clean_name(name))
         file_object = GoogleCloudFile(name, mode, self)
         if not file_object.blob:
-            raise FileNotFoundError("File does not exist: %s" % name)
+            raise FileNotFoundError(f"File does not exist: {name}")
         return file_object
 
     def _save(self, name, content):
 
-        # # cleaned_name = clean_name(name)
-        # # name = self._normalize_name(cleaned_name)
-        # # content.name = cleaned_name
-        # # file = GoogleCloudFile(name, "rw", self)
-        # file.blob.upload_from_file(
-        #     content, rewind=True, size=content.size, content_type=file.mime_type, predefined_acl=self.default_acl
-        # )
-        # return cleaned_name
-
         cleaned_name = clean_name(name)
         name = self._normalize_name(cleaned_name)
-
         content.name = cleaned_name
         file_object = GoogleCloudFile(name, "rw", self)
 
@@ -323,10 +327,10 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):
         return super().get_available_name(name, max_length)
 
 
-class GoogleCloudMediaStorage(GoogleCloudStorage):
+class GoogleCloudMediaStorage(GoogleCloudStorage):  # pylint: disable=abstract-method
     """Storage whose bucket name is taken from the GCP_STORAGE_MEDIA_NAME setting
 
-    This actually behaves exactly as a default instantitation of the base
+    This actually behaves exactly as a default instantiation of the base
     ``GoogleCloudStorage`` class, but is there to make configuration more
     explicit for first-timers.
 
@@ -338,7 +342,7 @@ class GoogleCloudMediaStorage(GoogleCloudStorage):
         super().__init__(store_key="media", **overrides)
 
 
-class GoogleCloudStaticStorage(GoogleCloudStorage):
+class GoogleCloudStaticStorage(GoogleCloudStorage):  # pylint: disable=abstract-method
     """Storage defined with an appended bucket name (called "<bucket>-static")
 
     We define that static files are stored in a different bucket than the (private) media files, which:
