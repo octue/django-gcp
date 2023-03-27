@@ -39,8 +39,12 @@ extensions = [
     "sphinx_tabs.tabs",
     "sphinx.ext.mathjax",
     "sphinx.ext.ifconfig",
-    "sphinx_charts.charts",
 ]
+
+autodoc_default_options = {
+    "members": True,
+    "member-order": "bysource",
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -56,7 +60,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "django_gcp"
-copyright = "2022 Octue Ltd"
+copyright = "2023 Octue Ltd"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -117,9 +121,8 @@ html_theme = "sphinx_rtd_theme"
 # html_theme_path = ["_themes",]
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
-# The name for this set of Sphinx documents.  If None, it defaults to
-# "<project> v<release> documentation".
-html_title = None
+# The name for this set of Sphinx documents.  Default is "<project> v<release> documentation".
+# html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 # html_short_title = None

@@ -9,11 +9,13 @@
 Django GCP
 ==========
 
-**django-gcp** is a library of tools to help you deploy and use django on Google Cloud Platform.
-Integrations provided by ``django-gcp``:
+``django-gcp`` is a library of tools to help you deploy and use django on Google Cloud Platform.
+Helpers are provided for:
 
-* `Google Cloud Storage <https://cloud.google.com/storage>`_,
-* `PubSub and EventArc <https://cloud.google.com/pubsub>`_,
+* `Cloud Storage <https://cloud.google.com/storage>`_,
+* `Events (PubSub and EventArc) <https://cloud.google.com/pubsub>`_,
+* `Structured Cloud Logging <https://cloud.google.com/logging>`_ and `Error Reporting <https://cloud.google.com/error-reporting>`_
+* `Cloud Run (Metadata) <https://cloud.google.com/run/docs/container-contract#metadata-server>`_
 * `Cloud Tasks <https://cloud.google.com/tasks>`_ and
 * `Cloud Scheduler <https://cloud.google.com/scheduler>`_.
 
@@ -29,7 +31,7 @@ The ultimate goals are to:
 
 - **Enable event-based integration** between django and various GCP services.
 
-- **Simplify the use of GCP resources in django** including Storage, PubSub, Tasks and Scheduler.
+- **Simplify the use of GCP resources in django** including Storage, Logging, Erorr Reporting, Run, PubSub, Tasks and Scheduler.
 
 .. TIP::
     For example, if we have *both* a Store *and* a PubSub subscription to events on that store, we can do smart things in django when files or their metadata change.
@@ -50,11 +52,12 @@ Some, like django-storages, are (admirably) maintaining a uniform API across man
 whereas we don't change providers often enough to need that, so would rather have the flexibility to do
 platform-specific things.
 
-We'll be using GCP for the foreseeable future, so can accept a platform-specific API in order to use latest GCP features and best practices.
+We'll be using GCP for the foreseeable future, so can accept a platform-specific API in order to use latest
+GCP features and best practices.
 
 
 Contents
-=============
+========
 
 .. toctree::
    :maxdepth: 2
@@ -62,10 +65,13 @@ Contents
    self
    getting_started
    authentication
-   storage
    events
+   cloud_run
+   logging
+   storage
    tasks
    projects
+   api
    license
    version_history
 
