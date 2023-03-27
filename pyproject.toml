@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-gcp"
-version = "0.7.3"
+version = "0.8.0"
 description = "Utilities to run Django on Google Cloud Platform"
 authors = ["Tom Clark"]
 license = "MIT"
