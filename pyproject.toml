@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-gcp"
-version = "0.7.3"
+version = "0.8.0"
 description = "Utilities to run Django on Google Cloud Platform"
 authors = ["Tom Clark"]
 license = "MIT"
@@ -30,9 +30,9 @@ python-dateutil = "^2.8.2"
 google-cloud-tasks = "^2"
 google-cloud-scheduler = "^2"
 google-cloud-pubsub = "^2"
+google-cloud-error-reporting = "^1.9.0"
 
 [tool.poetry.dev-dependencies]
-channels = "^3.0.4"
 coverage = "^6.2"
 pre-commit = "^2.17.0"
 pytest-sugar = "^0.9.4"

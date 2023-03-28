@@ -1,4 +1,4 @@
-exclude: "build|node_modules|.git/|.tox|staticfiles|static_files|media_files|((?:[^/]*/)*)(.svg)|((?:[^/]*/)*)(.xml)"
+exclude: 'django_gcp/static|django_gcp/templates|build|node_modules|.git/|.tox|staticfiles|static_files|media_files|((?:[^/]*/)*)(.svg)|((?:[^/]*/)*)(.xml)'
 default_stages: [commit]
 fail_fast: true
 default_language_version:
@@ -8,7 +8,7 @@ repos:
     rev: v3.1.0
     hooks:
       - id: check-added-large-files
-        args: ["--maxkb=10240"]
+        args: ['--maxkb=10240']
       - id: check-yaml
       - id: end-of-file-fixer
       - id: no-commit-to-branch
@@ -23,36 +23,35 @@ repos:
     rev: 22.3.0
     hooks:
       - id: black
-        args: ["--line-length", "120"]
+        args: ['--line-length', '120']
 
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.1
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
     hooks:
       - id: flake8
-        args: ["--config=setup.cfg"]
+        args: ['--config=setup.cfg']
         language_version: python3
 
-  - repo: https://github.com/timothycrosley/isort
-    rev: 5.0.9
+  - repo: https://github.com/pycqa/isort
+    rev: 5.11.5
     hooks:
       - id: isort
-        require_serial: true
 
   - repo: https://github.com/windpioneers/pre-commit-hooks
     rev: 0.0.5
     hooks:
       - id: check-branch-name
         args:
-          - "^main$"
-          - "^devops/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
-          - "^test/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
-          - "^doc/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
-          - "^feature/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
-          - "^fix/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
-          - "^refactor/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$"
+          - '^main$'
+          - '^devops/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$'
+          - '^test/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$'
+          - '^doc/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$'
+          - '^feature/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$'
+          - '^fix/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$'
+          - '^refactor/([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$'
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v2.2.1"
+    rev: 'v2.2.1'
     hooks:
       - id: prettier
 
@@ -69,9 +68,7 @@ repos:
     hooks:
       - id: build-docs
         language_version: python3
+        # Use dev dependencies to install sphinx, as well as installing
+        # the root module (required for autodoc)
         additional_dependencies:
-          - "Sphinx>=4,<5"
-          - "sphinx-rtd-theme==1.0.0"
-          - "sphinx-tabs==3.2.0"
-          - "sphinx-charts==0.1.2"
-          - "sphinx-math-dollar==1.2.0"
+          - 'django_gcp@file://localhost/workspace#egg=django_gcp'
