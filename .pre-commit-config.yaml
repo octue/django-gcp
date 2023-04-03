@@ -1,4 +1,4 @@
-exclude: 'django_gcp/static|django_gcp/templates|build|node_modules|.git/|.tox|staticfiles|static_files|media_files|((?:[^/]*/)*)(.svg)|((?:[^/]*/)*)(.xml)'
+exclude: "django_gcp/static|django_gcp/templates|build|node_modules|.git/|.tox|staticfiles|static_files|media_files|((?:[^/]*/)*)(.svg)|((?:[^/]*/)*)(.xml)"
 default_stages: [commit]
 fail_fast: true
 default_language_version:
