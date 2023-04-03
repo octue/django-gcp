@@ -6,6 +6,13 @@ resource "google_storage_bucket" "static_assets" {
   location                    = "EU"
   force_destroy               = true
   uniform_bucket_level_access = true
+  cors {
+    # WARNING: Do not set this to * for production buckets; it should be limited to the origin of your site
+    origin          = ["*"]
+    method          = ["GET", "HEAD"]
+    response_header = ["*"]
+    max_age_seconds = 3600
+  }
 }
 
 # Make static bucket contents public
@@ -26,6 +33,7 @@ resource "google_storage_bucket" "media_assets" {
   force_destroy               = true
   uniform_bucket_level_access = false
   cors {
+    # WARNING: Do not set this to * for production buckets; it should be limited to the origin of your site
     origin          = ["*"]
     method          = ["GET", "HEAD", "PUT"]
     response_header = ["*"]
@@ -53,6 +61,7 @@ resource "google_storage_bucket" "extra_versioned_assets" {
   force_destroy               = true
   uniform_bucket_level_access = false
   cors {
+    # WARNING: Do not set this to * for production buckets; it should be limited to the origin of your site
     origin          = ["*"]
     method          = ["GET", "HEAD", "PUT"]
     response_header = ["*"]
