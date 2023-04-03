@@ -1,4 +1,4 @@
-exclude: "django_gcp/static|django_gcp/templates|build|node_modules|.git/|.tox|staticfiles|static_files|media_files|((?:[^/]*/)*)(.svg)|((?:[^/]*/)*)(.xml)"
+exclude: 'django_gcp/static|django_gcp/templates|build|node_modules|.git/|.tox|staticfiles|static_files|media_files|((?:[^/]*/)*)(.svg)|((?:[^/]*/)*)(.xml)'
 default_stages: [commit]
 fail_fast: true
 default_language_version:
@@ -54,6 +54,9 @@ repos:
     rev: 'v2.2.1'
     hooks:
       - id: prettier
+        additional_dependencies:
+          - 'prettier@2.2.1'
+          - 'prettier-plugin-tailwindcss@0.2.6'
 
   - repo: https://github.com/octue/pre-commit-hooks
     rev: 0.5.0
