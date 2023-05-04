@@ -3,7 +3,18 @@
 Storage
 =======
 
-This module provides a Django File API for `Google Cloud Storage <https://cloud.google.com/storage/>`_.
+This module provides helpers for working with `Google Cloud Storage <https://cloud.google.com/storage/>`_, including:
+
+#. A django ``Storage`` class allowing django's ``FileField`` to use GCS as a storage backend. This incorporates the GCS-specific parts of `django-storages <https://django-storages.readthedocs.io/en/latest/>`_.
+#. A ``BlobField`` with an associated widget to facilitate direct uploads and provide more powerful ways of working with GCS features including metadata and revisions.
+
+.. figure:: images/direct-upload-widget.png
+   :align: center
+   :figclass: align-center
+   :alt: Direct upload widget
+
+   The widget provides a better user experience for blankable and overwriting options.
+
 
 Installation and Authentication
 -------------------------------
@@ -43,7 +54,7 @@ manually create two buckets in your project:
 Setup Media and Static Storage
 ------------------------------
 
-The most common types of storage are for media and static files.
+The most common types of storage are for media and static files, using the storage backend.
 We derived a custom storage type for each, making it easier to name them.
 
 In your ``settings.py`` file, do:
@@ -72,8 +83,8 @@ In your ``settings.py`` file, do:
     STATIC_ROOT = "/static/"
 
 
-Usage
------
+Default and Extra stores
+------------------------
 
 .. tabs::
 
@@ -117,6 +128,46 @@ Usage
          >>> obj1 = MyModel()
          >>> print(resume.pdf.storage)
          <django_gcp.storage.GoogleCloudMediaStorage object at ...>
+
+.. _blobfield_storage:
+
+BlobField Storage
+-----------------
+
+The benefit of a BlobField is that you can do direct upload of objects to the cloud.
+
+This allows you to accept uploads of files > 32mb whilst on request-size-limited services like Cloud Run.
+
+To enable this and other advanced features (like caching of metadata and blob version tracking),
+``BlobField``s intentionally don't maintain the ``FileField`` api. Under the hood,
+a BlobField is actually a `JSONField` allowing properties other than just the blob name to be stored in the database.
+
+We'll flesh out these instructions later (or Pull requests accepted!) but in the meantime,
+see the `example implementation here <https://github.com/octue/django-gcp/blob/main/tests/server/example/models.py>`_.
+
+You'll need to:
+
+#. Add a `django_gcp.storage.fields.BlobField` field to a model.
+#. Define a `get_destination_path` callback to generate the eventual name of the blob in the store.
+
+.. TIP::
+   On upload, blobs are always ingressed to a temporary location then moved to their eventual destination on save of
+   the model. Two steps (ingress -> rename) seems unnecessary, but this allows the eventual destination to use
+   the other model fields. It also avoids problems where you require deterministic object names: where object
+   versioning or retention is enabled on your bucket, an unrelated failure in
+   the model ``save()`` process will prevent future uploads to the same pathname.
+
+.. WARNING::
+   Migrating from an existing ``FileField`` to a ``BlobField`` is possible but a bit tricky.
+   We provide an example of how to do that migration in the example server model (see the instructions in the model, and the corresponding migration files)
+
+
+FileField Storage
+-----------------
+
+Works as a standard drop-in storage backend.
+
+.. tabs::
 
    .. group-tab:: File Access
 

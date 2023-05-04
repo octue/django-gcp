@@ -8,10 +8,10 @@ from .example import urls as example_urls
 
 admin.autodiscover()
 
-
 urlpatterns = [
-    # Include the django admin so we can use it with the example app
+    # Include the django admin and debug toolbar so we can use it with the example app
     re_path(r"^admin/", admin.site.urls),
+    re_path(r"^__debug__/", include("debug_toolbar.urls")),
     # Include the django-gcp urls to receive webhooks
     re_path(r"^example-django-gcp/", include(django_gcp_urls)),
     # Include your own app URLs

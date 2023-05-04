@@ -1,0 +1,62 @@
+{% load i18n %}
+<!-- 
+{% with form_field=form.field %}
+    <div class="form-group{% if form_field.errors %} has-error{% endif %}">
+        <label for="{{ form_field.id_for_label }}">{{ form_field.label }}</label>
+        {{ form_field }}
+        {% if form_field.errors %}
+            <ul class="errorlist">
+            {% for error in form_field.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endwith %} -->
+
+<div class="gcp-wrapper" data-existing-path="{{ existing_path }}" data-signed-ingress-url="{{ signed_ingress_url }}" data-ingress-path="{{ ingress_path }}">
+<div class="gcp-field-contents">
+    <input
+        type="hidden" name="{{ widget.name }}"
+        {% if widget.value != None and "path" in widget.value %} 
+        value="{{ widget.value|stringformat:'s' }}"
+        {% else %}
+        value=""
+        {% endif %}
+        {% include "django/forms/widgets/attrs.html" %}
+    >
+    <div class="gcp-row-wrapper">
+        <div class="gcp-row-info">
+            <span class="gcp-row-header">Existing cloud path</span>
+            <span class="gcp-row-text gcp-existing-path">{{ existing_path }}</span>
+        </div>
+        <div class="gcp-row-controls">
+            <button type="button"  class="gcp-clear-restore-existing gcp-button">Clear existing</button>
+            {% if console_url is not None %}
+            <button type="button"  class="gcp-view-console gcp-button">View in console</button>
+            {% endif %}
+            {% if download_url is not None %}
+            <button type="button"  class="gcp-download gcp-button" href="{{ download_url }}" download>Download</button>
+            {% endif %}
+        </div>
+    </div> 
+    <div class="gcp-row-wrapper">
+        <div class="gcp-row-info">
+            <span class="gcp-row-header">Selected for upload</span>
+            <span class="gcp-row-text gcp-selected-name"></span>
+        </div>
+        <div class="gcp-row-controls">
+            <label class="gcp-label">
+                <span class="gcp-select-label gcp-button">Select file</span>
+                <input type="file" class="gcp-file-input" accept="{{ accept_mimetype }}"/>
+            </label>
+            {% if not is_required %}
+            <span class="gcp-clear-selected gcp-button">Clear selection</span>
+            {% endif %}
+        </div>
+
+    <!-- <span class="gcp-selected-name">{{ current_file_name }}</span> -->
+</div>
+</div>
+<div class="gcp-overlay"><p class="gcp-overlay-text">{% trans "Uploading file, please wait..." %}</p></div>
+

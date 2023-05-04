@@ -53,6 +53,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+cov.xml
 
 # Translations
 *.mo
@@ -147,3 +148,10 @@ docs/doctrees
 
 # GCP credentials
 gcp-cred*
+
+
+# Django static
+staticfiles/
+
+# Tom's working notebooks
+notebooks/

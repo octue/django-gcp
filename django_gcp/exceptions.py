@@ -28,3 +28,11 @@ class UnknownActionError(ValueError):
 
 class DuplicateTaskError(Exception):
     """Raised when a unique (non-duplicatable) task is enqueued but already present in the queue"""
+
+
+class AttemptedOverwriteError(Exception):
+    """Raised when attempting to overwrite an existing object in GCS with another object"""
+
+
+class MissingBlobError(Exception):
+    """Raised when attempting to access or copy a blob that is not present in GCS"""

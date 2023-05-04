@@ -1,5 +1,3 @@
-# TODO Remove this pylint disable and clean up methods
-# pylint: disable=arguments-renamed
 import logging
 import mimetypes
 from tempfile import SpooledTemporaryFile
@@ -133,10 +131,19 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):  # pylint: disable=abst
 
     @property
     def bucket(self):
-        """The google-storage bucket object for this store"""
+        """The google-storage bucket object for this store
+        See bucket class information: https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.bucket.Bucket
+        """
         if self._bucket is None:
             self._bucket = self.client.bucket(self.settings.bucket_name)
         return self._bucket
+
+    @property
+    def versioning_enabled(self):
+        """True if versioning is enabled on the bucket
+        https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.bucket.Bucket#google_cloud_storage_bucket_Bucket_versioning_enabled
+        """
+        return self.bucket.versioning_enabled
 
     @property
     def bucket_name(self):
@@ -233,14 +240,14 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):  # pylint: disable=abst
         name = self._normalize_name(clean_name(name))
         return bool(self.bucket.get_blob(name))
 
-    def listdir(self, name):
-        name = self._normalize_name(clean_name(name))
+    def listdir(self, path):
+        prefix = self._normalize_name(clean_name(path))
         # For bucket.list_blobs and logic below name needs to end in /
         # but for the root path "" we leave it as an empty string
-        if name and not name.endswith("/"):
-            name += "/"
+        if prefix and not prefix.endswith("/"):
+            prefix += "/"
 
-        iterator = self.bucket.list_blobs(prefix=name, delimiter="/")
+        iterator = self.bucket.list_blobs(prefix=prefix, delimiter="/")
         blobs = list(iterator)
         prefixes = iterator.prefixes
 

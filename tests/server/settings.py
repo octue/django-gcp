@@ -1,6 +1,4 @@
 import os
-import google.cloud.storage
-from django_gcp.storage.bucket_registry import register_gcs_bucket
 
 
 def get_db_conf():
@@ -27,7 +25,7 @@ def get_db_conf():
 # GENERIC DJANGO SETTINGS FOR THE TEST APP (scroll down for the good stuff)
 # ---------------------------------------------------------------------------
 
-DEBUG = False
+DEBUG = True
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
@@ -40,6 +38,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_extensions",  # Gives us shell_plus and reset_db for manipulating the test server
+    "debug_toolbar",  # Allows us to inspect SQL statements made when making queries in the admin
+    "django_json_widget",  # Allows us to switch over to a json editing widget instead of our own js widgets for internal development
     "django_gcp",
     "tests.server.example",
 ]
@@ -48,7 +48,15 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
+
+# Required for django_debug_toolbar
+if DEBUG:
+    import socket
+
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
 
 TEMPLATES = [
     {
@@ -66,6 +74,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
             ],
+            "debug": DEBUG,
         },
     },
 ]
@@ -84,7 +93,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 SECRET_KEY = "secretkey"
@@ -146,7 +154,7 @@ LOGGING = {
 
 
 # ---------------------------------------------------------------------------
-# HERE'S HOW TO SET UP STATIC AND MEDIA STORAGE
+# HERE'S HOW TO SET UP STATIC, MEDIA AND EXTRA STORAGE
 # ---------------------------------------------------------------------------
 
 # MEDIA FILES
@@ -155,11 +163,19 @@ GCP_STORAGE_MEDIA = {"bucket_name": "example-media-assets"}
 MEDIA_URL = f"https://storage.googleapis.com/{GCP_STORAGE_MEDIA['bucket_name']}/"
 MEDIA_ROOT = "/media/"
 
-# STATIC FILES
+# STATIC FILES (FOR LOCAL DEVELOPMENT OF WIDGETS)
+# STATIC_URL = "static/"
+# STATIC_ROOT = "./staticfiles"
+
+
+# STATIC FILES (FOR USING THE CLOUD STORE)
 STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
 GCP_STORAGE_STATIC = {"bucket_name": "example-static-assets"}
 STATIC_URL = f"https://storage.googleapis.com/{GCP_STORAGE_STATIC['bucket_name']}/"
 STATIC_ROOT = "/static/"
+
+# EXTRA STORES
+GCP_STORAGE_EXTRA_STORES = {"extra-versioned": {"bucket_name": "example-extra-versioned-assets"}}
 
 
 # ---------------------------------------------------------------------------
@@ -175,8 +191,3 @@ GCP_TASKS_DOMAIN = "https://outrageous-horny-giraffe.loca.lt"
 GCP_TASKS_EAGER_EXECUTE = False
 GCP_TASKS_REGION = "europe-west1"
 GCP_TASKS_RESOURCE_PREFIX = "django-gcp"
-
-
-client = google.cloud.storage.Client()
-gcs_bucket = client.get_bucket(GCP_STORAGE_MEDIA["bucket_name"])
-ddcu_bucket_identifier = register_gcs_bucket(gcs_bucket)
