@@ -1,0 +1,151 @@
+.gcp-field-contents {
+  display: flex;
+  flex-direction: column;
+  margin-left: 160px;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.gcp-field-contents > *:not(:last-child) {
+  margin-bottom: 12px
+}
+
+.gcp-wrapper {
+  max-width: 1200px;
+}
+
+.gcp-row-wrapper {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.gcp-row-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.gcp-row-header {
+  font-size: 0.825rem;
+  width: 100%;
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+
+.gcp-row-text {
+  margin-left: 1rem;
+  color: var(--link-fg);
+}
+
+.gcp-row-controls {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+
+}
+
+.gcp-row-controls > *:not(:first-child) {
+  margin-left: 12px
+}
+
+.gcp-label {
+  /* Undo the django label css so it aligns correctly */
+  width: auto !important;
+  padding: 0 !important;
+  /* Offset to allow for the border pixels */
+  margin-top: 2px;
+}
+
+/* The actual HTML element displays none, but its label contents are clickable instead, so we style that as a button */
+.gcp-file-input {
+  display: none;
+}
+
+.gcp-selected-name {
+  /* display: block;
+  color: var(--body-quiet-color);
+  padding: .55rem 1rem;
+  margin-left: 0; */
+}
+
+.gcp-clear-selected {
+  display: inline-block;
+  text-decoration: none;
+  color: rgb(229, 185, 26);
+  background-color: #d41515;
+  margin: 0;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.gcp-button {
+  background-color: #FFFFFF;
+  border: 1px solid rgb(209,213,219);
+  border-radius: .5rem;
+  box-sizing: border-box;
+  color: #111827;
+  padding: .55rem 1rem;
+  text-align: center;
+  text-decoration: none #D1D5DB solid;
+  text-decoration-thickness: auto;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.gcp-button:hover {
+  background-color: rgb(249,250,251);
+}
+
+.gcp-button:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.gcp-button:focus-visible {
+  box-shadow: none;
+}
+
+.gcp-overlay {
+  display: none;
+  background-color: rgba(0,0,0, 0.7);
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10000;
+  cursor: wait;
+}
+
+.gcp-overlay-text {
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.gcp-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.gcp-hidden {
+  display: none;
+}
+
+.gcp-warning {
+  text-decoration: line-through;
+  color:rgba(214, 175, 1)
+}

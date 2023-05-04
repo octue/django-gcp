@@ -1,0 +1,494 @@
+import json
+import logging
+import os
+from uuid import uuid4
+from django.conf import settings
+from django.core import checks
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
+from django.utils.translation import gettext_lazy as _
+
+from .forms import CloudObjectFormField
+from .gcloud import GoogleCloudStorage
+from .operations import blob_exists, copy_blob, get_signed_upload_url
+from .widgets import DEFAULT_ACCEPT_MIMETYPE, CloudObjectWidget
+
+
+logger = logging.getLogger(__name__)
+
+
+# 32 megabyte default size chosen to be consistent with Cloud Run's
+# largest request size
+DEFAULT_MAX_SIZE_BYTES = 32 * 1024 * 1024
+
+DEFAULT_OVERWRITE_MODE = "never"
+
+DEFAULT_OVERRIDE_BLOBFIELD_VALUE = False
+
+
+class BlobField(models.JSONField):
+    """A FileField replacement with cloud store object-specific features
+
+    Features such as metadata fetching/synchronisation and direct uploads are enabled.
+
+    ObjectField allows storage classes to be declared in settings. This enables:
+    - storages to be switched without database migrations (supporting integration
+      and release preview type workflows plus cloud migration)
+    - eaiser way of using different buckets for different ObjectFields without
+      defining a Storage class for each bucket
+
+    ObjectField is built on JSONField to allow more complex information to be stored
+    and queried. Examples might include:
+     - cached object generation or metageneration,
+     - cached object metadata, or
+     - status of direct uploads
+
+    ObjectField does not inherit directly from FileField to avoid the burden of strict
+    compatibility with legacy or irrelevant-to-cloud-storage behaviour (like django
+    admin overriding formfields or coping with edge cases around name and path handling).
+    We do this to support a clear and maintainable implementation.
+
+    ObjectField can read FileField entries: since FileField stores the path as a string,
+    that's valid JSON so can be accepted by ObjectField, greatly simplifying migration.
+    Once a model instance has been updated, its entry will be a JSON object and so will
+    no longer be trivially reversible to a valid FileField entry without a custom migration.
+
+    :param ingress_to: A string defining the path within the bucket to which direct uploads
+    will be ingressed, if temporary_ingress=True. These uploaded files will be moved to their
+    ultimate path in the store on save of the model.
+    :param accept_mimetype: A string passed to widgets, suitable for use in the `accept` attribute
+    of an html filepicker. This will allow you to narrow down, eg to `image/*` or an even more
+    specific mimetype. No validation is done at the field level that objects actually are of this
+    type (because the python mimetypes module doesn't accept wildcard mimetypes and we don't want to
+    go on a wild goose chase just for this small feature).
+    :param get_destination_path: A callable to determine the destination path of the blob.
+    The blob should already have been successfully uploaded to the temporary location
+    in GCP prior to creation of this model instance. This function is then called in the
+    pre_save stage of the new model instance, so it has access to all the model fields in
+    order to construct the destination filename. Note this EXCLUDES the id, if the model has an
+    autoincrementing ID field that gets created on save, because that can't be known prior to
+    the save.
+    :param max_size_bytes: The maximum size in bytes of files that can be uploaded.
+
+    """
+
+    description = _("A GCP Cloud Storage object")
+    empty_values = [None, "", [], ()]
+
+    def __init__(
+        self,
+        get_destination_path=None,
+        ingress_to="_tmp/",
+        store_key="media",
+        accept_mimetype=DEFAULT_ACCEPT_MIMETYPE,
+        max_size_bytes=DEFAULT_MAX_SIZE_BYTES,
+        overwrite_mode=DEFAULT_OVERWRITE_MODE,
+        **kwargs,
+    ):
+        self._versioning_enabled = None
+        self._existing_value = None
+        self._temporary_path = None
+        self._primary_key_set_explicitly = "primary_key" in kwargs
+        self._choices_set_explicitly = "choices" in kwargs
+        self.overwrite_mode = overwrite_mode
+        self.get_destination_path = get_destination_path
+        self.ingress_to = ingress_to
+        self.store_key = store_key
+        self.accept_mimetype = accept_mimetype
+        self.max_size_bytes = max_size_bytes
+        kwargs["default"] = kwargs.pop("default", None)
+        kwargs["help_text"] = kwargs.pop("help_text", "GCP cloud storage object")
+
+        # Note, if you want to define overrides, then use the GCP_STORAGE_EXTRA_STORES
+        # setting with a different key
+        self.storage = GoogleCloudStorage(store_key=store_key)
+
+        # We should consider if there's a good use case for customising the storage class:
+        #
+        # self.storage = import_string(storage_class)(store_key=store_key)
+        #
+        # If doing so we should also check that the resulting storage class is a subclass
+        # of GoogleCloudStorage, to ensure that the storage API is compatible:
+        #
+        # if not isinstance(self.storage, GoogleCloudStorage):
+        #     raise TypeError(
+        #         "%s.storage must be a subclass/instance of %s.%s"
+        #         % (
+        #             self.__class__.__qualname__,
+        #             GoogleCloudStorage.__module__,
+        #             GoogleCloudStorage.__qualname__,
+        #         )
+        #     )
+        super().__init__(**kwargs)
+
+    def check(self, **kwargs):
+        return [
+            *super().check(**kwargs),
+            *self._check_explicit(),
+            *self._check_get_destination_path(),
+            *self._check_ingress_to(),
+            *self._check_overwrite_mode(),
+        ]
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        kwargs["store_key"] = self.store_key
+        kwargs["ingress_to"] = self.ingress_to
+        kwargs["accept_mimetype"] = self.accept_mimetype
+        kwargs["overwrite_mode"] = self.overwrite_mode
+        kwargs["get_destination_path"] = self.get_destination_path
+        return name, path, args, kwargs
+
+    def formfield(self, **kwargs):
+        widget = kwargs.pop("widget", None)
+        if widget is None:
+            widget = CloudObjectWidget(
+                accept_mimetype=self.accept_mimetype,
+                signed_ingress_url=self._get_signed_ingress_url(),
+                ingress_path=self._get_temporary_path(),
+            )
+
+        # Set up some defaults while letting the caller override them
+        defaults = {"form_class": CloudObjectFormField, "widget": widget}
+        defaults.update(kwargs)
+        return super().formfield(**defaults)
+
+    @property
+    def override_blobfield_value(self):
+        """Shortcut to access the GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE setting"""
+        return getattr(settings, "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE", DEFAULT_OVERRIDE_BLOBFIELD_VALUE)
+
+    def pre_save(self, model_instance, add):
+        """Return field's value just before saving."""
+        value = getattr(model_instance, self.attname)
+
+        existing_path = None if add else self._get_existing_path(model_instance)
+
+        # An escape hatch allowing you to set the path directly. This is dangerous and should only be done
+        # explicitly for the purpose of data migration and manipulation. You should never allow an untrusted
+        # client to set paths directly, because knowing the path of a pre-existing object allows you to assume
+        # access to it. Tip: You can use django's override_settings context manager to set this temporarily.
+        if getattr(settings, "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE", DEFAULT_OVERRIDE_BLOBFIELD_VALUE):
+            logger.warning(
+                "Overriding %s value with path %s",
+                self.__class__.__name__,
+                getattr(value, "path", None),
+            )
+            new_value = value
+        else:
+            # There are six scenarios to deal with:
+            adding_blank = add and value is None
+            adding_valid = add and value is not None
+            updating_valid_to_valid = not add and self._get_valid_to_valid(model_instance)
+            updating_valid_to_blank = not add and self._get_valid_to_blank(model_instance)
+            updating_blank_to_valid = not add and self._get_blank_to_valid(model_instance)
+            unchanged = not add and self._get_unchanged(model_instance)
+
+            if unchanged:
+                new_value = {"path": value["path"]} if value is not None else None
+
+            elif adding_blank or updating_valid_to_blank:
+                new_value = None
+
+            elif adding_valid or updating_blank_to_valid or updating_valid_to_valid:
+
+                new_value = {}
+                new_value["path"], allow_overwrite = self.get_destination_path(
+                    instance=model_instance,
+                    original_name=value["name"],
+                    attributes=getattr(value, "attributes", None),
+                    allow_overwrite=self._get_allow_overwrite(add),
+                    existing_path=existing_path,
+                    temporary_path=value["_tmp_path"],
+                    bucket=self.storage.bucket,
+                )
+                logger.info(
+                    "Adding/updating cloud object via temporary ingress at %s to %s",
+                    value["_tmp_path"],
+                    new_value["path"],
+                )
+
+                # Trigger the copy only on successful commit of the transaction. We have to
+                # capture the dual edge cases of the file not moving correctly, and the database
+                # row not saving (eg due to validation errors in other model fields).
+                # https://stackoverflow.com/questions/33180727/trigering-post-save-signal-only-after-transaction-has-completed
+                transaction.on_commit(
+                    lambda: copy_blob(
+                        self.storage.bucket,
+                        value["_tmp_path"],
+                        self.storage.bucket,
+                        new_value["path"],
+                        move=True,
+                        overwrite=allow_overwrite,
+                        attributes=value.get("attributes", None),
+                    )
+                )
+                logger.info(
+                    "Registered move of %s to %s to happen on transaction commit", value["_tmp_path"], new_value["path"]
+                )
+
+            else:
+                # TODO Remove this once we've enough experience in production
+                raise ValueError(
+                    f"Unable to determine field state for {self._get_fieldname(model_instance)}. The most likely cause of this doing an operation (like migration) without setting GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True. Otherwise, please contact the django_gcp developers and describe what you're doing along with this exception stacktrace. Value was: {json.dumps(value)}"
+                )
+
+        # Pop cached DB values so you can re-use an instantiated form after saving it
+        self._existing_value = {"_cached": new_value}
+
+        return new_value
+
+    def validate(self, value, model_instance):
+        """Validate field value contents
+        Checks that the value is a dict and checks blankness.
+        If the model is in an adding state, checks contents of the value and also presence
+        of the ingressing file in the cloud store (this latter check causes an API request to the store)
+        """
+
+        # Override the superclass completely because it doesn't do anything useful
+        # and has counterintuitive behaviour around what constitutes blank json
+        # super().validate(value, model_instance)
+        field_name = f"{model_instance.__class__.__name__}.{self.attname}"
+
+        # Accept None or a dict
+        value_or_dict = value or dict()
+        if not isinstance(value_or_dict, dict):
+            raise ValidationError(self.error_messages["invalid"], code="invalid", params={"value": value})
+
+        if not self.blank and len(value_or_dict) == 0:
+            raise ValidationError(self.error_messages["blank"], code="blank")
+
+        has_tmp_path_or_name = "_tmp_path" in value_or_dict or "name" in value_or_dict
+        has_tmp_path_and_name = "_tmp_path" in value_or_dict and "name" in value_or_dict
+        has_path = "path" in value_or_dict
+        is_blank = not has_path and not has_tmp_path_and_name
+        # pylint: disable-next=protected-access
+        adding = model_instance._state.adding
+        updating = not adding
+        blankable = self.blank
+        editable = self.editable
+
+        # Check that if a _tmp_path is given, a name is also given
+        if has_tmp_path_or_name and not has_tmp_path_and_name:
+            raise ValidationError(
+                f"Both `_tmp_path` and `name` properties must be present in data for {field_name} if ingressing a new blob."
+            )
+
+        # Check the matrix of valid combinations with specific error messages for each
+        if adding and blankable:
+            # Valid values:
+            #   None
+            #   {"_tmp_path":"something-new", "name":"something"}
+            if has_path:
+                raise ValidationError("You cannot specify a path directly")
+            if not is_blank and not has_tmp_path_and_name:
+                raise ValidationError("Provide either a blank value or valid ingress location")
+
+        elif adding and not blankable:
+            # Valid values:
+            #   {"_tmp_path":"something-new", "name":"something"}
+            if has_path:
+                raise ValidationError("You cannot specify a path directly")
+            if not has_tmp_path_and_name:
+                raise ValidationError("Provide a valid ingress location")
+
+        elif updating and blankable and editable:
+            # Valid values:
+            #   None
+            #   {"path":"something-unchanged-from-last"}
+            #   {"_tmp_path":"something-new", "name":"something"}
+            if not is_blank and not has_path and not has_tmp_path_and_name:
+                raise ValidationError("Provide either a blank value, valid ingress location or the existing blob path")
+
+        elif updating and blankable and not editable:
+            # Valid values:
+            #   None
+            #   {"path":"something-unchanged-from-last"}
+            if has_tmp_path_and_name:
+                raise ValidationError("Cannot change an uneditable field")
+            if not is_blank and not has_path:
+                raise ValidationError("Field is not editable")
+
+        elif updating and not blankable and editable:
+            # Valid values:
+            #   {"path":"something-unchanged-from-last"}
+            #   {"_tmp_path":"something-new", "name":"something"}
+            if not has_path and not has_tmp_path_and_name:
+                raise ValidationError("Provide either a valid ingress location or the existing blob path")
+
+        elif updating and not blankable and not editable:
+            # Valid values:
+            #   {"path":"something-unchanged-from-last"}
+            if has_tmp_path_and_name:
+                raise ValidationError("Cannot change an uneditable field")
+            if not has_path:
+                raise ValidationError("Provide the existing blob path")
+
+        # Check for temporary blob completion
+        if has_tmp_path_and_name:
+            tmp_path = value["_tmp_path"]
+            if not blob_exists(self.storage.bucket, tmp_path):
+                raise ValidationError(
+                    f"Upload incomplete or failed (no blob at '{tmp_path}' in bucket '{self.storage.bucket.name}')"
+                )
+
+        # Check that path roundtrips correctly without an attempt to change it
+        if has_path:
+            if not self.override_blobfield_value and self._get_path_altered(model_instance):
+                raise ValidationError(
+                    f"You cannot directly alter the `path` property in {field_name} data. Return the original `path` property to leave the field unchanged, or new `_tmp_path` and `name` properties to update the field."
+                )
+
+    @property
+    def versioning_enabled(self):
+        """True if object versioning is enabled on the bucket configured for this field"""
+        if self._versioning_enabled is None:
+            self._versioning_enabled = bool(self.storage.bucket.versioning_enabled)
+
+    def _check_ingress_to(self):
+        if isinstance(self.ingress_to, str) and self.ingress_to.startswith("/"):
+            return [
+                checks.Error(
+                    "{self.__class__.__name__}'s 'ingress_to' argument must be a relative path, not an absolute path.",
+                    obj=self,
+                    id="fields.E202",
+                    hint="Remove the leading slash.",
+                )
+            ]
+        return []
+
+    def _check_overwrite_mode(self):
+        allowable_modes = [
+            "never",
+            "update",
+            "update-versioned",
+            "add",
+            "add-versioned",
+            "add-update",
+            "add-update-versioned",
+        ]
+        if self.overwrite_mode not in allowable_modes:
+            return [
+                checks.Error(
+                    "{self.__class__.__name__}'s 'overwrite_mode' is invalid",
+                    obj=self,
+                    id="fields.E202",
+                    hint=f"Try one of: {allowable_modes}",
+                )
+            ]
+        return []
+
+    def _check_explicit(self):
+        if self._primary_key_set_explicitly or self._choices_set_explicitly:
+            return [
+                checks.Error(
+                    f"'primary_key', and 'choices' are not valid arguments for a {self.__class__.__name__}",
+                    obj=self,
+                    id="fields.E201",
+                )
+            ]
+        return []
+
+    def _check_get_destination_path(self):
+        if not callable(self.get_destination_path):
+            return [
+                checks.Error(
+                    f"'get_destination_path' argument in {self.__class__.__name__} must be a callable function to return the destination object name.",
+                    obj=self,
+                    id="fields.E201",
+                )
+            ]
+        return []
+
+    def _get_allow_overwrite(self, add):
+        """Return a boolean determining if overwrite should be allowed for this operation"""
+        mode_map = {
+            "never": False,
+            "update": not add,
+            "update-versioned": self.versioning_enabled and not add,
+            "add": add,
+            "add-versioned": self.versioning_enabled and add,
+            "add-update": True,
+            "add-update-versioned": self.versioning_enabled,
+        }
+        return mode_map[self.overwrite_mode]
+
+    def _get_blank_to_valid(self, instance):
+        """Return true if overwriting a blank path with a valid one"""
+        existing_path = self._get_existing_path(instance)
+        temporary_path = self._get_instance_tmp_path(instance)
+        return existing_path is None and temporary_path is not None
+
+    def _get_existing_path(self, instance):
+        """Gets the existing (saved in db) path; will raise an error if the instance is unsaved.
+        Caches value on the instance to avoid duplicate database calls within a transaction.
+        """
+        if self._existing_value is None:
+            # pylint: disable-next=protected-access
+            pk_name = instance._meta.pk.name
+            # pylint: disable-next=protected-access
+            existing = instance.__class__._default_manager.get(**{pk_name: getattr(instance, pk_name)})
+            # Cache value in a dict because None is a valid value
+            self._existing_value = {"_cached": getattr(existing, self.attname)}
+        value_or_dict = self._existing_value["_cached"] or {}
+        return value_or_dict.get("path", None)
+
+    def _get_fieldname(self, instance):
+        """Return the ModelName.FieldName string for use in error messages and warnings"""
+        return f"{instance.__class__.__name__}.{self.attname}"
+
+    def _get_instance_path(self, instance):
+        """Gets the instance path (or None) for a given instance"""
+        value_or_dict = getattr(instance, self.attname) or {}
+        return value_or_dict.get("path", None)
+
+    def _get_instance_tmp_path(self, instance):
+        """Gets the instance path (or None) for a given instance"""
+        value_or_dict = getattr(instance, self.attname) or {}
+        return value_or_dict.get("_tmp_path", None)
+
+    def _get_path_altered(self, instance):
+        """Return true if the path has changed between a given value and what's stored in the database.
+
+        If there is no path in the database (e.g. a blank entry is stored) the result is False.
+
+        Used only for validation purposes: the client side should never be able to specify the path.
+        """
+        existing_path = self._get_existing_path(instance)
+        instance_path = self._get_instance_path(instance)
+
+        return existing_path is not None and instance_path is not None and instance_path != existing_path
+
+    def _get_signed_ingress_url(self):
+        """Return a signed URL for uploading a blob to the temporary_path"""
+        return get_signed_upload_url(
+            self.storage.bucket,
+            self._get_temporary_path(),
+            content_type="application/octet-stream",
+            max_size_bytes=self.max_size_bytes,
+        )
+
+    def _get_temporary_path(self):
+        """Return a temporary path to which a blob can be uploaded before renaming"""
+        if self._temporary_path is None:
+            self._temporary_path = os.path.join(self.ingress_to, str(uuid4()))
+        return self._temporary_path
+
+    def _get_unchanged(self, instance):
+        """Return true if the path value is simply returned unchanged with no _tmp_path"""
+        existing_path = self._get_existing_path(instance)
+        instance_path = self._get_instance_path(instance)
+        temporary_path = self._get_instance_tmp_path(instance)
+        return existing_path == instance_path and temporary_path is None
+
+    def _get_valid_to_blank(self, instance):
+        """Return true if overwriting a valid path with a blank one"""
+        existing_path = self._get_existing_path(instance)
+        temporary_path = self._get_instance_tmp_path(instance)
+        return existing_path is not None and temporary_path is None
+
+    def _get_valid_to_valid(self, instance):
+        """Return true if updating object contents at an existing path"""
+        existing_path = self._get_existing_path(instance)
+        temporary_path = self._get_instance_tmp_path(instance)
+        return existing_path is not None and temporary_path is not None

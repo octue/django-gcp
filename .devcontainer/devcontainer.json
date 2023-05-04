@@ -41,6 +41,10 @@
         "python.linting.pylintEnabled": true,
         "python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
         "python.pythonPath": "/usr/local/bin/python",
+        "python.testing.pytestArgs": [
+          "--cov=django_gcp",
+          "--cov-report=xml:cov.xml"
+        ],
         // Scrolling the editor is a nice idea but it doesn't work, always out of sync and impossible to manage
         "restructuredtext.preview.scrollEditorWithPreview": false,
         "restructuredtext.preview.scrollPreviewWithEditor": false,
@@ -66,7 +70,8 @@
         "shamanu4.django-intellisense",
         "thebarkman.vscode-djaneiro",
         "trond-snekvik.simple-rst",
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "ryanluker.vscode-coverage-gutters"
       ]
     }
   },

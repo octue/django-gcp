@@ -9,7 +9,7 @@ resource "google_storage_bucket" "static_assets" {
   cors {
     # WARNING: Do not set this to * for production buckets; it should be limited to the origin of your site
     origin          = ["*"]
-    method          = ["GET", "HEAD"]
+    method          = ["GET", "HEAD", "PUT"]
     response_header = ["*"]
     max_age_seconds = 3600
   }
