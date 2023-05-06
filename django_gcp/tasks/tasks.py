@@ -83,13 +83,23 @@ class Task(metaclass=TaskMeta):
     deduplicate = False
 
     def enqueue(self, **kwargs):
-        """Invoke a task (place it onto a queue for processing)"""
+        """Enqueues the given task for processing, unless 'self.manager.disable_execution' is True.
+        If `manager.disable_execution` is True, this method returns None without enqueuing the task.
+        """
+        if self.manager.disable_execution:
+            return None
+
         return self._send(
             task_kwargs=kwargs,
         )
 
     def enqueue_later(self, when, **kwargs):
-        """Invoke a task (place it onto a queue for processing after some time delay)"""
+        """Invoke a task (place it onto a queue for processing after some time delay)
+        If `manager.disable_execution` is True, this method returns None without enqueuing the task.
+        """
+        if self.manager.disable_execution:
+            return None
+
         if isinstance(when, int):
             delay_in_seconds = when
         elif isinstance(when, timedelta):
