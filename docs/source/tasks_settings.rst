@@ -90,7 +90,7 @@ debugging of tasks in local environments.
 
 
 ``GCP_TASKS_DISABLE_EXECUTE``
----------------------------
+-----------------------------
 Type: ``boolean``
 
 Default: ``False``
