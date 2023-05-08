@@ -11,7 +11,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 from django_gcp.events.utils import make_pubsub_message
-from django_gcp.exceptions import DuplicateTaskError, IncorrectTaskUsageError
+from django_gcp.exceptions import DuplicateTaskError, IncompatibleSettingsError, IncorrectTaskUsageError
 from django_gcp.tasks import OnDemandTask
 from gcp_pilot.mocker import patch_auth
 from google.api_core.exceptions import AlreadyExists
@@ -87,13 +87,13 @@ class TasksEnqueueingTest(SimpleTestCase):
         self.assertIn("error", response.json())
 
     def test_disable_enqueueing_with_a_setting(self):
-        """Assert that no task is enqueued if the GCP_TASKS_DISABLE_EXECUTION is true"""
+        """Assert that no task is enqueued if the GCP_TASKS_DISABLE_EXECUTE is true"""
         with patch_auth():
-            with patch("django_gcp.tasks.tasks.Task._send") as patched_send:
+            with patch("django_gcp.tasks.tasks.run_coroutine") as patched_send:
                 MyOnDemandTask().enqueue(a="1")
                 self.assertEqual(patched_send.call_count, 1)
 
-                with override_settings(GCP_TASKS_DISABLE_EXECUTION=True):
+                with override_settings(GCP_TASKS_DISABLE_EXECUTE=True):
                     MyOnDemandTask().enqueue(a="1")
                     MyPeriodicTask().enqueue(a="1")
                     MySubscriberTask().enqueue(a="1")
@@ -107,3 +107,7 @@ class TasksEnqueueingTest(SimpleTestCase):
                     FailingOnDemandTask().enqueue_later(a="1", when=10)
 
                     self.assertEqual(patched_send.call_count, 1)
+
+            with override_settings(GCP_TASKS_DISABLE_EXECUTE=True, GCP_TASKS_EAGER_EXECUTE=True):
+                with self.assertRaises(IncompatibleSettingsError):
+                    MyOnDemandTask().enqueue(a="1")

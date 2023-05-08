@@ -11,7 +11,7 @@ from django.template.defaultfilters import slugify
 from django.urls import reverse
 from django.utils.timezone import now
 from django_gcp.events.utils import decode_pubsub_message
-from django_gcp.exceptions import DuplicateTaskError, IncorrectTaskUsageError
+from django_gcp.exceptions import DuplicateTaskError, IncompatibleSettingsError, IncorrectTaskUsageError
 from gcp_pilot.pubsub import CloudPublisher, CloudSubscriber
 from google.api_core.exceptions import AlreadyExists
 from google.cloud import pubsub_v1
@@ -83,23 +83,19 @@ class Task(metaclass=TaskMeta):
     deduplicate = False
 
     def enqueue(self, **kwargs):
-        """Enqueues the given task for processing, unless 'self.manager.disable_execution' is True.
-        If `manager.disable_execution` is True, this method returns None without enqueuing the task.
-        """
-        if self.manager.disable_execution:
-            return None
+        """Invoke a task (place it onto a queue for processing)
 
+        Some settings affect the behaviour of this method, allowing bypass or immediate execution. See settings documentation for more.
+        """
         return self._send(
             task_kwargs=kwargs,
         )
 
     def enqueue_later(self, when, **kwargs):
         """Invoke a task (place it onto a queue for processing after some time delay)
-        If `manager.disable_execution` is True, this method returns None without enqueuing the task.
-        """
-        if self.manager.disable_execution:
-            return None
 
+        Some settings affect the behaviour of this method, allowing bypass or immediate execution. See settings documentation for more.
+        """
         if isinstance(when, int):
             delay_in_seconds = when
         elif isinstance(when, timedelta):
@@ -173,6 +169,12 @@ class Task(metaclass=TaskMeta):
     # interacting with Cloud Tasks, like the following _send method
 
     def _send(self, task_kwargs, api_kwargs=None):
+        if self.manager.disable_execute and self.manager.eager_execute:
+            raise IncompatibleSettingsError("disable_execute and eager_execute are mutually exclusive")
+
+        if self.manager.disable_execute:
+            return None
+
         payload = serialize(task_kwargs)
         if self.manager.eager_execute:
             return self.run(**deserialize(payload))

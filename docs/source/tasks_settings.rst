@@ -89,7 +89,7 @@ Whilst not generally useful in production, this can be quite helpful for straigh
 debugging of tasks in local environments.
 
 
-``GCP_TASKS_DISABLE_EXECUTION``
+``GCP_TASKS_DISABLE_EXECUTE``
 ---------------------------
 Type: ``boolean``
 
