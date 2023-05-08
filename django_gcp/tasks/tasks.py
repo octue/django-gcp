@@ -170,7 +170,7 @@ class Task(metaclass=TaskMeta):
 
     def _send(self, task_kwargs, api_kwargs=None):
         if self.manager.disable_execute and self.manager.eager_execute:
-            raise IncompatibleSettingsError("disable_execute and eager_execute are mutually exclusive")
+            raise IncompatibleSettingsError("disable_execute and eager_execute should be mutually exclusive")
 
         if self.manager.disable_execute:
             return None
