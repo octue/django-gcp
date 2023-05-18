@@ -36,3 +36,7 @@ class AttemptedOverwriteError(Exception):
 
 class MissingBlobError(Exception):
     """Raised when attempting to access or copy a blob that is not present in GCS"""
+
+
+class IncompatibleSettingsError(ValueError):
+    """Raised when settings values are mutually exclusive"""

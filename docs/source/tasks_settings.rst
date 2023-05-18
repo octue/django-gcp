@@ -87,3 +87,18 @@ If set to true, tasks will synchronously execute when their ``enqueue()`` method
 
 Whilst not generally useful in production, this can be quite helpful for straightforward
 debugging of tasks in local environments.
+
+
+``GCP_TASKS_DISABLE_EXECUTE``
+-----------------------------
+Type: ``boolean``
+
+Default: ``False``
+
+If set to true, tasks will not be enqueued for processing when their ``enqueue()`` or ``enqueue_later()``
+methods are called. Instead, the method will simply return None without enqueuing the task, allowing for the
+disabling of task execution. This can be useful in scenarios where tasks need to be temporarily disabled or
+when testing/debugging task code.
+
+It is important to note that this setting only affect tasks when their ``enqueue()`` or ``enqueue_later()``
+methods are called and that tasks can still be executed manually even if this setting is set to True.

@@ -8,15 +8,21 @@
 
 import json
 from unittest.mock import patch
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 from django_gcp.events.utils import make_pubsub_message
-from django_gcp.exceptions import DuplicateTaskError, IncorrectTaskUsageError
+from django_gcp.exceptions import DuplicateTaskError, IncompatibleSettingsError, IncorrectTaskUsageError
 from django_gcp.tasks import OnDemandTask
 from gcp_pilot.mocker import patch_auth
 from google.api_core.exceptions import AlreadyExists
 
-from tests.server.example.tasks import DeduplicatedOnDemandTask, MyOnDemandTask
+from tests.server.example.tasks import (
+    DeduplicatedOnDemandTask,
+    FailingOnDemandTask,
+    MyOnDemandTask,
+    MyPeriodicTask,
+    MySubscriberTask,
+)
 from .test_events_utils import DEFAULT_SUBSCRIPTION
 
 
@@ -79,3 +85,29 @@ class TasksEnqueueingTest(SimpleTestCase):
 
         self.assertEqual(500, response.status_code)
         self.assertIn("error", response.json())
+
+    def test_disable_enqueueing_with_a_setting(self):
+        """Assert that no task is enqueued if the GCP_TASKS_DISABLE_EXECUTE is true"""
+        with patch_auth():
+            with patch("django_gcp.tasks.tasks.run_coroutine") as patched_send:
+                MyOnDemandTask().enqueue(a="1")
+                self.assertEqual(patched_send.call_count, 1)
+
+                with override_settings(GCP_TASKS_DISABLE_EXECUTE=True):
+                    MyOnDemandTask().enqueue(a="1")
+                    MyPeriodicTask().enqueue(a="1")
+                    MySubscriberTask().enqueue(a="1")
+                    FailingOnDemandTask().enqueue(a="1")
+
+                    self.assertEqual(patched_send.call_count, 1)
+
+                    MyOnDemandTask().enqueue_later(a="1", when=10)
+                    MyPeriodicTask().enqueue_later(a="1", when=10)
+                    MySubscriberTask().enqueue_later(a="1", when=10)
+                    FailingOnDemandTask().enqueue_later(a="1", when=10)
+
+                    self.assertEqual(patched_send.call_count, 1)
+
+            with override_settings(GCP_TASKS_DISABLE_EXECUTE=True, GCP_TASKS_EAGER_EXECUTE=True):
+                with self.assertRaises(IncompatibleSettingsError):
+                    MyOnDemandTask().enqueue(a="1")

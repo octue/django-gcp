@@ -50,6 +50,11 @@ class TaskManager:
         return getattr(settings, "GCP_TASKS_DELIMITER", "--")
 
     @property
+    def disable_execute(self):
+        """Return the GCP_TASKS_DISABLE_EXECUTE setting or default False"""
+        return getattr(settings, "GCP_TASKS_DISABLE_EXECUTE", False)
+
+    @property
     def domain(self):
         """Return the GCP_TASKS_DOMAIN setting or a default"""
         _domain = getattr(settings, "GCP_TASKS_DOMAIN")
