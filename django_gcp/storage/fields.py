@@ -23,6 +23,16 @@ DEFAULT_MAX_SIZE_BYTES = 32 * 1024 * 1024
 
 DEFAULT_OVERWRITE_MODE = "never"
 
+OVERWRITE_MODES = [
+    "never",
+    "update",
+    "update-versioned",
+    "add",
+    "add-versioned",
+    "add-update",
+    "add-update-versioned",
+]
+
 DEFAULT_OVERRIDE_BLOBFIELD_VALUE = False
 
 
@@ -31,27 +41,22 @@ class BlobField(models.JSONField):
 
     Features such as metadata fetching/synchronisation and direct uploads are enabled.
 
-    ObjectField allows storage classes to be declared in settings. This enables:
+    BlobField allows storage classes to be declared in settings. This enables:
     - storages to be switched without database migrations (supporting integration
       and release preview type workflows plus cloud migration)
-    - eaiser way of using different buckets for different ObjectFields without
+    - eaiser way of using different buckets for different BlobFields without
       defining a Storage class for each bucket
 
-    ObjectField is built on JSONField to allow more complex information to be stored
+    BlobField is built on JSONField to allow more complex information to be stored
     and queried. Examples might include:
      - cached object generation or metageneration,
      - cached object metadata, or
      - status of direct uploads
 
-    ObjectField does not inherit directly from FileField to avoid the burden of strict
+    BlobField does not inherit directly from FileField to avoid the burden of strict
     compatibility with legacy or irrelevant-to-cloud-storage behaviour (like django
     admin overriding formfields or coping with edge cases around name and path handling).
     We do this to support a clear and maintainable implementation.
-
-    ObjectField can read FileField entries: since FileField stores the path as a string,
-    that's valid JSON so can be accepted by ObjectField, greatly simplifying migration.
-    Once a model instance has been updated, its entry will be a JSON object and so will
-    no longer be trivially reversible to a valid FileField entry without a custom migration.
 
     :param ingress_to: A string defining the path within the bucket to which direct uploads
     will be ingressed, if temporary_ingress=True. These uploaded files will be moved to their
@@ -61,6 +66,7 @@ class BlobField(models.JSONField):
     specific mimetype. No validation is done at the field level that objects actually are of this
     type (because the python mimetypes module doesn't accept wildcard mimetypes and we don't want to
     go on a wild goose chase just for this small feature).
+
     :param get_destination_path: A callable to determine the destination path of the blob.
     The blob should already have been successfully uploaded to the temporary location
     in GCP prior to creation of this model instance. This function is then called in the
@@ -68,8 +74,18 @@ class BlobField(models.JSONField):
     order to construct the destination filename. Note this EXCLUDES the id, if the model has an
     autoincrementing ID field that gets created on save, because that can't be known prior to
     the save.
+
     :param max_size_bytes: The maximum size in bytes of files that can be uploaded.
 
+    :overwrite_mode: One of `OVERWRITE_MODES` determining the circumstances under which overwrite
+    is allowed. overwrite mode behaves as follows:
+    - never: Never allows overwrite
+    - update: Only when updating an object
+    - update-versioned: Only when updating an object and the bucket has object versioning
+    - add: Only when adding an object (we're not sure why you'd want this, here for completeness)
+    - add-versioned: Only when adding an object to a versioned bucket (again, for completeness)
+    - add-update: Always allow (ie when adding or updating an object)
+    - add-update-versioned: When adding or updating an object to a versioned bucket
     """
 
     description = _("A GCP Cloud Storage object")
@@ -170,9 +186,9 @@ class BlobField(models.JSONField):
         # access to it. Tip: You can use django's override_settings context manager to set this temporarily.
         if getattr(settings, "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE", DEFAULT_OVERRIDE_BLOBFIELD_VALUE):
             logger.warning(
-                "Overriding %s value with path %s",
+                "Overriding %s value to %s",
                 self.__class__.__name__,
-                getattr(value, "path", None),
+                value,
             )
             new_value = value
         else:
@@ -358,22 +374,13 @@ class BlobField(models.JSONField):
         return []
 
     def _check_overwrite_mode(self):
-        allowable_modes = [
-            "never",
-            "update",
-            "update-versioned",
-            "add",
-            "add-versioned",
-            "add-update",
-            "add-update-versioned",
-        ]
-        if self.overwrite_mode not in allowable_modes:
+        if self.overwrite_mode not in OVERWRITE_MODES:
             return [
                 checks.Error(
                     "{self.__class__.__name__}'s 'overwrite_mode' is invalid",
                     obj=self,
                     id="fields.E202",
-                    hint=f"Try one of: {allowable_modes}",
+                    hint=f"Try one of: {OVERWRITE_MODES}",
                 )
             ]
         return []
