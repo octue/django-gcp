@@ -59,8 +59,8 @@ class BlobField(models.JSONField):
     We do this to support a clear and maintainable implementation.
 
     :param ingress_to: A string defining the path within the bucket to which direct uploads
-    will be ingressed, if temporary_ingress=True. These uploaded files will be moved to their
-    ultimate path in the store on save of the model.
+    will be ingressed. These uploaded files will be moved to their ultimate path in the store on save of the model.
+
     :param accept_mimetype: A string passed to widgets, suitable for use in the `accept` attribute
     of an html filepicker. This will allow you to narrow down, eg to `image/*` or an even more
     specific mimetype. No validation is done at the field level that objects actually are of this
@@ -77,7 +77,7 @@ class BlobField(models.JSONField):
 
     :param max_size_bytes: The maximum size in bytes of files that can be uploaded.
 
-    :overwrite_mode: One of `OVERWRITE_MODES` determining the circumstances under which overwrite
+    :param overwrite_mode: One of `OVERWRITE_MODES` determining the circumstances under which overwrite
     is allowed. overwrite mode behaves as follows:
     - never: Never allows overwrite
     - update: Only when updating an object
@@ -172,7 +172,11 @@ class BlobField(models.JSONField):
     @property
     def override_blobfield_value(self):
         """Shortcut to access the GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE setting"""
-        return getattr(settings, "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE", DEFAULT_OVERRIDE_BLOBFIELD_VALUE)
+        return getattr(
+            settings,
+            "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE",
+            DEFAULT_OVERRIDE_BLOBFIELD_VALUE,
+        )
 
     def pre_save(self, model_instance, add):
         """Return field's value just before saving."""
@@ -184,7 +188,11 @@ class BlobField(models.JSONField):
         # explicitly for the purpose of data migration and manipulation. You should never allow an untrusted
         # client to set paths directly, because knowing the path of a pre-existing object allows you to assume
         # access to it. Tip: You can use django's override_settings context manager to set this temporarily.
-        if getattr(settings, "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE", DEFAULT_OVERRIDE_BLOBFIELD_VALUE):
+        if getattr(
+            settings,
+            "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE",
+            DEFAULT_OVERRIDE_BLOBFIELD_VALUE,
+        ):
             logger.warning(
                 "Overriding %s value to %s",
                 self.__class__.__name__,
@@ -207,7 +215,6 @@ class BlobField(models.JSONField):
                 new_value = None
 
             elif adding_valid or updating_blank_to_valid or updating_valid_to_valid:
-
                 new_value = {}
                 new_value["path"], allow_overwrite = self.get_destination_path(
                     instance=model_instance,
@@ -240,7 +247,9 @@ class BlobField(models.JSONField):
                     )
                 )
                 logger.info(
-                    "Registered move of %s to %s to happen on transaction commit", value["_tmp_path"], new_value["path"]
+                    "Registered move of %s to %s to happen on transaction commit",
+                    value["_tmp_path"],
+                    new_value["path"],
                 )
 
             else:
