@@ -3,13 +3,15 @@
 # pylint: disable=protected-access
 # pylint: disable=too-many-public-methods
 # pylint: disable=no-member
+from unittest.mock import patch
 from uuid import uuid4
 from django import forms
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.test import Client, TestCase, TransactionTestCase, override_settings
 from django_gcp.exceptions import MissingBlobError
 
-from tests.server.example.models import ExampleBlankBlobFieldModel, ExampleBlobFieldModel
+from tests.server.example.models import ExampleBlankBlobFieldModel, ExampleBlobFieldModel, ExampleCallbackBlobFieldModel
 from ._utils import get_admin_add_view_url, get_admin_change_view_url
 from .test_storage_operations import StorageOperationsMixin
 
@@ -27,6 +29,14 @@ class BlankBlobForm(forms.ModelForm):
 
     class Meta:
         model = ExampleBlankBlobFieldModel
+        fields = ["blob"]
+
+
+class CallbackBlobForm(forms.ModelForm):
+    """Dummy form for testing modeladmin"""
+
+    class Meta:
+        model = ExampleCallbackBlobFieldModel
         fields = ["blob"]
 
 
@@ -129,7 +139,15 @@ class TestBlobField(StorageOperationsMixin, TransactionTestCase):
     def test_validates_path_not_present_on_add(self):
         """Ensure that a ValidationError is raised if no 'name' property is present in the blob data"""
 
-        form = BlobForm(data={"blob": {"name": "something", "_tmp_path": "something", "path": "something"}})
+        form = BlobForm(
+            data={
+                "blob": {
+                    "name": "something",
+                    "_tmp_path": "something",
+                    "path": "something",
+                }
+            }
+        )
 
         self.assertEqual(
             form.errors["blob"],
@@ -266,7 +284,10 @@ class TestBlankBlobField(BlobModelFactoryMixin, StorageOperationsMixin, Transact
         tmp_blob = self._create_temporary_blob(self.bucket)
 
         # Create a form to change this instance and set the data to a real value
-        form = BlankBlobForm(instance=instance, data={"blob": {"_tmp_path": tmp_blob.name, "name": new_name}})
+        form = BlankBlobForm(
+            instance=instance,
+            data={"blob": {"_tmp_path": tmp_blob.name, "name": new_name}},
+        )
         self.assertTrue(form.is_valid())
         form.save()
         instance.refresh_from_db()
@@ -290,3 +311,58 @@ class TestBlankBlobField(BlobModelFactoryMixin, StorageOperationsMixin, Transact
         form = BlankBlobForm(instance=instance, data={"blob": {"path": name}, "category": "test"})
         self.assertTrue(form.is_valid())
         form.save()
+
+
+class TestCallableBlobField(BlobModelFactoryMixin, StorageOperationsMixin, TestCase):
+    """Inherits from transaction test case, because we use an on_commit
+    hook to move ingressed files once a database save has been made.
+    """
+
+    def test_on_change_callback_execution(self):
+        with patch("django.db.transaction.on_commit") as mock_on_commit:
+            with transaction.atomic():
+
+                # Create a blank instance
+                form = CallbackBlobForm(data={"blob": {}})
+                instance = form.save()
+                instance.refresh_from_db()
+
+                self.assertEqual(mock_on_commit.call_count, 1)
+
+                # Editing while keeping field blank should not execute the callback
+                form = CallbackBlobForm(instance=instance, data={"blob": {}})
+                instance = form.save()
+                self.assertEqual(mock_on_commit.call_count, 1)
+
+                # Editing from blank to valid should execute the callback
+                name = self._prefix_blob_name("test_on_change_callback_execution.txt")
+                tmp_blob = self._create_temporary_blob(self.bucket)
+                form = CallbackBlobForm(
+                    instance=instance,
+                    data={"blob": {"_tmp_path": tmp_blob.name, "name": name}},
+                )
+                instance = form.save()
+                self.assertEqual(mock_on_commit.call_count, 2)
+
+                # Editing with unchanged valid entry should not trigger a callback
+                form = CallbackBlobForm(instance=instance, data={"blob": {"path": name}, "category": "test"})
+                form.save()
+                self.assertEqual(mock_on_commit.call_count, 2)
+
+                # Editing to a new valid entry should trigger callback
+                name = self._prefix_blob_name("test_on_change_callback_execution_2.txt")
+                tmp_blob = self._create_temporary_blob(self.bucket)
+                form = CallbackBlobForm(
+                    instance=instance,
+                    data={"blob": {"_tmp_path": tmp_blob.name, "name": name}},
+                )
+                instance = form.save()
+                self.assertEqual(mock_on_commit.call_count, 3)
+
+                # Editing valid to blank should trigger callback
+                form = CallbackBlobForm(
+                    instance=instance,
+                    data={"blob": {}},
+                )
+                instance = form.save()
+                self.assertEqual(mock_on_commit.call_count, 4)

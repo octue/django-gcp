@@ -1,17 +1,9 @@
 # pylint: disable=missing-docstring
 
 import datetime
-from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation
 from django.test import TestCase
 from django_gcp.storage import utils
-
-
-class SettingTest(TestCase):
-    def test_get_setting(self):
-        """Ensure that the settings utility works"""
-        value = utils.setting("SECRET_KEY")
-        self.assertEqual(settings.SECRET_KEY, value)
 
 
 class CleanNameTests(TestCase):

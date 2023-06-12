@@ -1,6 +1,5 @@
 import os
 import posixpath
-from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation
 from django.utils.encoding import force_bytes
 
@@ -13,37 +12,24 @@ def to_bytes(content):
     return force_bytes(content)
 
 
-def setting(name, default=None):
-    """
-    Helper function to get a Django setting by name. If setting doesn't exists
-    it will return a default.
-
-    :param name: Name of setting
-    :type name: str
-    :param default: Value if setting is unfound
-    :returns: Setting's value
-    """
-    return getattr(settings, name, default)
-
-
 def clean_name(name):
     """
     Cleans the name so that Windows style paths work
     """
     # Normalize Windows style paths
-    clean_name = posixpath.normpath(name).replace("\\", "/")
+    cleaned = posixpath.normpath(name).replace("\\", "/")
 
     # os.path.normpath() can strip trailing slashes so we implement
     # a workaround here.
-    if name.endswith("/") and not clean_name.endswith("/"):
+    if name.endswith("/") and not cleaned.endswith("/"):
         # Add a trailing slash as it was stripped.
-        clean_name = clean_name + "/"
+        cleaned = cleaned + "/"
 
     # Given an empty string, os.path.normpath() will return ., which we don't want
-    if clean_name == ".":
-        clean_name = ""
+    if cleaned == ".":
+        cleaned = ""
 
-    return clean_name
+    return cleaned
 
 
 def safe_join(base, *paths):
@@ -77,12 +63,13 @@ def safe_join(base, *paths):
     # the base path is /.
     base_path_len = len(base_path)
     if not final_path.startswith(base_path) or final_path[base_path_len] != "/":
-        raise ValueError("the joined path is located outside of the base path" " component")
+        raise ValueError("the joined path is located outside of the base path component")
 
     return final_path.lstrip("/")
 
 
 def get_available_overwrite_name(name, max_length):
+    """Truncate a filename to obey max_length limit"""
     if max_length is None or len(name) <= max_length:
         return name
 
@@ -94,8 +81,6 @@ def get_available_overwrite_name(name, max_length):
     file_root = file_root[:-truncation]
     if not file_root:
         raise SuspiciousFileOperation(
-            'Storage tried to truncate away entire filename "%s". '
-            "Please make sure that the corresponding file field "
-            'allows sufficient "max_length".' % name
+            f'Storage tried to truncate away entire filename "{name}". Please make sure that the corresponding file field allows sufficient "max_length".'
         )
-    return os.path.join(dir_name, "{}{}".format(file_root, file_ext))
+    return os.path.join(dir_name, f"{file_root}{file_ext}")

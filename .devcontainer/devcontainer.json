@@ -71,7 +71,8 @@
         "thebarkman.vscode-djaneiro",
         "trond-snekvik.simple-rst",
         "ms-azuretools.vscode-docker",
-        "ryanluker.vscode-coverage-gutters"
+        "ryanluker.vscode-coverage-gutters",
+        "ms-python.black-formatter"
       ]
     }
   },

@@ -59,8 +59,8 @@ class BlobField(models.JSONField):
     We do this to support a clear and maintainable implementation.
 
     :param ingress_to: A string defining the path within the bucket to which direct uploads
-    will be ingressed, if temporary_ingress=True. These uploaded files will be moved to their
-    ultimate path in the store on save of the model.
+    will be ingressed. These uploaded files will be moved to their ultimate path in the store on save of the model.
+
     :param accept_mimetype: A string passed to widgets, suitable for use in the `accept` attribute
     of an html filepicker. This will allow you to narrow down, eg to `image/*` or an even more
     specific mimetype. No validation is done at the field level that objects actually are of this
@@ -77,7 +77,7 @@ class BlobField(models.JSONField):
 
     :param max_size_bytes: The maximum size in bytes of files that can be uploaded.
 
-    :overwrite_mode: One of `OVERWRITE_MODES` determining the circumstances under which overwrite
+    :param overwrite_mode: One of `OVERWRITE_MODES` determining the circumstances under which overwrite
     is allowed. overwrite mode behaves as follows:
     - never: Never allows overwrite
     - update: Only when updating an object
@@ -86,6 +86,10 @@ class BlobField(models.JSONField):
     - add-versioned: Only when adding an object to a versioned bucket (again, for completeness)
     - add-update: Always allow (ie when adding or updating an object)
     - add-update-versioned: When adding or updating an object to a versioned bucket
+
+    :param on_change: A callable that will be executed on change of the field value. This will be called
+    on commit of the transaction (ie once any file upload is ingressed to its final location) and allows you,
+    for example, to dispatch a worker task to further process the uploaded blob.
     """
 
     description = _("A GCP Cloud Storage object")
@@ -99,6 +103,7 @@ class BlobField(models.JSONField):
         accept_mimetype=DEFAULT_ACCEPT_MIMETYPE,
         max_size_bytes=DEFAULT_MAX_SIZE_BYTES,
         overwrite_mode=DEFAULT_OVERWRITE_MODE,
+        on_change=None,
         **kwargs,
     ):
         self._versioning_enabled = None
@@ -112,6 +117,7 @@ class BlobField(models.JSONField):
         self.store_key = store_key
         self.accept_mimetype = accept_mimetype
         self.max_size_bytes = max_size_bytes
+        self.on_change = on_change
         kwargs["default"] = kwargs.pop("default", None)
         kwargs["help_text"] = kwargs.pop("help_text", "GCP cloud storage object")
 
@@ -144,6 +150,7 @@ class BlobField(models.JSONField):
             *self._check_get_destination_path(),
             *self._check_ingress_to(),
             *self._check_overwrite_mode(),
+            *self._check_on_change(),
         ]
 
     def deconstruct(self):
@@ -153,6 +160,7 @@ class BlobField(models.JSONField):
         kwargs["accept_mimetype"] = self.accept_mimetype
         kwargs["overwrite_mode"] = self.overwrite_mode
         kwargs["get_destination_path"] = self.get_destination_path
+        kwargs["on_change"] = self.on_change
         return name, path, args, kwargs
 
     def formfield(self, **kwargs):
@@ -172,7 +180,11 @@ class BlobField(models.JSONField):
     @property
     def override_blobfield_value(self):
         """Shortcut to access the GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE setting"""
-        return getattr(settings, "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE", DEFAULT_OVERRIDE_BLOBFIELD_VALUE)
+        return getattr(
+            settings,
+            "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE",
+            DEFAULT_OVERRIDE_BLOBFIELD_VALUE,
+        )
 
     def pre_save(self, model_instance, add):
         """Return field's value just before saving."""
@@ -184,7 +196,12 @@ class BlobField(models.JSONField):
         # explicitly for the purpose of data migration and manipulation. You should never allow an untrusted
         # client to set paths directly, because knowing the path of a pre-existing object allows you to assume
         # access to it. Tip: You can use django's override_settings context manager to set this temporarily.
-        if getattr(settings, "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE", DEFAULT_OVERRIDE_BLOBFIELD_VALUE):
+        # Note that you'll have to execute any on_changed
+        if getattr(
+            settings,
+            "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE",
+            DEFAULT_OVERRIDE_BLOBFIELD_VALUE,
+        ):
             logger.warning(
                 "Overriding %s value to %s",
                 self.__class__.__name__,
@@ -206,8 +223,15 @@ class BlobField(models.JSONField):
             elif adding_blank or updating_valid_to_blank:
                 new_value = None
 
-            elif adding_valid or updating_blank_to_valid or updating_valid_to_valid:
+                # Trigger the on_change callback at the end of the commit when we know the
+                # database transaction will work
+                def on_commit_blank():
+                    if self.on_change is not None:
+                        self.on_change(new_value, instance=model_instance)
 
+                transaction.on_commit(on_commit_blank)
+
+            elif adding_valid or updating_blank_to_valid or updating_valid_to_valid:
                 new_value = {}
                 new_value["path"], allow_overwrite = self.get_destination_path(
                     instance=model_instance,
@@ -228,8 +252,8 @@ class BlobField(models.JSONField):
                 # capture the dual edge cases of the file not moving correctly, and the database
                 # row not saving (eg due to validation errors in other model fields).
                 # https://stackoverflow.com/questions/33180727/trigering-post-save-signal-only-after-transaction-has-completed
-                transaction.on_commit(
-                    lambda: copy_blob(
+                def on_commit_valid():
+                    copy_blob(
                         self.storage.bucket,
                         value["_tmp_path"],
                         self.storage.bucket,
@@ -238,9 +262,15 @@ class BlobField(models.JSONField):
                         overwrite=allow_overwrite,
                         attributes=value.get("attributes", None),
                     )
-                )
+                    if self.on_change is not None:
+                        self.on_change(new_value, instance=model_instance)
+
+                transaction.on_commit(on_commit_valid)
+
                 logger.info(
-                    "Registered move of %s to %s to happen on transaction commit", value["_tmp_path"], new_value["path"]
+                    "Registered move of %s to %s to happen on transaction commit",
+                    value["_tmp_path"],
+                    new_value["path"],
                 )
 
             else:
@@ -401,6 +431,17 @@ class BlobField(models.JSONField):
             return [
                 checks.Error(
                     f"'get_destination_path' argument in {self.__class__.__name__} must be a callable function to return the destination object name.",
+                    obj=self,
+                    id="fields.E201",
+                )
+            ]
+        return []
+
+    def _check_on_change(self):
+        if self.on_change is not None and not callable(self.on_change):
+            return [
+                checks.Error(
+                    f"'on_change' argument in {self.__class__.__name__} must be or a callable function, or None",
                     obj=self,
                     id="fields.E201",
                 )
