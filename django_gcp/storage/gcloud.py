@@ -1,6 +1,7 @@
 import logging
 import mimetypes
 from tempfile import SpooledTemporaryFile
+from django.conf import settings
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import File
 from django.core.files.storage import Storage
@@ -12,7 +13,7 @@ from google.cloud.storage.blob import _quote
 
 from .compress import CompressedFileMixin, CompressStorageMixin
 from .settings import StorageSettings
-from .utils import clean_name, get_available_overwrite_name, safe_join, setting, to_bytes
+from .utils import clean_name, get_available_overwrite_name, safe_join, to_bytes
 
 
 CONTENT_ENCODING = "content_encoding"
@@ -44,7 +45,7 @@ class GoogleCloudFile(CompressedFileMixin, File):
             self._file = SpooledTemporaryFile(
                 max_size=self._storage.settings.max_memory_size,
                 suffix=".GSStorageFile",
-                dir=setting("FILE_UPLOAD_TEMP_DIR"),
+                dir=getattr(settings, "FILE_UPLOAD_TEMP_DIR"),
             )
             if "r" in self._mode:
                 self._is_dirty = False
@@ -286,7 +287,7 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):  # pylint: disable=abst
         name = self._normalize_name(clean_name(name))
         blob = self._get_blob(name)
         updated = blob.updated
-        return updated if setting("USE_TZ") else timezone.make_naive(updated)
+        return updated if getattr(settings, "USE_TZ") else timezone.make_naive(updated)
 
     def get_created_time(self, name):
         """
@@ -296,7 +297,7 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):  # pylint: disable=abst
         name = self._normalize_name(clean_name(name))
         blob = self._get_blob(name)
         created = blob.time_created
-        return created if setting("USE_TZ") else timezone.make_naive(created)
+        return created if getattr(settings, "USE_TZ") else timezone.make_naive(created)
 
     def url(self, name):
         """

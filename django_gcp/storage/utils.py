@@ -1,6 +1,5 @@
 import os
 import posixpath
-from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation
 from django.utils.encoding import force_bytes
 
@@ -11,19 +10,6 @@ def to_bytes(content):
         return content
 
     return force_bytes(content)
-
-
-def setting(name, default=None):
-    """
-    Helper function to get a Django setting by name. If setting doesn't exists
-    it will return a default.
-
-    :param name: Name of setting
-    :type name: str
-    :param default: Value if setting is unfound
-    :returns: Setting's value
-    """
-    return getattr(settings, name, default)
 
 
 def clean_name(name):
