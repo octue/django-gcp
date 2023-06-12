@@ -4,7 +4,15 @@ from django_gcp.storage.fields import BlobField
 
 # Disabled to show the argument range in the example:
 # pylint: disable-next=unused-argument
-def get_destination_path(instance, original_name, attributes, existing_path, temporary_path, allow_overwrite, bucket):
+def get_destination_path(
+    instance,
+    original_name,
+    attributes,
+    existing_path,
+    temporary_path,
+    allow_overwrite,
+    bucket,
+):
     """An example callback, which is provided to BlobField in order that
     you can set the eventual pathname of the uploaded blob, using other model fields
     if you wish.
@@ -101,7 +109,12 @@ class ExampleBlankBlobFieldModel(Model):
     """
 
     category = CharField(max_length=20, blank=True, null=True)
-    blob = BlobField(get_destination_path=get_destination_path, store_key="media", blank=True, null=True)
+    blob = BlobField(
+        get_destination_path=get_destination_path,
+        store_key="media",
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         """Metaclass defining this model to reside in the example app"""
@@ -117,6 +130,35 @@ class ExampleUneditableBlobFieldModel(Model):
 
     category = CharField(max_length=20, blank=True, null=True)
     blob = BlobField(get_destination_path=get_destination_path, store_key="media", editable=False)
+
+    class Meta:
+        """Metaclass defining this model to reside in the example app"""
+
+        app_label = "example"
+
+
+def my_on_change_callback(value, instance):
+    """Demonstrate the on_change callback functionality"""
+    if value is None:
+        print("You removed the blob")
+    else:
+        print(f"Do something with the value {value} and instance {instance}")
+
+
+class ExampleCallbackBlobFieldModel(Model):
+    """
+    As ExampleBlobFieldModel but showing use of the on_change callback
+    (This is mostly used for widget development and testing)
+    """
+
+    category = CharField(max_length=20, blank=True, null=True)
+    blob = BlobField(
+        get_destination_path=get_destination_path,
+        store_key="media",
+        blank=True,
+        null=True,
+        on_change=my_on_change_callback,
+    )
 
     class Meta:
         """Metaclass defining this model to reside in the example app"""
