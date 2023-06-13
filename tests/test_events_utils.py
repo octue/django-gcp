@@ -10,9 +10,9 @@ import base64
 import json
 from datetime import datetime, timezone
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 from django.test import TestCase
 from django_gcp.events.utils import decode_pubsub_message, get_event_url, make_pubsub_message
-from zoneinfo import ZoneInfo
 
 
 DEFAULT_SUBSCRIPTION = "projects/my-project/subscriptions/my-subscription"

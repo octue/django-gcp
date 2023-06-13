@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       debug_enabled:
-        description: "Enable tmate debug"
+        description: 'Enable tmate debug'
         type: boolean
-        default: "false"
+        default: 'false'
 
 jobs:
   check-semantic-version:
@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python: ["3.9", "3.10"]
+        python: ['3.9', '3.10']
         os: [ubuntu-latest] # [ubuntu-latest, windows-latest, macos-latest] for full coverage but this gets expensive quickly
     runs-on: ${{ matrix.os }}
 

@@ -11,6 +11,7 @@
     "vscode": {
       "settings": {
         "austin.mode": "Wall time",
+        "black-formatter.args": ["--line-length", "120"],
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.formatOnSave": true,
         "esbonio.server.enabled": true,
@@ -29,7 +30,6 @@
         "python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
         "python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
         "python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-        // Line length to match black settings
         // Disabling specific messages:
         //  - To find the details do: /usr/local/py-utils/bin/pylint --list-msgs
         //  - Disable missing-module-docstring (C0114) because we don't document modules routinely, just their members

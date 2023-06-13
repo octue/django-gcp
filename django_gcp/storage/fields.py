@@ -188,7 +188,7 @@ class BlobField(models.JSONField):
 
     def pre_save(self, model_instance, add):
         """Return field's value just before saving."""
-        value = getattr(model_instance, self.attname)
+        value = self._clean_blank_value(getattr(model_instance, self.attname))
 
         existing_path = None if add else self._get_existing_path(model_instance)
 
@@ -196,7 +196,6 @@ class BlobField(models.JSONField):
         # explicitly for the purpose of data migration and manipulation. You should never allow an untrusted
         # client to set paths directly, because knowing the path of a pre-existing object allows you to assume
         # access to it. Tip: You can use django's override_settings context manager to set this temporarily.
-        # Note that you'll have to execute any on_changed
         if getattr(
             settings,
             "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE",
@@ -209,6 +208,7 @@ class BlobField(models.JSONField):
             )
             new_value = value
         else:
+
             # There are six scenarios to deal with:
             adding_blank = add and value is None
             adding_valid = add and value is not None
@@ -447,6 +447,13 @@ class BlobField(models.JSONField):
                 )
             ]
         return []
+
+    @staticmethod
+    def _clean_blank_value(value):
+        """Convert blanks values formulated as empty dicts {} to None"""
+        if value is not None and len(value) == 0:
+            value = None
+        return value
 
     def _get_allow_overwrite(self, add):
         """Return a boolean determining if overwrite should be allowed for this operation"""
