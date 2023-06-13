@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 
 # Developers:
 #
@@ -11,9 +11,9 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
       args:
-        VARIANT: "3.9"
-        INSTALL_NODE: "true"
-        NODE_VERSION: "lts/*"
+        VARIANT: '3.9'
+        INSTALL_NODE: 'true'
+        NODE_VERSION: 'lts/*'
 
     environment:
       - DATABASE_URL=postgres://postgres_user:postgres_password@localhost/postgres_db
@@ -55,7 +55,7 @@ services:
       - postgres_data:/var/lib/postgresql
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 10s
       timeout: 5s
       retries: 5
