@@ -279,8 +279,8 @@ class BlobField(models.JSONField):
                     f"Unable to determine field state for {self._get_fieldname(model_instance)}. The most likely cause of this doing an operation (like migration) without setting GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True. Otherwise, please contact the django_gcp developers and describe what you're doing along with this exception stacktrace. Value was: {json.dumps(value)}"
                 )
 
-        # Pop cached DB values so you can re-use an instantiated form after saving it
-        self._existing_value = {"_cached": new_value}
+        # Cache DB values in the instance so you can reuse it without multiple DB queries
+        model_instance._state.fields_cache[self.attname] = new_value
 
         return new_value
 
@@ -478,14 +478,14 @@ class BlobField(models.JSONField):
         """Gets the existing (saved in db) path; will raise an error if the instance is unsaved.
         Caches value on the instance to avoid duplicate database calls within a transaction.
         """
-        if self._existing_value is None:
-            # pylint: disable-next=protected-access
+        # pylint: disable=protected-access
+        if self.attname not in instance._state.fields_cache.keys():
             pk_name = instance._meta.pk.name
             # pylint: disable-next=protected-access
             existing = instance.__class__._default_manager.get(**{pk_name: getattr(instance, pk_name)})
             # Cache value in a dict because None is a valid value
-            self._existing_value = {"_cached": getattr(existing, self.attname)}
-        value_or_dict = self._existing_value["_cached"] or {}
+            instance._state.fields_cache[self.attname] = getattr(existing, self.attname)
+        value_or_dict = instance._state.fields_cache.get(self.attname, None) or {}
         return value_or_dict.get("path", None)
 
     def _get_fieldname(self, instance):
