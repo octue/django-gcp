@@ -314,8 +314,8 @@ class TestBlankBlobField(BlobModelFactoryMixin, StorageOperationsMixin, Transact
 
 
 class TestCallableBlobField(BlobModelFactoryMixin, StorageOperationsMixin, TestCase):
-    """Inherits from transaction test case, because we use an on_commit
-    hook to move ingressed files once a database save has been made.
+    """Test the callbacks functionality.
+    Use normal test case, allowing on_commit hook to execute.
     """
 
     def test_on_change_callback_execution(self):
@@ -366,3 +366,37 @@ class TestCallableBlobField(BlobModelFactoryMixin, StorageOperationsMixin, TestC
                 )
                 instance = form.save()
                 self.assertEqual(mock_on_commit.call_count, 4)
+
+
+class TestModelBlobField(BlobModelFactoryMixin, StorageOperationsMixin, TestCase):
+    """Extra tests for corner cases and model behaviour"""
+
+    def test_no_corruption_with_multiple_models(self):
+        """Tests for the presence of a nasty corner case where
+        multiple models loaded into memory at once would conflict in
+        their behaviour when determining the existing_path
+        """
+
+        blob_name_1 = self._prefix_blob_name("no_corruption_1.txt")
+        blob_name_2 = self._prefix_blob_name("no_corruption_2.txt")
+        # self._create_test_blob(self.bucket, blob_name_1, "")
+        # self._create_test_blob(self.bucket, blob_name_2, "")
+
+        # Create two instances
+        with override_settings(GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True):
+            obj_1 = ExampleBlobFieldModel.objects.create(blob={"path": blob_name_1})
+            obj_1.save()
+            # In the captured behaviour, the cache of the second instance overwrite the first
+            obj_2 = ExampleBlobFieldModel.objects.create(blob={"path": blob_name_2})
+            obj_2.save()
+
+        # Edit the first, without changing the KMZ field (and outside the settings override)
+        new_obj_1 = ExampleBlobFieldModel.objects.get(id=obj_1.id)
+        new_obj_1.category = "test-change"
+
+        # Note this is not a blankable model, and the observed flaw in flushing
+        # the cache in this case manifests in passing a None value instead of
+        # the correct existing path being passed through. This save() thus
+        # resulted in an IntegrityError.
+        new_obj_1.save()
+        self.assertEqual(new_obj_1.blob["path"], blob_name_1)
