@@ -107,7 +107,6 @@ class BlobField(models.JSONField):
         **kwargs,
     ):
         self._versioning_enabled = None
-        self._existing_value = None
         self._temporary_path = None
         self._primary_key_set_explicitly = "primary_key" in kwargs
         self._choices_set_explicitly = "choices" in kwargs
@@ -274,12 +273,13 @@ class BlobField(models.JSONField):
                 )
 
             else:
-                # TODO Remove this once we've enough experience in production
+                # Raise unknown edge cases rather than failing silently
                 raise ValueError(
                     f"Unable to determine field state for {self._get_fieldname(model_instance)}. The most likely cause of this doing an operation (like migration) without setting GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True. Otherwise, please contact the django_gcp developers and describe what you're doing along with this exception stacktrace. Value was: {json.dumps(value)}"
                 )
 
         # Cache DB values in the instance so you can reuse it without multiple DB queries
+        # pylint: disable-next=protected-access
         model_instance._state.fields_cache[self.attname] = new_value
 
         return new_value
@@ -390,6 +390,7 @@ class BlobField(models.JSONField):
         """True if object versioning is enabled on the bucket configured for this field"""
         if self._versioning_enabled is None:
             self._versioning_enabled = bool(self.storage.bucket.versioning_enabled)
+        return self._versioning_enabled
 
     def _check_ingress_to(self):
         if isinstance(self.ingress_to, str) and self.ingress_to.startswith("/"):
