@@ -16,7 +16,7 @@ jobs:
     uses: octue/.github/.github/workflows/reusable-check-semantic-version.yml@main
 
   run-tests:
-    if: '!contains(github.event.head_commit.message, "skipci")'
+    if: "!contains(github.event.head_commit.message, 'skipci')"
     strategy:
       fail-fast: true
       matrix:
