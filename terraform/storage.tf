@@ -24,6 +24,18 @@ resource "google_storage_bucket_iam_binding" "static_assets_object_viewer" {
   ]
 }
 
+
+# Allow developers to run collectstatic
+resource "google_storage_bucket_iam_binding" "static_assets_object_admin" {
+  bucket = google_storage_bucket.static_assets.name
+  role   = "roles/storage.objectAdmin"
+  members = [
+    "serviceAccount:${google_service_account.dev_thclark.email}",
+    "serviceAccount:${google_service_account.dev_lukasvinclav.email}"
+  ]
+}
+
+
 # Add a media bucket (private contents)
 #   Note: CORS are set to allow direct uploads, enabling upload of files
 #         larger than 32 mb (Cloud Run has a hard limit on file upload size)
@@ -47,7 +59,8 @@ resource "google_storage_bucket_iam_binding" "media_assets_object_admin" {
   bucket = google_storage_bucket.media_assets.name
   role   = "roles/storage.objectAdmin"
   members = [
-    "serviceAccount:${google_service_account.dev_thclark.email}"
+    "serviceAccount:${google_service_account.dev_thclark.email}",
+    "serviceAccount:${google_service_account.dev_lukasvinclav.email}"
   ]
 }
 
@@ -78,6 +91,7 @@ resource "google_storage_bucket_iam_binding" "extra_versioned_assets_object_admi
   bucket = google_storage_bucket.extra_versioned_assets.name
   role   = "roles/storage.objectAdmin"
   members = [
-    "serviceAccount:${google_service_account.dev_thclark.email}"
+    "serviceAccount:${google_service_account.dev_thclark.email}",
+    "serviceAccount:${google_service_account.dev_lukasvinclav.email}"
   ]
 }
