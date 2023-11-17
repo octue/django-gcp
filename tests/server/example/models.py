@@ -137,6 +137,27 @@ class ExampleUneditableBlobFieldModel(Model):
         app_label = "example"
 
 
+class ExampleMultipleBlobFieldModel(Model):
+    """
+    An example model containing multiple BlobFields
+    This model was started as a FileField model then migrated, so check the migrations
+    to see how that worked.
+    """
+
+    # This charfield is added to demonstrate that other fields of the model can be used
+    # in order to set the blob name
+    category = CharField(max_length=20, blank=True, null=True)
+
+    blob1 = BlobField(get_destination_path=get_destination_path, store_key="media")
+    blob2 = BlobField(get_destination_path=get_destination_path, store_key="media")
+    blob3 = BlobField(get_destination_path=get_destination_path, store_key="media")
+
+    class Meta:
+        """Metaclass defining this model to reside in the example app"""
+
+        app_label = "example"
+
+
 def my_on_change_callback(value, instance):
     """Demonstrate the on_change callback functionality"""
     if value is None:
