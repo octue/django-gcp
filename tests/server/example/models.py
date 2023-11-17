@@ -1,3 +1,4 @@
+from uuid import uuid4
 from django.db.models import CharField, FileField, Model
 from django_gcp.storage.fields import BlobField
 
@@ -55,9 +56,14 @@ def get_destination_path(
     """
     # Demonstrate using another field to name the object
     category = f"{instance.category}/" if instance.category is not None else ""
+
     # You may wish to add a timestamp, or random string to prevent collisions
-    # In this case we do the very simple thing of using the original name
-    return f"{category}{original_name}", allow_overwrite
+    # In this case we do the very simple thing of using the original name with random prefix
+    # If you attempt to overwrite while allow_ovewrite is false, a server error will raise.
+    # Only set allow_overwrite = True if you really, REALLY, know what you're doing!
+    random_prefix = str(uuid4())[0:8]
+
+    return f"{category}{random_prefix}-{original_name}", allow_overwrite
 
 
 class ExampleStorageModel(Model):
