@@ -1,0 +1,86 @@
+{% load i18n %}
+
+<div class="gcp-wrapper" data-existing-path="{{ existing_path }}" data-signed-ingress-url="{{ signed_ingress_url }}" data-ingress-path="{{ ingress_path }}">
+    <div class="border flex flex-col overflow-hidden rounded-md shadow-sm text-sm max-w-2xl dark:border-gray-700">
+        <input
+            type="hidden" name="{{ widget.name }}"
+            {% if widget.value != None and "path" in widget.value %} 
+            value="{{ widget.value|stringformat:'s' }}"
+            {% else %}
+            value=""
+            {% endif %}
+            {% include "django/forms/widgets/attrs.html" %}
+        >
+
+        <div class="border-b flex flex-col md:flex-row dark:border-gray-700">
+            <div class="border-b flex flex-row h-9.5 items-center px-3 py-2 w-48 w-full whitespace-nowrap shrink-0 dark:border-gray-700 md:border-0 md:border-r md:w-48">            
+                <span class="material-symbols-outlined mr-2 text-gray-400">
+                    cloud
+                </span>
+
+                {% trans "Existing cloud path" %}
+            </div>
+
+            <div class="flex flex-grow flex-row h-9.5 min-w-0">
+                <div class="gcp-existing-path flex-grow px-3 py-2 truncate">
+                    {{ existing_path }}
+                </div>
+
+                <div class="gcp-row-controls">
+                    <div class="flex flex-row items-center gap-2 px-2">
+                        {% if existing_path %}
+                            <button type="button" class="gcp-clear-restore-existing bg-red-100 border border-red-200 text-red-500 leading-relaxed rounded-md px-2 shadow-sm whitespace-nowrap dark:bg-red-500/20 dark:border-red-500/20">
+                                {% trans "Clear existing" %}
+                            </button>
+                        {% endif %}
+
+                        {% if console_url is not None %}
+                            <button type="button"  class="gcp-view-console block border leading-relaxed rounded-md px-2 shadow-sm whitespace-nowrap dark:border-gray-700">
+                                {% trans "View in console" %}
+                            </button>
+                        {% endif %}
+
+                        {% if download_url is not None %}
+                            <button type="button" class="gcp-download block border leading-relaxed rounded-md px-2 shadow-sm whitespace-nowrap dark:border-gray-700" href="{{ download_url }}" download>
+                                {% trans "Download" %}
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div> 
+
+        <div class="flex flex-col items-center md:flex-row">
+            <div class="border-b flex flex-row h-9.5 items-center px-3 py-2 w-full whitespace-nowrap shrink-0 md:border-0 md:border-r md:w-48 dark:border-gray-700">            
+                <span class="material-symbols-outlined mr-2 text-gray-400">
+                    cloud_upload
+                </span>
+
+                {% trans "Selected for upload" %}
+            </div>
+                        
+            <label class="cursor-pointer flex flex-row flex-grow h-9.5  items-center min-w-0 w-full">
+                <input type="file" class="gcp-file-input" accept="{{ accept_mimetype }}"/>
+
+                <span class="gcp-selected-name flex-grow px-3 py-2 truncate"></span>        
+            
+                <span class="gcp-select-label block border leading-relaxed rounded-md mr-2 px-2 shadow-sm whitespace-nowrap dark:border-gray-700">
+                    {% trans "Select file" %}                    
+                </span>                
+            </label>
+
+            {% if not is_required %}
+                <span class="gcp-clear-selected border bg-red-100 border-red-200 text-red-500 cursor-pointer leading-relaxed mr-2 rounded-md px-2 shadow-sm whitespace-nowrap dark:bg-red-500/20 dark:border-red-500/20">
+                    {% trans "Clear selection" %}
+                </span>
+            {% endif %}                                                
+        </div>
+    </div>
+</div>
+
+<div class="gcp-overlay">
+    <p class="gcp-overlay-text">
+        {% trans "Uploading file, please wait..." %}
+    </p>
+</div>
+

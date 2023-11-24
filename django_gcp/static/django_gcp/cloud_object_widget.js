@@ -73,7 +73,7 @@ function clearSelected(wrapper) {
   wrapper.find(".gcp-selected-name").text("");
   // Update button text to "Select file"
   wrapper.find(".gcp-select-label").text("Select file");
-  wrapper.find(".gcp-clear-selected").addClass("gcp-disabled").prop("disabled", true);
+  wrapper.find(".gcp-clear-selected").addClass("gcp-disabled hidden").prop("disabled", true);
 }
 
 function addSelected(wrapper, name, contentType) {
@@ -93,7 +93,7 @@ function addSelected(wrapper, name, contentType) {
   // Update button text to "Select other"
   wrapper.find(".gcp-select-label").text("Select other");
   // Enable user to clear selection
-  wrapper.find(".gcp-clear-selected").removeClass("gcp-disabled").prop("disabled", false);
+  wrapper.find(".gcp-clear-selected").removeClass("gcp-disabled hidden").prop("disabled", false);
 }
 
 function hasSelected(wrapper) {
