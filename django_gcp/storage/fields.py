@@ -2,8 +2,8 @@ import json
 import logging
 import os
 from uuid import uuid4
-from django.contrib.admin.widgets import AdminTextareaWidget 
 from django.conf import settings
+from django.contrib.admin.widgets import AdminTextareaWidget
 from django.core import checks
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -208,7 +208,6 @@ class BlobField(models.JSONField):
             )
             new_value = value
         else:
-
             # There are six scenarios to deal with:
             adding_blank = add and value is None
             adding_valid = add and value is not None
@@ -233,7 +232,7 @@ class BlobField(models.JSONField):
 
             elif adding_valid or updating_blank_to_valid or updating_valid_to_valid:
                 new_value = {}
-                new_value["path"], allow_overwrite = self.get_destination_path(
+                new_value["path"], allow_overwrite = self._get_destination_path(
                     instance=model_instance,
                     original_name=value["name"],
                     attributes=getattr(value, "attributes", None),
@@ -549,3 +548,15 @@ class BlobField(models.JSONField):
         existing_path = self._get_existing_path(instance)
         temporary_path = self._get_instance_tmp_path(instance)
         return existing_path is not None and temporary_path is not None
+
+    def _get_destination_path(self, *args, **kwargs):
+        """Call the get_destination_path callback unless an override is defined in
+        settings. This funcitonality is intended for test purposes only, because
+        patching the callback in a test framework is a struggle
+        """
+        get_destination_path = getattr(
+            settings,
+            "GCP_STORAGE_OVERRIDE_GET_DESTINATION_PATH_CALLBACK",
+            self.get_destination_path,
+        )
+        return get_destination_path(*args, **kwargs)

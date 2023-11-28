@@ -55,6 +55,20 @@ class BlobModelFactoryMixin:
         return obj
 
 
+def get_destination_path_for_test(
+    instance,
+    original_name,
+    attributes,
+    existing_path,
+    temporary_path,
+    allow_overwrite,
+    bucket,
+):
+    """Returns a consistent destination path for a blob for test purposes"""
+    category = f"{instance.category}/" if instance.category is not None else ""
+    return f"{category}{original_name}", allow_overwrite
+
+
 class TestBlobFieldAdmin(StorageOperationsMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -237,8 +251,8 @@ class TestBlankBlobField(BlobModelFactoryMixin, StorageOperationsMixin, Transact
         form = BlankBlobForm(data={"blob": None})
         self.assertNotIn("blob", form.errors)
 
+    @override_settings(GCP_STORAGE_OVERRIDE_GET_DESTINATION_PATH_CALLBACK=get_destination_path_for_test)
     def test_update_valid_to_blank(self):
-
         # Create a valid instance
         name = self._prefix_blob_name("update_valid_to_blank.txt")
         tmp_blob = self._create_temporary_blob(self.bucket)
@@ -252,8 +266,8 @@ class TestBlankBlobField(BlobModelFactoryMixin, StorageOperationsMixin, Transact
         instance.refresh_from_db()
         self.assertIsNone(instance.blob)
 
+    @override_settings(GCP_STORAGE_OVERRIDE_GET_DESTINATION_PATH_CALLBACK=get_destination_path_for_test)
     def test_update_blank_to_valid(self):
-
         # Create a blank instance
         form = BlankBlobForm(data={"blob": {}})
         instance = form.save()
@@ -271,8 +285,8 @@ class TestBlankBlobField(BlobModelFactoryMixin, StorageOperationsMixin, Transact
         self.assertIn("path", instance.blob)
         self.assertEqual(instance.blob["path"], name)
 
+    @override_settings(GCP_STORAGE_OVERRIDE_GET_DESTINATION_PATH_CALLBACK=get_destination_path_for_test)
     def test_update_valid_to_valid(self):
-
         # Create a valid instance
         name = self._prefix_blob_name("update_valid_to_valid.txt")
         tmp_blob = self._create_temporary_blob(self.bucket)
@@ -295,8 +309,8 @@ class TestBlankBlobField(BlobModelFactoryMixin, StorageOperationsMixin, Transact
         self.assertIn("path", instance.blob)
         self.assertEqual(instance.blob["path"], new_name)
 
+    @override_settings(GCP_STORAGE_OVERRIDE_GET_DESTINATION_PATH_CALLBACK=get_destination_path_for_test)
     def test_update_valid_unchanged(self):
-
         # Create a valid instance
         name = self._prefix_blob_name("update_valid_unchanged.txt")
         tmp_blob = self._create_temporary_blob(self.bucket)
@@ -318,10 +332,10 @@ class TestCallableBlobField(BlobModelFactoryMixin, StorageOperationsMixin, TestC
     Use normal test case, allowing on_commit hook to execute.
     """
 
+    @override_settings(GCP_STORAGE_OVERRIDE_GET_DESTINATION_PATH_CALLBACK=get_destination_path_for_test)
     def test_on_change_callback_execution(self):
         with patch("django.db.transaction.on_commit") as mock_on_commit:
             with transaction.atomic():
-
                 # Create a blank instance
                 form = CallbackBlobForm(data={"blob": {}})
                 instance = form.save()
