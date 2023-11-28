@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
+    "unfold",  # <----  COMMENT THIS OUT AND REBOOT SERVER TO DEVELOP ON ORIGINAL DJANGO ADMIN
     "django.contrib.admin",
     "django.contrib.messages",
     "django.contrib.staticfiles",
