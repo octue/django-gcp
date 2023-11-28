@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from uuid import uuid4
+from django.contrib.admin.widgets import AdminTextareaWidget 
 from django.conf import settings
 from django.core import checks
 from django.core.exceptions import ValidationError
@@ -164,7 +165,7 @@ class BlobField(models.JSONField):
 
     def formfield(self, **kwargs):
         widget = kwargs.pop("widget", None)
-        if widget is None:
+        if widget is None or issubclass(widget, AdminTextareaWidget):
             widget = CloudObjectWidget(
                 accept_mimetype=self.accept_mimetype,
                 signed_ingress_url=self._get_signed_ingress_url(),
