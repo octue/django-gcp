@@ -3,18 +3,44 @@
 Creating and using tasks
 ========================
 
-TODO: I've written SO MUCH already and need to get this into production. This week.
+Creating tasks
+--------------
+A task is created by subclassing one of the ``OnDemandTask``, ``PeriodicTask``,  or ``SubscriberTask`` classes. In each
+task, the ``run`` method must be overridden and any relevant class variables set. See the `full example implementation
+here <https://github.com/octue/django-gcp/tree/main/tests/server>`_ to see some example tasks.
 
-I'll come back and explain this, I promise.
+Registering tasks
+-----------------
+For tasks to be registered, they must be imported in the app's ``AppConfig.ready`` method. For example, if the classes
+are defined in modules in a subpackage of the app called ``tasks``, the app config would look like this:
 
-~~ Tom ~~
+.. codeblock::
 
-IN THE MEANTIME:
+    class ExampleAppConfig(AppConfig):
+    """Example (test server) app showing how you would use django-gcp within your own django server"""
 
-Look at management commands available (both in django gcp and the example app), and look at the `full example implementation here <https://github.com/octue/django-gcp/tree/main/tests/server>`_ to pick up how to define and use tasks :)
+    ...
 
-If you need to use this library and can't figure it out, get in touch by raising an issue on GitHub and we'll help you configure your app (and write the docs at the same time).
+    def ready(self):
+        # Import the tasks only once the app is ready, in order to register them.
+        from . import tasks
 
+Note that this requires the task classes to be imported in ``tasks/__init__.py``.
+
+Scheduling periodic tasks
+-------------------------
+Periodic tasks are triggered by cronjobs in Google Cloud Scheduler. To create these jobs, the ``create_scheduler_jobs``
+management command must be run.
+
+Setting up subscriber tasks
+---------------------------
+Subscriber tasks are triggered by Pub/Sub messages received by subscriptions. To create these subscriptions, the
+``create_pubsub_subscriptions`` management command must be run.
+
+More information
+----------------
+Have a look at the management commands available (both in ``django-gcp`` and the example app). If you are having
+problems, get in touch by raising an issue on GitHub and we'll help you configure your app.
 
 Deduplicating tasks
 -------------------
