@@ -14,7 +14,7 @@ Registering tasks
 For tasks to be registered, they must be imported in the app's ``AppConfig.ready`` method. For example, if the classes
 are defined in modules in a subpackage of the app called ``tasks``, the app config would look like this:
 
-.. codeblock::
+.. code-block:: python
 
     class ExampleAppConfig(AppConfig):
     """Example (test server) app showing how you would use django-gcp within your own django server"""
