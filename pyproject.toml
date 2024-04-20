@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-gcp"
-version = "0.11.1"
+version = "0.11.2"
 description = "Utilities to run Django on Google Cloud Platform"
 authors = ["Tom Clark"]
 license = "MIT"
@@ -13,6 +13,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
 ]
 repository = "https://github.com/octue/django-gcp"
@@ -22,40 +23,39 @@ packages = [{ include = "django_gcp" },]
 
 [tool.poetry.dependencies]
 Django = ">=3.0,<5"
-python = ">=3.9,<=3.11"
-google-cloud-storage = "^2.7.0"
-google-auth = "^2.6.0"
+python = ">=3.9,<4"
 django-app-settings = "^0.7.1"
-gcp-pilot = "^0.40.0"
 python-dateutil = "^2.8.2"
-google-cloud-tasks = "^2"
-google-cloud-scheduler = "^2"
-google-cloud-pubsub = "^2"
+google-auth = "^2.6.0"
 google-cloud-error-reporting = "^1.9.0"
+google-cloud-pubsub = "^2"
+google-cloud-scheduler = "^2"
+google-cloud-storage = "^2.7.0"
+google-cloud-tasks = "^2"
 
 [tool.poetry.dev-dependencies]
 coverage = "^6.2"
+django-debug-toolbar = "^3.8.1"
+django-extensions = "^3.2.0"
+django-json-widget = "^1.1.1"
+django-test-migrations = "^1.2.0"
+notebook = "^6.5.3"
 pre-commit = "^2.17.0"
+psycopg2-binary = "^2.9.3"
+pylint-django = "^2.5.3"
+pytest = "^7.0.0"
+pytest-asyncio = "^0.17.2"
+pytest-cov = "^4.0.0"
 pytest-sugar = "^0.9.4"
 pytest-django = "^4.5.2"
-pytest-asyncio = "^0.17.2"
-pytest = "^7.0.0"
-tox = "^3.24.5"
-tox-gh-actions = "^2.9.1"
-tox-poetry = "^0.4.1"
 sphinx-rtd-theme = "^1.0.0"
 sphinx-tabs = "^3.2.0"
 Sphinx = "^4.4.0"
-django-extensions = "^3.2.0"
-pylint-django = "^2.5.3"
-watchdog = "^2.1.9"
 throttle = "^0.2.2"
-psycopg2-binary = "^2.9.3"
-notebook = "^6.5.3"
-django-test-migrations = "^1.2.0"
-django-debug-toolbar = "^3.8.1"
-django-json-widget = "^1.1.1"
-pytest-cov = "^4.0.0"
+tox = "^3.24.5"
+tox-gh-actions = "^2.9.1"
+tox-poetry = "^0.4.1"
+watchdog = "^2.1.9"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
