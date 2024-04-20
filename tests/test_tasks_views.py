@@ -11,7 +11,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 from django.urls import reverse
 from django_gcp.events.utils import make_pubsub_message
-from gcp_pilot.mocker import patch_auth
+from django_gcp.tasks._pilot.mocker import patch_auth
 
 from .test_events_utils import DEFAULT_SUBSCRIPTION
 
@@ -21,7 +21,7 @@ class ExampleAppViewTest(SimpleTestCase):
         url = reverse("enqueue-on-demand")
 
         with self.settings(GCP_TASKS_DOMAIN="https://the-domain.com"):
-            with patch("gcp_pilot.tasks.CloudTasks.push") as patched_push:
+            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
                 with patch_auth():
                     response = self.client.post(path=url, content_type="application/json")
 

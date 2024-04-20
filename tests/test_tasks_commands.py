@@ -9,15 +9,15 @@ from unittest.mock import Mock, patch
 from django.core.management import call_command
 from django.test import SimpleTestCase, override_settings
 from django_gcp.exceptions import UnknownActionError
-from gcp_pilot.mocker import patch_auth
+from django_gcp.tasks._pilot.mocker import patch_auth
 
 
 class CommandsTest(SimpleTestCase):
     def patch_schedule(self, **kwargs):
-        return patch("gcp_pilot.scheduler.CloudScheduler.put", **kwargs)
+        return patch("django_gcp.tasks._pilot.scheduler.CloudScheduler.put", **kwargs)
 
     def patch_subscribe(self, **kwargs):
-        return patch("gcp_pilot.pubsub.CloudSubscriber.create_subscription", **kwargs)
+        return patch("django_gcp.tasks._pilot.pubsub.CloudSubscriber.create_subscription", **kwargs)
 
     def patch_get_scheduled(self, names: List[str] = None, **kwargs):
         jobs = []
@@ -25,10 +25,10 @@ class CommandsTest(SimpleTestCase):
             job = Mock()
             job.name = f"/app/jobs/{name}"
             jobs.append(job)
-        return patch("gcp_pilot.scheduler.CloudScheduler.list", return_value=jobs, **kwargs)
+        return patch("django_gcp.tasks._pilot.scheduler.CloudScheduler.list", return_value=jobs, **kwargs)
 
     def patch_delete_schedule(self):
-        return patch("gcp_pilot.scheduler.CloudScheduler.delete")
+        return patch("django_gcp.tasks._pilot.scheduler.CloudScheduler.delete")
 
     def _assert_command(
         self,

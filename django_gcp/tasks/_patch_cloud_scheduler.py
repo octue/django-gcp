@@ -1,5 +1,5 @@
-from gcp_pilot.base import GoogleCloudPilotAPI
-from gcp_pilot.scheduler import CloudScheduler as BaseCloudScheduler
+from ._pilot.base import GoogleCloudPilotAPI
+from ._pilot.scheduler import CloudScheduler as BaseCloudScheduler
 
 
 class CloudScheduler(BaseCloudScheduler):

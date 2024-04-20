@@ -1,11 +1,11 @@
 import asyncio
 import logging
 from django.conf import settings
-from gcp_pilot.pubsub import CloudSubscriber
 
 from django_gcp import exceptions
 from . import tasks
 from ._patch_cloud_scheduler import CloudScheduler
+from ._pilot.pubsub import CloudSubscriber
 
 
 logger = logging.getLogger(__name__)
@@ -147,17 +147,6 @@ class TaskManager:
             logger.debug("Skipping cleanup of unused Scheduler Jobs")
 
         return updated, removed
-
-    # TODO REFACTOR REQUEST
-    #   Figure out what this is for, if anything, and decide whether it's in scope before reintroducing
-    #
-    # def set_up_permissions(self):
-    #     """Set up permissions
-    #     TODO figure out what that means
-    #     """
-    #     sub = CloudSubscriber()
-    #     routine = sub.set_up_permissions(email=sub.credentials.service_account_email)
-    #     asyncio.run(routine)
 
     def create_pubsub_subscriptions(self, cleanup=False):
         """Register all SubscriberTasks by creating push subscriptions for them on PubSub

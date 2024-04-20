@@ -1,5 +1,5 @@
-from gcp_pilot.base import GoogleCloudPilotAPI
-from gcp_pilot.tasks import CloudTasks as BaseCloudTasks
+from ._pilot.base import GoogleCloudPilotAPI
+from ._pilot.tasks import CloudTasks as BaseCloudTasks
 
 
 class CloudTasks(BaseCloudTasks):
