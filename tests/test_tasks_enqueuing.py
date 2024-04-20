@@ -13,7 +13,7 @@ from django.urls import reverse
 from django_gcp.events.utils import make_pubsub_message
 from django_gcp.exceptions import DuplicateTaskError, IncompatibleSettingsError, IncorrectTaskUsageError
 from django_gcp.tasks import OnDemandTask
-from gcp_pilot.mocker import patch_auth
+from django_gcp.tasks._pilot.mocker import patch_auth
 from google.api_core.exceptions import AlreadyExists
 
 from tests.server.example.tasks import (
@@ -34,14 +34,14 @@ class TasksEnqueueingTest(SimpleTestCase):
     def test_enqueue_duplicatable_on_demand_task(self):
 
         with patch_auth():
-            with patch("gcp_pilot.tasks.CloudTasks.push"):
+            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push"):
                 MyOnDemandTask().enqueue(a="1")
 
     def test_enqueue_deduplicated_task_raises_exception_on_duplicate(self):
         """Ensures that a unique task cannot be enqueued"""
 
         with patch_auth():
-            with patch("gcp_pilot.tasks.CloudTasks.push") as patched_push:
+            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
                 patched_push.side_effect = AlreadyExists("409 Requested entity already exists")
 
                 with self.assertRaises(DuplicateTaskError):

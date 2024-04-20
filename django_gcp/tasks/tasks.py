@@ -12,12 +12,12 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_gcp.events.utils import decode_pubsub_message
 from django_gcp.exceptions import DuplicateTaskError, IncompatibleSettingsError, IncorrectTaskUsageError
-from gcp_pilot.pubsub import CloudPublisher, CloudSubscriber
 from google.api_core.exceptions import AlreadyExists
 from google.cloud import pubsub_v1
 
 from ._patch_cloud_scheduler import CloudScheduler
 from ._patch_cloud_tasks import CloudTasks
+from ._pilot.pubsub import CloudPublisher, CloudSubscriber
 from .helpers import run_coroutine
 from .serializers import deserialize, serialize
 

@@ -1,10 +1,10 @@
-# Only trigger when a pull request into main branch is merged
+name: cd
+
 on:
   pull_request:
     types: [closed]
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   publish:
@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Test package is publishable with PyPI test server
-        uses: JRubics/poetry-publish@v1.16
+        uses: JRubics/poetry-publish@v1.13
         with:
           python_version: '3.9'
           pypi_token: ${{ secrets.TEST_PYPI_TOKEN }}
@@ -38,7 +38,7 @@ jobs:
     needs: [publish]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install poetry
         run: pip install poetry

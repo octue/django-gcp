@@ -1,20 +1,24 @@
 name: ci
 
 on:
-  pull_request:
+  # Also on push so that codecov reports main branch coverage
+  push:
     branches:
       - main
+
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
   workflow_dispatch:
     inputs:
       debug_enabled:
         description: 'Enable tmate debug'
         type: boolean
-        default: 'false'
+        default: false
 
 jobs:
-  check-semantic-version:
-    uses: octue/.github/.github/workflows/reusable-check-semantic-version.yml@main
-
   run-tests:
     if: "!contains(github.event.head_commit.message, 'skipci')"
     strategy:
@@ -42,10 +46,10 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python }}
 
@@ -70,8 +74,10 @@ jobs:
       - name: Upload coverage to Codecov
         # This seems redundant inside the test matrix but actually isn't, since different
         # dependency combinations may cause different lines of code to be hit (e.g. backports)
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
         with:
-          file: coverage.xml
-          fail_ci_if_error: true
+          files: coverage.xml
+          fail_ci_if_error: false
+          # Token is not required for public repos, but see:
+          # https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
           token: ${{ secrets.CODECOV_TOKEN }}
