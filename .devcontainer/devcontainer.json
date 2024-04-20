@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.187.0/containers/python-3
 {
-  "name": "Django Twined",
+  "name": "Django GCP",
 
   "dockerComposeFile": ["docker-compose.yml", "docker-compose.developer.yml"],
   "service": "web",
