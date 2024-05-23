@@ -29,8 +29,30 @@ Note that this requires the task classes to be imported in ``tasks/__init__.py``
 
 Scheduling periodic tasks
 -------------------------
-Periodic tasks are triggered by cronjobs in Google Cloud Scheduler. To create these jobs, the ``create_scheduler_jobs``
-management command must be run.
+Periodic tasks are triggered by cronjobs in Google Cloud Scheduler.
+To create these resources, you may wish to manage them directly with
+terraform but it's possible to create the resources using the ``create_scheduler_jobs``
+action from the ``task_manager``` management command:
+
+.. code-block::
+
+    # Note: use the --task-domain flag to override the domain where tasks will get sent
+    python manage.py task manager create_scheduler_jobs
+
+.. attention::
+
+   To register these resources, your service account will need to have ``cloudscheduler.update`` permission. Here's how to apply that to a service account using terraform:
+
+   .. code-block::
+
+      # Allow django-gcp tasks to create periodic tasks in google cloud scheduler
+      resource "google_project_iam_binding" "cloudscheduler_admin" {
+        project = var.project
+        role    = "roles/cloudscheduler.admin"
+        members = [
+          "serviceAccount:your-service-account@your-project.iam.gserviceaccount.com",
+        ]
+      }
 
 Setting up subscriber tasks
 ---------------------------
