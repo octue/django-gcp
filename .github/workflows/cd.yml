@@ -1,3 +1,5 @@
+# This workflow releases a new version of the package before publishing it to PyPI.
+
 name: cd
 
 on:
@@ -6,54 +8,71 @@ on:
     branches:
       - main
 
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch or commit SHA to tag"
+        type: string
+        required: true
+      tag:
+        description: "Tag for release"
+        type: string
+        required: true
+
 jobs:
-  publish:
-    # This job will only run if the PR has been merged (and not closed without merging).
-    if: "github.event.pull_request.merged == true && !contains(github.event.pull_request.head.message, 'skipci')"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Test package is publishable with PyPI test server
-        uses: JRubics/poetry-publish@v1.13
-        with:
-          python_version: '3.9'
-          pypi_token: ${{ secrets.TEST_PYPI_TOKEN }}
-          repository_name: 'testpypi'
-          repository_url: 'https://test.pypi.org/legacy/'
-
-      - name: Publish latest package to PyPI
-        uses: JRubics/poetry-publish@v1.16
-        with:
-          python_version: '3.9'
-          poetry_version: '==1.4.2' # (PIP version specifier syntax)
-          pypi_token: ${{ secrets.PYPI_TOKEN }}
-          ignore_dev_requirements: 'yes'
-
   release:
-    # This job will only run if the PR has been merged (and not closed without merging).
-    if: "github.event.pull_request.merged == true && !contains(github.event.pull_request.head.message, 'skipci')"
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}"
     runs-on: ubuntu-latest
-    needs: [publish]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
-      - name: Install poetry
-        run: pip install poetry
+      - name: Install Poetry
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        uses: snok/install-poetry@v1.3.2
+
+      - name: Check pyproject.toml file
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: poetry check
 
       - name: Get package version
-        id: version
-        run: echo "::set-output name=package_version::$(poetry version -s)"
+        id: get-package-version
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: echo "package_version=$(poetry version -s)" >> $GITHUB_OUTPUT
 
-      - name: Create release
+      - name: Create Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, no need to create your own.
         with:
-          tag_name: ${{ steps.version.outputs.package_version }}
+          commitish: ${{ inputs.ref }}
+          tag_name: ${{ inputs.tag || steps.get-package-version.outputs.package_version }}
           release_name: ${{ github.event.pull_request.title }}
           body: ${{ github.event.pull_request.body }}
           draft: false
           prerelease: false
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.3.4
+
+      - name: Build a binary wheel and a source tarball
+        run: poetry build
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.8.10
