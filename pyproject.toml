@@ -35,7 +35,10 @@ google-cloud-scheduler = "^2"
 google-cloud-storage = "^2.7.0"
 google-cloud-tasks = "^2"
 
-[tool.poetry.dev-dependencies]
+
+[tool.poetry.group.dev.dependencies]
+django-unfold = "^0.22.0"
+ruff = "^0.6.9"
 coverage = "^6.2"
 django-debug-toolbar = "^3.8.1"
 django-extensions = "^3.2.0"
@@ -59,8 +62,33 @@ tox-gh-actions = "^2.9.1"
 tox-poetry = "^0.4.1"
 watchdog = "^2.1.9"
 
-[tool.poetry.group.dev.dependencies]
-django-unfold = "^0.22.0"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes
+select = ["E", "F"]
+# Ignore E501 line-too-long - see https://docs.astral.sh/ruff/faq/#is-the-ruff-linter-compatible-with-black for why
+ignore = ["F405", "E501", "E203", "E731", "N818"]
+# Disable fix for unused imports (`F401`) which annoyingly removes your work-in-progress on save
+unfixable = ["F401"]
+
+[tool.ruff.isort]
+known-first-party = ["backend", "app", "amy", "api", "nibbler", "settings", "test", "utils", "strands", "people"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+force-sort-within-sections = true
+
+[tool.ruff.lint.per-file-ignores]
+# Allow variables from use of `import *` in settings files
+"backend/settings*" = ["F403", "F405"]
+# Prevent undefined errors when declaring lazy types
+#     LazyUserType = Annotated["UserType", lazy("people.graphql.users.types")]
+"*/types.py" = ["F821"]
+"*/mutations.py" = ["F821"]
+"*/queries.py" = ["F821"]
+"*/filters.py" = ["F821"]
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

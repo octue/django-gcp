@@ -19,23 +19,12 @@ repos:
     hooks:
       - id: check-json5
 
-  - repo: https://github.com/psf/black
-    rev: 22.10.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
     hooks:
-      - id: black
-        args: ['--line-length', '120']
-
-  - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-        args: ['--config=setup.cfg']
-        language_version: python3
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.11.5
-    hooks:
-      - id: isort
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
 
   - repo: https://github.com/windpioneers/pre-commit-hooks
     rev: 0.0.5
@@ -53,13 +42,11 @@ repos:
           - 'prettier@2.2.1'
           - 'prettier-plugin-tailwindcss@0.2.6'
 
-  - repo: https://github.com/octue/pre-commit-hooks
-    rev: 0.5.0
+  - repo: https://github.com/octue/conventional-commits
+    rev: 0.9.0
     hooks:
       - id: check-commit-message-is-conventional
         stages: [commit-msg]
-        args:
-          - --maximum-body-line-length=2000
 
   - repo: https://github.com/thclark/pre-commit-sphinx
     rev: 0.0.1

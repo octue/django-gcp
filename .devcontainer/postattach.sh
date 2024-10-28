@@ -1,6 +1,8 @@
 #!/bin/zsh
 
-# Install dependencies
+
+# Install dependencies to a cache that persists across devcontainer builds
+poetry config cache-dir /workspace/.poetry_cache
 poetry install
 
 # Auto set up remote when pushing new branches
@@ -33,4 +35,5 @@ echo 'alias djm="python manage.py migrate"' >> ~/.zshrc
 echo 'alias djr="python manage.py runserver"' >> ~/.zshrc
 echo 'alias djreset="python manage.py reset_db -c"' >> ~/.zshrc
 echo 'alias djs="python manage.py shell_plus"' >> ~/.zshrc
+echo 'alias djt="pytest backend/test"' >> ~/.zshrc
 echo 'alias dju="python manage.py show_urls"' >> ~/.zshrc
