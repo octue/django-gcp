@@ -35,7 +35,6 @@ google-cloud-scheduler = "^2"
 google-cloud-storage = "^2.7.0"
 google-cloud-tasks = "^2"
 
-
 [tool.poetry.group.dev.dependencies]
 django-unfold = "^0.22.0"
 ruff = "^0.6.9"
@@ -57,9 +56,8 @@ sphinx-rtd-theme = "^1.0.0"
 sphinx-tabs = "^3.2.0"
 Sphinx = "^4.4.0"
 throttle = "^0.2.2"
-tox = "^3.24.5"
-tox-gh-actions = "^2.9.1"
-tox-poetry = "^0.4.1"
+tox = "^4.23.2"
+tox-factor = "^0.1.2"
 watchdog = "^2.1.9"
 
 
