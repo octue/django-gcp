@@ -23,7 +23,7 @@ packages = [{ include = "django_gcp" },]
 
 
 [tool.poetry.dependencies]
-Django = ">=3.0,<6"
+Django = ">=3.0,<5.1"
 python = ">=3.9,<4"
 django-app-settings = "^0.7.1"
 python-dateutil = "^2.8.2"
