@@ -1,6 +1,5 @@
-# This workflow releases a new version of the package before publishing it to PyPI.
-
 name: cd
+description: This workflow releases a new version of the package before publishing it to PyPI.
 
 on:
   pull_request:
