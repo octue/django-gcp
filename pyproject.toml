@@ -14,6 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
 ]
 repository = "https://github.com/octue/django-gcp"
@@ -22,7 +23,7 @@ packages = [{ include = "django_gcp" },]
 
 
 [tool.poetry.dependencies]
-Django = ">=3.0,<5"
+Django = ">=3.0,<6"
 python = ">=3.9,<4"
 django-app-settings = "^0.7.1"
 python-dateutil = "^2.8.2"
