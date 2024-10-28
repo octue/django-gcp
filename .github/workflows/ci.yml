@@ -45,16 +45,16 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Python ${{ matrix.python }}
+      - name: Setup python ${{ matrix.python }}
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python }}
 
         # See the repo of this action for way more advanced caching strategies than used here
-      - name: Install Poetry
+      - name: Install poetry
         uses: snok/install-poetry@v1.4.1
 
         # For more advanced configuration see https://github.com/ymyzk/tox-gh-actions
@@ -89,10 +89,10 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Poetry
+      - name: Install poetry
         uses: snok/install-poetry@v1.4.1
 
       - name: Build a binary wheel and a source tarball

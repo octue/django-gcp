@@ -24,13 +24,13 @@ jobs:
     if: "${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         if: ${{ github.event_name != 'workflow_dispatch' }}
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
 
-      - name: Install Poetry
+      - name: Install poetry
         if: ${{ github.event_name != 'workflow_dispatch' }}
         uses: snok/install-poetry@v1.4.1
 
@@ -43,7 +43,7 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' }}
         run: echo "package_version=$(poetry version -s)" >> $GITHUB_OUTPUT
 
-      - name: Create Release
+      - name: Create release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, no need to create your own.
@@ -63,12 +63,12 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.tag }}
 
-      - name: Install Poetry
+      - name: Install poetry
         uses: snok/install-poetry@v1.4.1
 
       - name: Build a binary wheel and a source tarball
