@@ -69,10 +69,10 @@ jobs:
           ref: ${{ inputs.tag }}
 
       - name: Install Poetry
-        uses: snok/install-poetry@v1.3.4
+        uses: snok/install-poetry@v1.4.1
 
       - name: Build a binary wheel and a source tarball
         run: poetry build
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.8.10
+        uses: pypa/gh-action-pypi-publish@v1.10.3
