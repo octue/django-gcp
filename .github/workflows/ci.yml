@@ -33,7 +33,7 @@ jobs:
   run-tests:
     if: github.event.pull_request.draft == false
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         python: ['3.9', '3.10', '3.11', '3.12', '3.13']
         os: [ubuntu-latest] # [ubuntu-latest, windows-latest, macos-latest] for full coverage but this gets expensive quickly
