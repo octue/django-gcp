@@ -4,11 +4,11 @@
     around ``trace``/``span`` and the contents of the ``httpRequest`` object. `Pick up the issue here: PRs are welcome! <https://github.com/octue/django-gcp/issues/25>`_
 
 
-.. _logging:
+.. _logs:
 
-=======
-Logging
-=======
+====
+Logs
+====
 
 .. tip::
    Quickly set up logging out of the box, by dropping the `LOGGING entry from the example test server <https://github.com/octue/django-gcp/blob/main/tests/server/settings.py>`_
@@ -27,7 +27,7 @@ Django has its own `default logging configuration <https://docs.djangoproject.co
 tweaking to it to make sure we capture the information in a structured way. Notice particularly that the ``django`` and ``django.server`` modules have specific setups to record,
 for example, request-level information.
 
-``django-gcp`` provides :class:`django_gcp.logging.GoogleStructuredLogsHandler` to add django-specific
+``django-gcp`` provides :class:`django_gcp.logs.GoogleStructuredLogsHandler` to add django-specific
 behaviour to the Google ``StructuredLogsHandler`` that is used under the hood.
 
 .. _error_reporting:
@@ -41,5 +41,5 @@ If you use Google Cloud Error Reporting (as opposed to sentry or similar), ``dja
 a handler enabling you to send errors/exceptions directly from django. Then you can configure Error Reporting
 as you wish (eg to track unresolved errors, email teams, connect issue trackers, etc).
 
-``django-gcp`` provides :class:`django_gcp.logging.GoogleErrorReportingHandler` to do this. You need to set the
+``django-gcp`` provides :class:`django_gcp.logs.GoogleErrorReportingHandler` to do this. You need to set the
 ``GCP_ERROR_REPORTING_SERVICE_NAME`` value in your settings.py.

@@ -7,9 +7,9 @@ Events
 .. automodule:: django_gcp.events
 
 
-Logging
-=======
-.. automodule:: django_gcp.logging
+Logs
+====
+.. automodule:: django_gcp.logs
 
 
 Metadata
