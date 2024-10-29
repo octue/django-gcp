@@ -20,7 +20,7 @@ on:
 
 jobs:
   run-tests:
-    if: "!contains(github.event.head_commit.message, 'skipci')"
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: true
       matrix:
