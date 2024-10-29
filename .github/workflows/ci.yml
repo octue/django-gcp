@@ -40,15 +40,15 @@ jobs:
         include:
           # Test with all supported Django versions, for all compatible Python versions
           - python: '3.9'
-            tox_envs: py39-dj40,py39-dj41,py39-dj42
+            tox_factors: -f py39-dj32 -f py39-dj42
           - python: '3.10'
-            tox_envs: py310-dj42,py310-dj50
+            tox_factors: -f py310-dj42 -f py310-dj50
           - python: '3.11'
-            tox_envs: py311-dj42,py311-dj50
+            tox_factors: -f py311-dj42 -f py311-dj50
           - python: '3.12'
-            tox_envs: py312-dj42,py312-dj50
+            tox_factors: -f py312-dj42 -f py312-dj50
           - python: '3.13'
-            tox_envs: py313-dj42,py313-dj50
+            tox_factors: -f py313-dj42 -f py313-dj50
 
         os: [ubuntu-latest] # [ubuntu-latest, windows-latest, macos-latest] for full coverage but this gets expensive quickly
 
@@ -89,9 +89,8 @@ jobs:
           workload_identity_provider: projects/134056372703/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
           service_account: github-actions@octue-django-gcp.iam.gserviceaccount.com
 
-      - name: Setup gcloud
-        uses: 'google-github-actions/setup-gcloud@v2'
-
+      # - name: Setup gcloud
+      #   uses: 'google-github-actions/setup-gcloud@v2'
       - name: Setup python ${{ matrix.python }}
         uses: actions/setup-python@v5
         with:
@@ -113,7 +112,16 @@ jobs:
 
       # For more advanced configuration see https://github.com/ymyzk/tox-gh-actions
       - name: Run tests using tox
-        run: tox -f ${{ matrix.tox_envs }}
+        run: tox run ${{ matrix.tox_factors }}
+
+      - name: Prepare Integration Test Credentials
+        # The workload identity federation works great for using the GCloud API, but the credentials required by
+        # the storages client in integration tests don't like it. So until the credentials APIs are sensibly
+        # applied across the google client libraries we inject the service account key manually purely for test...
+        id: authoverride
+        run: |
+          echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}' > $(pwd)/gha-creds-github-actions.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/gha-creds-github-actions.json" >> $GITHUB_OUTPUT
 
       - name: Upload coverage to Codecov
         # This seems redundant inside the test matrix but actually isn't, since different
