@@ -48,12 +48,12 @@ repos:
       - id: check-commit-message-is-conventional
         stages: [commit-msg]
 
-  # - repo: https://github.com/thclark/pre-commit-sphinx
-  #   rev: 0.0.1
-  #   hooks:
-  #     - id: build-docs
-  #       language_version: python3
-  #       # Use dev dependencies to install sphinx, as well as installing
-  #       # the root module (required for autodoc)
-  #       additional_dependencies:
-  #         - 'django_gcp@file://localhost/workspace#egg=django_gcp'
+  - repo: https://github.com/thclark/pre-commit-sphinx
+    rev: 0.0.1
+    hooks:
+      - id: build-docs
+        language_version: python3
+        # Use dev dependencies to install sphinx, as well as installing
+        # the root module (required for autodoc)
+        additional_dependencies:
+          - 'django_gcp@file://localhost/workspace#egg=django_gcp'

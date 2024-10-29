@@ -63,7 +63,7 @@ jobs:
         run: poetry install --no-interaction
 
       - name: Run precommit
-        run: poetry run pre-commit run --all-files
+        run: SKIP=build-docs,check-branch-name poetry run pre-commit run --all-files
 
   test:
     if: github.event.pull_request.draft == false
