@@ -123,7 +123,7 @@ jobs:
         id: application-credentials
         run: |
           echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}' > $(pwd)/gha-creds-github-actions.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/gha-creds-github-actions.json" >> $GITHUB_OUTPUT
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/gha-creds-github-actions.json" >> $GITHUB_ENV
 
       # - name: Authenticate with GCP Workload Identity
       #   id: auth
