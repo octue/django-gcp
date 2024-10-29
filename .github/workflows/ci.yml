@@ -35,20 +35,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Get latest main commit SHA
-        id: get-main-sha
-        run: echo "LATEST_MAIN_SHA=$(git ls-remote origin refs/heads/main | cut -f 1)" >> $GITHUB_ENV
-
-      - name: Get current branch merge base with main
-        id: get-merge-base
-        run: echo "MERGE_BASE_SHA=$(git merge-base HEAD origin/main)" >> $GITHUB_ENV
-
-      - name: Check if branch is up-to-date with main
-        if: env.LATEST_MAIN_SHA != env.MERGE_BASE_SHA
+      - name: Check branch is ahead of main
         run: |
-          echo "::error::This branch is not up-to-date with the latest main branch commit."
-          exit 1
+          if ! git merge-base --is-ancestor origin/main ${{ github.event.pull_request.head.sha }};
+          then echo "::error::This branch is not up-to-date with the latest main branch commit.";
+          exit 1; fi
 
   lint:
     if: github.event.pull_request.draft == false
