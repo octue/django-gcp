@@ -35,16 +35,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
         include:
           # Test with all supported Django versions, for all compatible Python versions
           - python: '3.9'
-            tox_envs: py39-dj32,py39-dj40,py39-dj41,py39-dj42
+            tox_envs: py39-dj40,py39-dj41,py39-dj42
           - python: '3.10'
-            tox_envs: py310-dj32,py310-dj42,py310-dj50
+            tox_envs: py310-dj42,py310-dj50
           - python: '3.11'
-            tox_envs: py311-dj32,py311-dj42,py311-dj50
+            tox_envs: py311-dj42,py311-dj50
           - python: '3.12'
-            tox_envs: py312-dj32,py312-dj42,py312-dj50
+            tox_envs: py312-dj42,py312-dj50
           - python: '3.13'
             tox_envs: py313-dj42,py313-dj50
 
@@ -85,7 +86,7 @@ jobs:
       - name: Install tox and plugins
         run: |
           python -m pip install --upgrade pip
-          python -m pip install tox==4.23.2 tox-factor==0.1.2
+          python -m pip install tox==4.23.2
 
       - name: Setup tmate session [DEBUG]
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled == 'true'}}
