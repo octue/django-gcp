@@ -19,6 +19,13 @@ on:
         default: false
 
 jobs:
+  check-semantic-version:
+    if: github.event.pull_request.draft == false
+    uses: octue/workflows/.github/workflows/check-semantic-version.yml@main
+    with:
+      path: pyproject.toml
+      breaking_change_indicated_by: minor
+
   run-tests:
     if: github.event.pull_request.draft == false
     strategy:
