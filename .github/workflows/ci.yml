@@ -7,7 +7,11 @@ on:
       - main
 
   pull_request:
-    types: [opened, synchronize, reopened]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
     branches:
       - main
 
@@ -19,8 +23,15 @@ on:
         default: false
 
 jobs:
+  check-semantic-version:
+    if: github.event.pull_request.draft == false
+    uses: octue/workflows/.github/workflows/check-semantic-version.yml@main
+    with:
+      path: pyproject.toml
+      breaking_change_indicated_by: minor
+
   run-tests:
-    if: "!contains(github.event.head_commit.message, 'skipci')"
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: true
       matrix:
@@ -45,17 +56,17 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup Python ${{ matrix.python }}
-        uses: actions/setup-python@v3
+      - name: Setup python ${{ matrix.python }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
 
         # See the repo of this action for way more advanced caching strategies than used here
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install poetry
+        uses: snok/install-poetry@v1.4.1
 
         # For more advanced configuration see https://github.com/ymyzk/tox-gh-actions
       - name: Install tox and plugins
@@ -81,3 +92,26 @@ jobs:
           # Token is not required for public repos, but see:
           # https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  test-publish:
+    runs-on: ubuntu-latest
+    needs: run-tests
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1.4.1
+
+      - name: Build a binary wheel and a source tarball
+        run: poetry build
+
+      - name: Test package is publishable with PyPI test server
+        uses: pypa/gh-action-pypi-publish@v1.10.3
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+          verbose: true
