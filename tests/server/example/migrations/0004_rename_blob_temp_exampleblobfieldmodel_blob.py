@@ -2,7 +2,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("example", "0003_remove_exampleblobfieldmodel_blob"),
     ]

@@ -7,7 +7,6 @@ import tests.server.example.models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = []

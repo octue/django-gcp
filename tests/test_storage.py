@@ -32,7 +32,6 @@ class NonSeekableContentFile(ContentFile):
 
 class GCloudTestCase(TestCase):
     def setUp(self):
-
         self.client_patcher = mock.patch("django_gcp.storage.gcloud.Client")
         self.client_patcher.start()
 
@@ -326,7 +325,6 @@ class GCloudStorageTests(GCloudTestCase):
         url = f"https://example.com/mah-bukkit/{self.filename}"
 
         with override_settings(GCP_STORAGE_MEDIA={"bucket_name": self.bucket_name, "default_acl": "publicRead"}):
-
             self.storage._bucket = mock.MagicMock()
             blob = mock.MagicMock()
             blob.public_url = url
@@ -351,7 +349,6 @@ class GCloudStorageTests(GCloudTestCase):
         blob.generate_signed_url.assert_called_with(expiration=timedelta(seconds=86400), version="v4")
 
     def test_url_not_public_file_with_custom_expires(self):
-
         expiration = timedelta(seconds=3600)
         with override_settings(GCP_STORAGE_MEDIA={"bucket_name": self.bucket_name, "expiration": expiration}):
             secret_filename = "secret_file.txt"
@@ -366,7 +363,6 @@ class GCloudStorageTests(GCloudTestCase):
             blob.generate_signed_url.assert_called_with(expiration=expiration, version="v4")
 
     def test_custom_endpoint(self):
-
         with override_settings(
             GCP_STORAGE_MEDIA={
                 "bucket_name": self.bucket_name,
@@ -469,7 +465,6 @@ class GCloudStorageTests(GCloudTestCase):
                 "gzip": True,
             }
         ):
-
             name = "test_storage_save.css"
             content = ContentFile("I should be gzip'd")
             self.storage.save(name, content)

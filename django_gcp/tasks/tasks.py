@@ -302,9 +302,7 @@ class SubscriberTask(Task):
         )
 
     @abstractmethod
-    def run(
-        self, data, attributes, message_id, ordering_key, publish_time, subscription, **kwargs
-    ):  # pylint: disable=arguments-differ
+    def run(self, data, attributes, message_id, ordering_key, publish_time, subscription, **kwargs):  # pylint: disable=arguments-differ
         raise NotImplementedError()
 
     @property

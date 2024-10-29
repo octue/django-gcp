@@ -44,7 +44,6 @@ class StorageOperationsMixin:
         return blob
 
     def _copy(self, bucket, test_name, **extras):
-
         source_blob_name = self._prefix_blob_name(f"{test_name}.source.txt")
         destination_blob_name = self._prefix_blob_name(f"{test_name}.destination.txt")
 

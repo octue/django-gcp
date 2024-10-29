@@ -195,7 +195,6 @@ class GCloudEventUtilsTests(TestCase):
         self.assertEqual("stuff", decoded["data"])
 
     def test_decode_invalid_pubsub_message_raises_value_error(self):
-
         with self.assertRaises(ValueError) as e:
             body = json.dumps({"has_no_message": {}, "or_subscription": {}}).encode("utf-8")
             decode_pubsub_message(body)

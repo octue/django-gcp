@@ -177,7 +177,6 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):  # pylint: disable=abst
         return file_object
 
     def _save(self, name, content):
-
         cleaned_name = clean_name(name)
         name = self._normalize_name(cleaned_name)
         content.name = cleaned_name

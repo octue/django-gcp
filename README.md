@@ -7,15 +7,16 @@
 # DjangoGCP
 
 Helps you to run Django on Google Cloud Platform:
- - Storage (including direct uploads)
- - Events (PubSub)
- - Tasks (ad-hoc and scheduled)
- - Logging (pretty colours and labels) and
- - Error Reporting.
- 
- Read the [documentation here](https://django-gcp.readthedocs.io/en/latest).
 
-This app is maintained by Octue - we're on a mission to help climate scientists and energy engineers be more efficient. [Find out more](https://www.octue.com). If you need some help implementing ``django-gcp``, or wish to sponsor a feature or any of the issues on the board, we can help! Raise an issue or [contact us](https://www.octue.com/contact).
+- Storage (including direct uploads)
+- Events (PubSub)
+- Tasks (ad-hoc and scheduled)
+- Logging (pretty colours and labels) and
+- Error Reporting.
+
+Read the [documentation here](https://django-gcp.readthedocs.io/en/latest).
+
+This app is maintained by Octue - we're on a mission to help climate scientists and energy engineers be more efficient. [Find out more](https://www.octue.com). If you need some help implementing `django-gcp`, or wish to sponsor a feature or any of the issues on the board, we can help! Raise an issue or [contact us](https://www.octue.com/contact).
 
 ## Are you from GCP??
 

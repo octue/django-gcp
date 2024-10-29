@@ -32,7 +32,6 @@ class TasksEnqueueingTest(SimpleTestCase):
             OnDemandTask()
 
     def test_enqueue_duplicatable_on_demand_task(self):
-
         with patch_auth():
             with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push"):
                 MyOnDemandTask().enqueue(a="1")

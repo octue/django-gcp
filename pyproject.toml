@@ -46,7 +46,6 @@ django-test-migrations = "^1.2.0"
 notebook = "^6.5.3"
 pre-commit = "^2.17.0"
 psycopg2-binary = "^2.9.3"
-pylint-django = "^2.5.3"
 pytest = "^7.0.0"
 pytest-asyncio = "^0.17.2"
 pytest-cov = "^4.0.0"
@@ -67,11 +66,11 @@ line-length = 120
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes
 select = ["E", "F"]
 # Ignore E501 line-too-long - see https://docs.astral.sh/ruff/faq/#is-the-ruff-linter-compatible-with-black for why
-ignore = ["F405", "E501", "E203", "E731", "N818"]
+ignore = ["F405", "E501", "E203", "E731", "E721", "N818"]
 # Disable fix for unused imports (`F401`) which annoyingly removes your work-in-progress on save
 unfixable = ["F401"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["backend", "app", "amy", "api", "nibbler", "settings", "test", "utils", "strands", "people"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 force-sort-within-sections = true
