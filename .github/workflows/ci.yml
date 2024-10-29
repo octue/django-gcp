@@ -79,6 +79,32 @@ jobs:
       - name: Run precommit
         run: SKIP=build-docs,check-branch-name poetry run pre-commit run --all-files
 
+  publish-test:
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - check-main-merge
+      - check-semantic-version
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1.4.1
+
+      - name: Build a binary wheel and a source tarball
+        run: poetry build
+
+      - name: Test package is publishable with PyPI test server
+        uses: pypa/gh-action-pypi-publish@v1.10.3
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+          verbose: true
+
   test:
     if: github.event.pull_request.draft == false
     needs:
@@ -205,29 +231,3 @@ jobs:
           # Token is not strictly required for public repos, but see:
           # https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
           token: ${{ secrets.CODECOV_TOKEN }}
-
-  publish-test:
-    runs-on: ubuntu-latest
-    needs:
-      - lint
-      - check-main-merge
-      - check-semantic-version
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install poetry
-        uses: snok/install-poetry@v1.4.1
-
-      - name: Build a binary wheel and a source tarball
-        run: poetry build
-
-      - name: Test package is publishable with PyPI test server
-        uses: pypa/gh-action-pypi-publish@v1.10.3
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          skip-existing: true
-          verbose: true
