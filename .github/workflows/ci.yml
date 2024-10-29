@@ -32,6 +32,7 @@ jobs:
 
   run-tests:
     if: github.event.pull_request.draft == false
+
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +54,10 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    permissions:
+      id-token: write
+      contents: read
+
     services:
       postgres:
         image: kartoza/postgis:13.0
@@ -72,6 +77,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Authenticate with GCP Workload Identity
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          # NOTE: If setting create_credentials_file=true when building docker images,
+          # a .dockerignore file must be present and include `gha-creds-*.json` to
+          # avoid baking these credentials into the container
+          create_credentials_file: true
+          workload_identity_provider: projects/134056372703/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
+          service_account: github-actions@octue-django-gcp.iam.gserviceaccount.com
+
+      - name: Setup gcloud
+        uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: Setup python ${{ matrix.python }}
         uses: actions/setup-python@v5
