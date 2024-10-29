@@ -24,13 +24,14 @@ on:
 
 jobs:
   check-semantic-version:
-    if: github.event.pull_request.draft == false
+    if: github.ref != 'refs/heads/main'
     uses: octue/workflows/.github/workflows/check-semantic-version.yml@main
     with:
       path: pyproject.toml
       breaking_change_indicated_by: minor
 
   check-main-merge:
+    if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -45,7 +46,6 @@ jobs:
           exit 1; fi
 
   lint:
-    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
