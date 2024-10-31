@@ -30,7 +30,7 @@ jobs:
       path: pyproject.toml
       breaking_change_indicated_by: minor
 
-  check-main-merge:
+  check-ahead-of-main:
     if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - lint
-      - check-main-merge
+      - check-ahead-of-main
       - check-semantic-version
     permissions:
       id-token: write
@@ -109,7 +109,7 @@ jobs:
     if: github.event.pull_request.draft == false
     needs:
       - lint
-      - check-main-merge
+      - check-ahead-of-main
       - check-semantic-version
     strategy:
       fail-fast: false
