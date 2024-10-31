@@ -24,78 +24,67 @@ on:
 
 jobs:
   check-semantic-version:
-    if: github.event.pull_request.draft == false
+    if: github.ref != 'refs/heads/main'
     uses: octue/workflows/.github/workflows/check-semantic-version.yml@main
     with:
       path: pyproject.toml
       breaking_change_indicated_by: minor
 
-  run-tests:
-    if: github.event.pull_request.draft == false
-    strategy:
-      fail-fast: true
-      matrix:
-        python: ['3.9', '3.10', '3.11']
-        os: [ubuntu-latest] # [ubuntu-latest, windows-latest, macos-latest] for full coverage but this gets expensive quickly
-    runs-on: ${{ matrix.os }}
+  check-ahead-of-main:
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    services:
-      postgres:
-        image: kartoza/postgis:13.0
-        env:
-          POSTGRES_DB: postgres_db
-          POSTGRES_USER: postgres_user
-          POSTGRES_PASSWORD: postgres_password
-          POSTGRES_MULTIPLE_EXTENSIONS: postgis,hstore,postgis_topology,postgis_raster,pgrouting
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+      - name: Check branch is ahead of main
+        run: |
+          if ! git merge-base --is-ancestor origin/main ${{ github.event.pull_request.head.sha }};
+          then echo "::error::This branch is not up-to-date with the latest main branch commit.";
+          exit 1; fi
 
+  lint:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup python ${{ matrix.python }}
+      - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: '3.11'
 
-        # See the repo of this action for way more advanced caching strategies than used here
-      - name: Install poetry
-        uses: snok/install-poetry@v1.4.1
-
-        # For more advanced configuration see https://github.com/ymyzk/tox-gh-actions
-      - name: Install tox and plugins
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tox==3.24.5 tox-gh-actions==2.9.1 tox-poetry==0.4.1
-
-      - name: Setup tmate session [DEBUG]
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled == 'true'}}
-        uses: mxschmitt/action-tmate@v3
-
-      # For more advanced configuration see https://github.com/ymyzk/tox-gh-actions
-      - name: Run tests using tox
-        run: tox
-
-      - name: Upload coverage to Codecov
-        # This seems redundant inside the test matrix but actually isn't, since different
-        # dependency combinations may cause different lines of code to be hit (e.g. backports)
-        uses: codecov/codecov-action@v3
+      - name: Install and configure poetry
+        uses: snok/install-poetry@v1
         with:
-          files: coverage.xml
-          fail_ci_if_error: false
-          # Token is not required for public repos, but see:
-          # https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
-          token: ${{ secrets.CODECOV_TOKEN }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
 
-  test-publish:
+      - name: Setup virtual environment cache
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-3.11-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies (if not cached)
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --only dev --no-interaction --no-root
+
+      - name: Install root project
+        run: poetry install --no-interaction
+
+      - name: Run precommit
+        run: SKIP=build-docs,check-branch-name poetry run pre-commit run --all-files
+
+  publish-test:
     runs-on: ubuntu-latest
-    needs: run-tests
+    needs:
+      - lint
+      - check-ahead-of-main
+      - check-semantic-version
     permissions:
       id-token: write
       contents: read
@@ -115,3 +104,124 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           skip-existing: true
           verbose: true
+
+  test:
+    if: github.event.pull_request.draft == false
+    needs:
+      - lint
+      - check-ahead-of-main
+      - check-semantic-version
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+        django-version: ['>=4.2,<4.3', '>=5.0,<5.1']
+        database-engine: ['sqlite', 'postgres']
+
+        exclude:
+          # Exclude Django 5 with Python 3.9
+          - python-version: '3.9'
+            django-version: '>=5.0,<5.1'
+
+    permissions:
+      id-token: write
+      contents: read
+
+    services:
+      postgres:
+        image: kartoza/postgis:13.0
+        env:
+          POSTGRES_DB: postgres_db
+          POSTGRES_USER: postgres_user
+          POSTGRES_PASSWORD: postgres_password
+          POSTGRES_MULTIPLE_EXTENSIONS: postgis,hstore,postgis_topology,postgis_raster,pgrouting
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    runs-on: 'ubuntu-latest'
+
+    env:
+      DJANGO_SETTINGS_MODULE: tests.server.settings
+      DATABASE_ENGINE: ${{ matrix.database-engine }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare Integration Test Credentials
+        # Workload Identity Federation works great for using the GCloud API, but the credentials required by
+        # the storages client in integration tests don't like it; they need a private key to sign blobs.
+        # So until the credentials APIs are sensibly applied across the google client libraries, we inject
+        # a private service account key (against recommended practice, but this is the only thing that works).
+        id: application-credentials
+        run: |
+          echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}' > $(pwd)/gha-creds-github-actions.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/gha-creds-github-actions.json" >> $GITHUB_ENV
+
+      # - name: Authenticate with GCP Workload Identity
+      #   id: auth
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     # NOTE: If setting create_credentials_file=true when building docker images,
+      #     # a .dockerignore file must be present and include `gha-creds-*.json` to
+      #     # avoid baking these credentials into the container
+      #     create_credentials_file: true
+      #     workload_identity_provider: projects/134056372703/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
+      #     service_account: github-actions@octue-django-gcp.iam.gserviceaccount.com
+
+      # - name: Setup gcloud
+      #   uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Set up python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Setup virtual environment cache
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies (if not cached)
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      - name: Install root project
+        run: poetry install --no-interaction
+
+      - name: Install django ${{ matrix.django-version }}
+        run: |
+          source .venv/bin/activate
+          pip install "django${{ matrix.django-version }}"
+
+      - name: Setup tmate session [DEBUG]
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled == 'true'}}
+        uses: mxschmitt/action-tmate@v3
+
+      - name: Run tests
+        run: poetry run pytest --cov=django_gcp --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        # This seems redundant inside the test matrix but actually isn't, since different
+        # dependency combinations may cause different lines of code to be hit (e.g. backports)
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+          # Token is not strictly required for public repos, but see:
+          # https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
+          token: ${{ secrets.CODECOV_TOKEN }}

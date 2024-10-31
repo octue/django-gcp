@@ -10,7 +10,6 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-
         self.stdout.write(self.style.NOTICE("Running the create_subscriptions command..."))  # pylint: disable=no-member
         call_command("create_subscriptions")
 

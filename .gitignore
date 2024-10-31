@@ -155,3 +155,8 @@ staticfiles/
 
 # Tom's working notebooks
 notebooks/
+
+
+# Tools caches
+.ruff_cache
+.poetry_cache

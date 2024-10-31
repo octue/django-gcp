@@ -9,7 +9,6 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-
         # # Trigger an on-demand task that should suceed
         # CalculatePriceTask().enqueue()
 

@@ -67,7 +67,7 @@ Contents
    authentication
    events
    cloud_run
-   logging
+   logs
    storage
    tasks
    projects

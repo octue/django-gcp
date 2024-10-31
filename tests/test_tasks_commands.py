@@ -80,7 +80,6 @@ class CommandsTest(SimpleTestCase):
         )
 
     def test_create_scheduler_jobs_with_no_cleanup_affix(self):
-
         with override_settings(GCP_TASKS_RESOURCE_AFFIX=None):
             with override_settings(GCP_TASKS_DOMAIN="https://wherever.com"):
                 self._assert_command(
@@ -96,7 +95,6 @@ class CommandsTest(SimpleTestCase):
         # )
 
     def test_create_scheduler_jobs_with_cleanup_affix(self):
-
         with override_settings(GCP_TASKS_RESOURCE_AFFIX="notnone"):
             with override_settings(GCP_TASKS_DOMAIN="https://wherever.com"):
                 self._assert_command(

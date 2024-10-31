@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.test import override_settings
+
 from django_gcp.exceptions import UnknownActionError
 
 from ._base import BaseCommand
@@ -11,7 +12,6 @@ class Command(BaseCommand):
     help = "Allows creation of scheduler jobs and pubsub subscriptions via django-gcp"
 
     def add_arguments(self, parser):
-
         parser.add_argument(
             "actions",
             nargs="+",
@@ -32,12 +32,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, actions, **options):
-
         cleanup = options["cleanup"]
-        tasks_domain = options["tasks_domain"] or settings["GCP_TASKS_DOMAIN"]
+        tasks_domain = options["tasks_domain"] or settings.GCP_TASKS_DOMAIN
 
         with override_settings(GCP_TASKS_DOMAIN=tasks_domain):
-
             for action in actions:
                 if action == "create_scheduler_jobs":
                     updated, deleted = self.task_manager.create_scheduler_jobs(cleanup=cleanup)

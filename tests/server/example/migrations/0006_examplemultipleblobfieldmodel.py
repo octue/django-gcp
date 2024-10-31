@@ -7,7 +7,6 @@ import tests.server.example.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("example", "0005_examplecallbackblobfieldmodel_and_more"),
     ]

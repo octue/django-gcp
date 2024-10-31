@@ -8,8 +8,10 @@
 
 import json
 from unittest.mock import patch
+
 from django.test import SimpleTestCase
 from django.urls import reverse
+
 from django_gcp.events.utils import make_pubsub_message
 from django_gcp.tasks._pilot.mocker import patch_auth
 
@@ -77,10 +79,12 @@ class TasksViewTest(SimpleTestCase):
         self.assertEqual({"result": None}, response.json())
         patched_run.assert_called_once()
 
-    def test_failing_on_demand_task_returns_error(self):
+    @patch("django_gcp.logs.error_reporting.GoogleErrorReportingHandler.emit")
+    def test_failing_on_demand_task_returns_error(self, patched_emit):
         url = reverse("gcp-tasks", args=["FailingOnDemandTask"])
         data = {"a": 1}
         response = self.client.post(path=url, data=json.dumps(data), content_type="application/json")
 
         self.assertEqual(500, response.status_code)
         self.assertIn("error", response.json())
+        patched_emit.assert_called()

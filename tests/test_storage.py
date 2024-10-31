@@ -6,17 +6,22 @@
 # Disabled because gcloud api dynamically constructed
 # pylint: disable=no-member
 
+from datetime import datetime, timedelta
 import gzip
 import mimetypes
-from datetime import datetime, timedelta
 from unittest import mock
+
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
 from django.test import TestCase, override_settings
 from django.utils import timezone
-from django_gcp.storage import gcloud
 from google.cloud.exceptions import NotFound
 from google.cloud.storage.blob import Blob
+from zoneinfo import ZoneInfo
+
+from django_gcp.storage import gcloud
+
+UTC = ZoneInfo("UTC")
 
 
 class NonSeekableContentFile(ContentFile):
@@ -32,7 +37,6 @@ class NonSeekableContentFile(ContentFile):
 
 class GCloudTestCase(TestCase):
     def setUp(self):
-
         self.client_patcher = mock.patch("django_gcp.storage.gcloud.Client")
         self.client_patcher.start()
 
@@ -259,7 +263,8 @@ class GCloudStorageTests(GCloudTestCase):
 
     def test_modified_time(self):
         naive_date = datetime(2017, 1, 2, 3, 4, 5, 678)
-        aware_date = timezone.make_aware(naive_date, timezone.utc)
+
+        aware_date = timezone.make_aware(naive_date, UTC)
 
         self.storage._bucket = mock.MagicMock()
         blob = mock.MagicMock()
@@ -274,7 +279,7 @@ class GCloudStorageTests(GCloudTestCase):
 
     def test_get_modified_time(self):
         naive_date = datetime(2017, 1, 2, 3, 4, 5, 678)
-        aware_date = timezone.make_aware(naive_date, timezone.utc)
+        aware_date = timezone.make_aware(naive_date, UTC)
 
         self.storage._bucket = mock.MagicMock()
         blob = mock.MagicMock()
@@ -296,7 +301,7 @@ class GCloudStorageTests(GCloudTestCase):
 
     def test_get_created_time(self):
         naive_date = datetime(2017, 1, 2, 3, 4, 5, 678)
-        aware_date = timezone.make_aware(naive_date, timezone.utc)
+        aware_date = timezone.make_aware(naive_date, UTC)
 
         self.storage._bucket = mock.MagicMock()
         blob = mock.MagicMock()
@@ -326,7 +331,6 @@ class GCloudStorageTests(GCloudTestCase):
         url = f"https://example.com/mah-bukkit/{self.filename}"
 
         with override_settings(GCP_STORAGE_MEDIA={"bucket_name": self.bucket_name, "default_acl": "publicRead"}):
-
             self.storage._bucket = mock.MagicMock()
             blob = mock.MagicMock()
             blob.public_url = url
@@ -351,7 +355,6 @@ class GCloudStorageTests(GCloudTestCase):
         blob.generate_signed_url.assert_called_with(expiration=timedelta(seconds=86400), version="v4")
 
     def test_url_not_public_file_with_custom_expires(self):
-
         expiration = timedelta(seconds=3600)
         with override_settings(GCP_STORAGE_MEDIA={"bucket_name": self.bucket_name, "expiration": expiration}):
             secret_filename = "secret_file.txt"
@@ -366,7 +369,6 @@ class GCloudStorageTests(GCloudTestCase):
             blob.generate_signed_url.assert_called_with(expiration=expiration, version="v4")
 
     def test_custom_endpoint(self):
-
         with override_settings(
             GCP_STORAGE_MEDIA={
                 "bucket_name": self.bucket_name,
@@ -469,7 +471,6 @@ class GCloudStorageTests(GCloudTestCase):
                 "gzip": True,
             }
         ):
-
             name = "test_storage_save.css"
             content = ContentFile("I should be gzip'd")
             self.storage.save(name, content)

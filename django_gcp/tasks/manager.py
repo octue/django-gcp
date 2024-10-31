@@ -178,7 +178,7 @@ class TaskManager:
             if self.resource_affix:
                 logger.debug("Cleaning up unused PubSub Subscriptions")
                 client = CloudSubscriber()
-                for (subscription_id, subscribed_task) in asyncio.run(_get_subscriptions()):
+                for subscription_id, subscribed_task in asyncio.run(_get_subscriptions()):
                     if subscribed_task not in updated:
                         asyncio.run(client.delete_subscription(subscription_id=subscription_id))
                         removed.append(subscribed_task)

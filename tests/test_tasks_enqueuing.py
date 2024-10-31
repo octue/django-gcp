@@ -8,14 +8,15 @@
 
 import json
 from unittest.mock import patch
+
 from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
+from google.api_core.exceptions import AlreadyExists
+
 from django_gcp.events.utils import make_pubsub_message
 from django_gcp.exceptions import DuplicateTaskError, IncompatibleSettingsError, IncorrectTaskUsageError
 from django_gcp.tasks import OnDemandTask
 from django_gcp.tasks._pilot.mocker import patch_auth
-from google.api_core.exceptions import AlreadyExists
-
 from tests.server.example.tasks import (
     DeduplicatedOnDemandTask,
     FailingOnDemandTask,
@@ -23,6 +24,7 @@ from tests.server.example.tasks import (
     MyPeriodicTask,
     MySubscriberTask,
 )
+
 from .test_events_utils import DEFAULT_SUBSCRIPTION
 
 
@@ -32,7 +34,6 @@ class TasksEnqueueingTest(SimpleTestCase):
             OnDemandTask()
 
     def test_enqueue_duplicatable_on_demand_task(self):
-
         with patch_auth():
             with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push"):
                 MyOnDemandTask().enqueue(a="1")
@@ -77,14 +78,6 @@ class TasksEnqueueingTest(SimpleTestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual({"result": None}, response.json())
         patched_run.assert_called_once()
-
-    def test_failing_on_demand_task_returns_error(self):
-        url = reverse("gcp-tasks", args=["FailingOnDemandTask"])
-        data = {"a": 1}
-        response = self.client.post(path=url, data=json.dumps(data), content_type="application/json")
-
-        self.assertEqual(500, response.status_code)
-        self.assertIn("error", response.json())
 
     def test_disable_enqueueing_with_a_setting(self):
         """Assert that no task is enqueued if the GCP_TASKS_DISABLE_EXECUTE is true"""

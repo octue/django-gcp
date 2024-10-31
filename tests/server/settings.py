@@ -131,12 +131,12 @@ LOGGING = {
         "gcp_structured_logging": {
             "level": "INFO",
             "filters": ["require_debug_false"],
-            "class": "django_gcp.logging.GoogleStructuredLogsHandler",
+            "class": "django_gcp.logs.GoogleStructuredLogsHandler",
         },
         "gcp_error_reporting": {
             "level": "ERROR",
             "filters": ["require_debug_false"],
-            "class": "django_gcp.logging.GoogleErrorReportingHandler",
+            "class": "django_gcp.logs.GoogleErrorReportingHandler",
             "formatter": "verbose",
         },
     },
@@ -163,11 +163,6 @@ DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
 GCP_STORAGE_MEDIA = {"bucket_name": "example-media-assets"}
 MEDIA_URL = f"https://storage.googleapis.com/{GCP_STORAGE_MEDIA['bucket_name']}/"
 MEDIA_ROOT = "/media/"
-
-# STATIC FILES (FOR LOCAL DEVELOPMENT OF WIDGETS)
-# STATIC_URL = "static/"
-# STATIC_ROOT = "./staticfiles"
-
 
 # STATIC FILES (FOR USING THE CLOUD STORE)
 STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"

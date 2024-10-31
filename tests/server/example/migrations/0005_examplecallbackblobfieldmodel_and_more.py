@@ -7,7 +7,6 @@ import tests.server.example.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("example", "0004_rename_blob_temp_exampleblobfieldmodel_blob"),
     ]
