@@ -6,17 +6,22 @@
 # Disabled because gcloud api dynamically constructed
 # pylint: disable=no-member
 
+from datetime import datetime, timedelta
 import gzip
 import mimetypes
-from datetime import datetime, timedelta
 from unittest import mock
+
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
 from django.test import TestCase, override_settings
 from django.utils import timezone
-from django_gcp.storage import gcloud
 from google.cloud.exceptions import NotFound
 from google.cloud.storage.blob import Blob
+from zoneinfo import ZoneInfo
+
+from django_gcp.storage import gcloud
+
+UTC = ZoneInfo("UTC")
 
 
 class NonSeekableContentFile(ContentFile):
@@ -258,7 +263,8 @@ class GCloudStorageTests(GCloudTestCase):
 
     def test_modified_time(self):
         naive_date = datetime(2017, 1, 2, 3, 4, 5, 678)
-        aware_date = timezone.make_aware(naive_date, timezone.utc)
+
+        aware_date = timezone.make_aware(naive_date, UTC)
 
         self.storage._bucket = mock.MagicMock()
         blob = mock.MagicMock()
@@ -273,7 +279,7 @@ class GCloudStorageTests(GCloudTestCase):
 
     def test_get_modified_time(self):
         naive_date = datetime(2017, 1, 2, 3, 4, 5, 678)
-        aware_date = timezone.make_aware(naive_date, timezone.utc)
+        aware_date = timezone.make_aware(naive_date, UTC)
 
         self.storage._bucket = mock.MagicMock()
         blob = mock.MagicMock()
@@ -295,7 +301,7 @@ class GCloudStorageTests(GCloudTestCase):
 
     def test_get_created_time(self):
         naive_date = datetime(2017, 1, 2, 3, 4, 5, 678)
-        aware_date = timezone.make_aware(naive_date, timezone.utc)
+        aware_date = timezone.make_aware(naive_date, UTC)
 
         self.storage._bucket = mock.MagicMock()
         blob = mock.MagicMock()
