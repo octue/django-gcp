@@ -115,19 +115,13 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
-        django-version: ['>=3.2,<3.3', '>=4.2,<4.3', '>=5.0,<5.1']
+        django-version: ['>=4.2,<4.3', '>=5.0,<5.1']
         database-engine: ['sqlite', 'postgres']
 
         exclude:
           # Exclude Django 5 with Python 3.9
           - python-version: '3.9'
             django-version: '>=5.0,<5.1'
-
-          # Exclude Django 3 with Python 3.11 and 3.12
-          - python-version: '3.11'
-            django-version: '>=3.2,<3.3'
-          - python-version: '3.12'
-            django-version: '>=3.2,<3.3'
 
     permissions:
       id-token: write
