@@ -114,7 +114,7 @@ def get_signed_url(instance, field_name, expiration=None):
     return get_blob(instance, field_name).generate_signed_url(expiration=expiration)
 
 
-class BlobFieldModel:
+class BlobFieldMixin:
     """Mixin to a model to provide extra utility methods for processing of blobs"""
 
     def get_blob(self, field_name):
