@@ -104,14 +104,32 @@ def get_blob_name(instance, field_name):
         return split(path)[-1]
 
 
-def get_signed_url(instance, field_name, expiration=None):
+def get_signed_url(instance, field_name, expiration=None, **kwargs):
     """Get a signed URL to the blob for the given model field name
     :param str field_name: Name of the model field (which should be a BlobField)
     :param Union[datetime.datetime|datetime.timedelta|None] expiration: Expiration date or duration for the URL. If None, duration defaults to 24hrs.
     :return str: Signed URL of the blob
     """
     expiration = expiration or timedelta(hours=24)
-    return get_blob(instance, field_name).generate_signed_url(expiration=expiration)
+    blob = get_blob(instance, field_name)
+    if blob is not None:
+        return blob.generate_signed_url(expiration=expiration, **kwargs)
+
+
+def get_signed_download_url(instance, field_name, **kwargs):
+    """Gets a signed URL with the response disposition set to an attachment"""
+    name = get_blob_name(instance, field_name)
+    if name is not None:
+        return get_signed_url(instance, field_name, **kwargs, response_disposition=f"attachment; filename={name}")
+
+
+def get_console_url(instance, field_name):
+    """Gets the URL of the blob in the GCS console"""
+    path = get_path(instance, field_name)
+    if path is not None:
+        field = instance._meta.get_field(field_name)
+        bucket_name = field.storage.bucket.name
+        return f"https://console.cloud.google.com/storage/browser/{bucket_name}/{path}"
 
 
 class BlobFieldMixin:

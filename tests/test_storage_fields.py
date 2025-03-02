@@ -5,13 +5,15 @@
 # pylint: disable=no-member
 from unittest.mock import patch
 from uuid import uuid4
+
 from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.test import Client, TestCase, TransactionTestCase, override_settings
-from django_gcp.exceptions import MissingBlobError
 
+from django_gcp.exceptions import MissingBlobError
 from tests.server.example.models import ExampleBlankBlobFieldModel, ExampleBlobFieldModel, ExampleCallbackBlobFieldModel
+
 from ._utils import get_admin_add_view_url, get_admin_change_view_url
 from .test_storage_operations import StorageOperationsMixin
 
@@ -101,7 +103,8 @@ class TestBlobFieldAdmin(StorageOperationsMixin, TestCase):
 
         blob_name = self._prefix_blob_name("test_change_view_loads_normally.txt")
         self._create_test_blob(self.bucket, blob_name, "")
-        obj = ExampleBlobFieldModel.objects.create(blob={"path": blob_name})
+        with override_settings(GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True):
+            obj = ExampleBlobFieldModel.objects.create(blob={"path": blob_name})
 
         # Assert that the view loads
         response = self.client.get(get_admin_change_view_url(obj))

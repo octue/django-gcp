@@ -13,14 +13,24 @@
         >
 
         <div class="border-b flex flex-col md:flex-row dark:border-gray-700">
-            <div class="border-b flex flex-row h-9.5 items-center px-3 py-2 w-48 w-full whitespace-nowrap shrink-0 dark:border-gray-700 md:border-0 md:border-r md:w-48">            
-                <span class="material-symbols-outlined mr-2 text-gray-400">
-                    cloud
-                </span>
 
-                {% trans "Existing cloud path" %}
-            </div>
+            {% if console_url is not None %}
+                <a href="{{ console_url }}" target="_blank" class="border-b flex flex-row h-9.5 items-center px-3 py-2 w-48 w-full whitespace-nowrap shrink-0 dark:border-gray-700 md:border-0 md:border-r md:w-48">
+                    <span class="material-symbols-outlined mr-2 text-gray-400">
+                        cloud
+                    </span>
+                    {% trans "Existing cloud path" %}
+                </a>
+            {% else %}
+                <div class="border-b flex flex-row h-9.5 items-center px-3 py-2 w-48 w-full whitespace-nowrap shrink-0 dark:border-gray-700 md:border-0 md:border-r md:w-48">            
+                    <span class="material-symbols-outlined mr-2 text-gray-400">
+                        cloud
+                    </span>
 
+                    {% trans "Existing cloud path" %}
+                </div>
+            {% endif %}
+            
             <div class="flex flex-grow flex-row h-9.5 min-w-0">
                 <div class="gcp-existing-path flex-grow px-3 py-2 truncate">
                     {{ existing_path }}
@@ -29,21 +39,18 @@
                 <div class="gcp-row-controls">
                     <div class="flex flex-row items-center gap-2 px-2">
                         {% if existing_path %}
-                            <button type="button" class="gcp-clear-restore-existing bg-red-100 border border-red-200 text-red-500 leading-relaxed rounded-md px-2 shadow-sm whitespace-nowrap dark:bg-red-500/20 dark:border-red-500/20">
-                                {% trans "Clear existing" %}
-                            </button>
-                        {% endif %}
-
-                        {% if console_url is not None %}
-                            <button type="button"  class="gcp-view-console block border leading-relaxed rounded-md px-2 shadow-sm whitespace-nowrap dark:border-gray-700">
-                                {% trans "View in console" %}
+                            <button type="button" class="bg-red-100 border border-red-200 text-red-500 leading-relaxed rounded-md px-2 shadow-sm whitespace-nowrap dark:bg-red-500/20 dark:border-red-500/20">
+                                Clear
                             </button>
                         {% endif %}
 
                         {% if download_url is not None %}
-                            <button type="button" class="gcp-download block border leading-relaxed rounded-md px-2 shadow-sm whitespace-nowrap dark:border-gray-700" href="{{ download_url }}" download>
+                            <a class="gcp-download block border leading-relaxed flex flex-row items-center rounded-md px-2 shadow-sm whitespace-nowrap dark:border-gray-700" href="{{ download_url }}" download>
+                                <span class="material-symbols-outlined mr-2 text-gray-400">
+                                    download
+                                </span>
                                 {% trans "Download" %}
-                            </button>
+                            </a>
                         {% endif %}
                     </div>
                 </div>

@@ -16,6 +16,11 @@
   max-width: 1200px;
 }
 
+.gcp-readonly-wrapper {
+  margin-bottom: -0.5rem;
+  margin-top: -0.5rem;
+}
+
 .gcp-row-wrapper {
   display: flex;
   flex-direction: row;
@@ -131,8 +136,8 @@
 
 .gcp-overlay-text {
   color: white;
-  font-size: 24px;
-  font-weight: bold;
+  font-size: 18px;
+  font-weight: normal;
   text-align: center;
 }
 

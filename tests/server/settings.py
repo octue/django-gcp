@@ -170,6 +170,13 @@ GCP_STORAGE_STATIC = {"bucket_name": "example-static-assets"}
 STATIC_URL = f"https://storage.googleapis.com/{GCP_STORAGE_STATIC['bucket_name']}/"
 STATIC_ROOT = "/static/"
 
+# STATIC FILES (FOR USING LOCAL STORAGE)
+# DEVELOPERS ONLY - Use these alternative settings for local development of CSS files,
+# to avoid collectstatic taking forever each time you change the CSS.
+# STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+# STATIC_URL = "/static/"
+# STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
 # EXTRA STORES
 GCP_STORAGE_EXTRA_STORES = {"extra-versioned": {"bucket_name": "example-extra-versioned-assets"}}
 
