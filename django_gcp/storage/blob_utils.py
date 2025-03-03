@@ -143,6 +143,10 @@ class BlobFieldMixin:
         """Get blob name for the given model field name"""
         return get_blob_name(self, field_name)
 
+    def get_console_url(self, field_name):
+        """Get a URL to where the file resides in GCP cloud console"""
+        return get_console_url(self, field_name)
+
     def get_path(self, field_name):
         """Get the path of the blob in the object store for the given model field name"""
         return get_path(self, field_name)
@@ -150,3 +154,7 @@ class BlobFieldMixin:
     def get_signed_url(self, field_name, expiration=None):
         """Get a signed URL to the blob for the given model field name"""
         return get_signed_url(self, field_name, expiration)
+
+    def get_signed_download_url(self, field_name, expiration=None):
+        """Get a signed URL to the blob with the response disposition set"""
+        return get_signed_download_url(self, field_name, expiration)
