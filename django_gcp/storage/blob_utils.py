@@ -1,66 +1,6 @@
 from datetime import timedelta
 from os.path import split
 
-from google.cloud.storage.blob import Blob
-
-
-def upload_blob(
-    instance,
-    field_name,
-    local_path,
-    destination_path=None,
-    attributes=None,
-    allow_overwrite=False,
-    existing_path=None,
-):
-    """Upload a file to the cloud store, using the instance and field name to determine the store details
-
-    You might use this utility to upload fixtue files for integration tests, as part of
-    a migration, or as part of a function creating local files. The field's own logic for generating paths
-    is used by default, although this can be overridden.
-
-    Returns the field value so you can use this to construct instances directly:
-
-    # Directly set the instance field without processing the blob ingress
-    with override_settings(GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True):
-        instance.field_name = upload_blob(...)
-
-    :param django.db.Model instance: An instance of a django Model which has a BlobField
-    :param str field_name: The name of the BlobField attribute on the instance
-    :param str local_path: The path to the file to upload
-    :param str destination_path: The path to upload the file to. If None, the remote path will be generated
-    from the BlobField. If setting this value, take care to override the value of the field on the instance
-    so it's path matches; this is not updated for you.
-    :param dict attributes: A dictionary of attributes to set on the blob eg content type
-    :param bool allow_overwrite: If true, allows existing blobs at the path to be overwritten. If destination_path is not given, this is provided to the get_destination_path callback (and may be overridden by that callback per its specification)
-    :param str existing_path: If destination_path is None, this is provided to the get_destination_path callback to simulate behaviour where there is an existing path
-    """
-    # Get the field (which
-    field = instance._meta.get_field(field_name)
-    if destination_path is None:
-        destination_path, allow_overwrite = field.get_destination_path(
-            instance,
-            original_name=local_path,
-            attributes=attributes,
-            allow_overwrite=allow_overwrite,
-            existing_path=existing_path,
-            bucket=field.storage.bucket,
-        )
-
-    # If not allowing overwrite, set generation matching constraints to prevent it
-    if_generation_match = None if allow_overwrite else 0
-
-    # Attributes must be a dict by default
-    attributes = attributes or {}
-
-    # Upload the file
-    Blob(destination_path, bucket=field.storage.bucket).upload_from_filename(
-        local_path, if_generation_match=if_generation_match, **attributes
-    )
-
-    # Return the field value
-    return {"path": destination_path}
-
 
 def get_path(instance, field_name):
     """Get the path of the blob in the object store"""
