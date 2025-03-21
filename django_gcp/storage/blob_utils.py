@@ -8,7 +8,7 @@ def get_path(instance, field_name):
     return field_value.get("path", None) if field_value is not None else None
 
 
-def get_blob(instance, field_name):
+def get_blob(instance, field_name, reload=True):
     """Get a blob from a model instance containing a BlobField
 
     This allows you to download the blob to a local file. For example:
@@ -25,11 +25,16 @@ def get_blob(instance, field_name):
 
     :param django.db.Model instance: An instance of a django Model which has a BlobField
     :param str field_name: The name of the BlobField attribute on the instance
+    :param bool reload: Default True. If it is not essential to have up-to-date information from the store, speed up the call to get_blob using call with reload_blob=False
     """
     path = get_path(instance, field_name)
     if path is not None:
         field = instance._meta.get_field(field_name)
-        return field.storage.bucket.blob(path)
+        blob = field.storage.bucket.blob(path)
+        if reload:
+            blob.reload()
+
+        return blob
 
 
 def get_blob_name(instance, field_name):

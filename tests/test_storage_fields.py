@@ -12,7 +12,13 @@ from django.db import transaction
 from django.test import Client, TestCase, TransactionTestCase, override_settings
 
 from django_gcp.exceptions import MissingBlobError
-from tests.server.example.models import ExampleBlankBlobFieldModel, ExampleBlobFieldModel, ExampleCallbackBlobFieldModel
+from django_gcp.storage.blob_utils import get_blob
+from tests.server.example.models import (
+    ExampleBlankBlobFieldModel,
+    ExampleBlobFieldModel,
+    ExampleCallbackBlobFieldModel,
+    ExampleUpdateAttributesBlobFieldModel,
+)
 
 from ._utils import get_admin_add_view_url, get_admin_change_view_url
 from .test_storage_operations import StorageOperationsMixin
@@ -39,6 +45,14 @@ class CallbackBlobForm(forms.ModelForm):
 
     class Meta:
         model = ExampleCallbackBlobFieldModel
+        fields = ["blob"]
+
+
+class UpdateAttributesBlobForm(forms.ModelForm):
+    """Dummy form for testing modeladmin"""
+
+    class Meta:
+        model = ExampleUpdateAttributesBlobFieldModel
         fields = ["blob"]
 
 
@@ -383,6 +397,24 @@ class TestCallableBlobField(BlobModelFactoryMixin, StorageOperationsMixin, TestC
                 )
                 instance = form.save()
                 self.assertEqual(mock_on_commit.call_count, 4)
+
+    @override_settings(GCP_STORAGE_OVERRIDE_GET_DESTINATION_PATH_CALLBACK=get_destination_path_for_test)
+    def test_update_attributes_callback_execution(self):
+        with self.captureOnCommitCallbacks(execute=True) as callbacks:
+            tmp_blob = self._create_temporary_blob(self.bucket)
+            name = self._prefix_blob_name("test_attribute_error.txt")
+
+            obj = ExampleUpdateAttributesBlobFieldModel.objects.create(
+                category="test", blob={"_tmp_path": tmp_blob.name, "name": name}
+            )
+
+            # Callbacks are executed now at the end of this context manager
+
+        obj.refresh_from_db()
+        self.assertEqual(len(callbacks), 1)
+        blob = get_blob(obj, "blob")
+        self.assertEqual(blob.metadata["category"], "test")
+        self.assertEqual(blob.content_type, "image/png")
 
 
 class TestModelBlobField(BlobModelFactoryMixin, StorageOperationsMixin, TestCase):
