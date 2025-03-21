@@ -236,9 +236,8 @@ class TestBlobField(StorageOperationsMixin, TransactionTestCase):
         """Through the ORM, we may need to create blobs directly at the destination"""
 
         blob_name = self._prefix_blob_name("create_object_succeeds_with_overridden_path.txt")
-        self._create_test_blob(self.bucket, blob_name, "")
-        obj = ExampleBlobFieldModel.objects.create(blob={"path": blob_name})
-        obj.save()
+        self._create_test_blob(self.bucket, blob_name)
+        ExampleBlobFieldModel.objects.create(blob={"path": blob_name})
         count = ExampleBlobFieldModel.objects.count()
         self.assertEqual(count, 1)
 
