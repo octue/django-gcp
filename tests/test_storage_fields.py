@@ -12,7 +12,13 @@ from django.db import transaction
 from django.test import Client, TestCase, TransactionTestCase, override_settings
 
 from django_gcp.exceptions import MissingBlobError
-from tests.server.example.models import ExampleBlankBlobFieldModel, ExampleBlobFieldModel, ExampleCallbackBlobFieldModel
+from django_gcp.storage.blob_utils import get_blob
+from tests.server.example.models import (
+    ExampleBlankBlobFieldModel,
+    ExampleBlobFieldModel,
+    ExampleCallbackBlobFieldModel,
+    ExampleUpdateAttributesBlobFieldModel,
+)
 
 from ._utils import get_admin_add_view_url, get_admin_change_view_url
 from .test_storage_operations import StorageOperationsMixin
@@ -39,6 +45,14 @@ class CallbackBlobForm(forms.ModelForm):
 
     class Meta:
         model = ExampleCallbackBlobFieldModel
+        fields = ["blob"]
+
+
+class UpdateAttributesBlobForm(forms.ModelForm):
+    """Dummy form for testing modeladmin"""
+
+    class Meta:
+        model = ExampleUpdateAttributesBlobFieldModel
         fields = ["blob"]
 
 
@@ -118,28 +132,11 @@ class TestBlobFieldAdmin(StorageOperationsMixin, TestCase):
         )
 
 
-class TestBlobField(StorageOperationsMixin, TransactionTestCase):
+class TestBlobField(StorageOperationsMixin, TestCase):
     """Inherits from transaction test case, because we use an on_commit
     hook to move ingressed files once a database save has been made
 
-    TODO REMOVE TRANSACTION TEST CASE
-    as per https://code.djangoproject.com/ticket/30457
-    ```
-    with self.captureOnCommitCallbacks(execute=True) as callbacks:
-        with transaction.atomic():
-            transaction.on_commit(branch_1)
-    ```
     """
-
-    def test_validates_blob_exists_on_add(self):
-        """Ensure that a ValidationError is raised if the blob at _tmp_path does not exist"""
-
-        form = BlobForm(data={"blob": {"name": "thing", "_tmp_path": "something"}})
-        form.is_valid()
-        self.assertEqual(
-            form.errors["blob"],
-            ["Upload incomplete or failed (no blob at 'something' in bucket 'example-media-assets')"],
-        )
 
     def test_validates_name_is_present_on_add(self):
         """Ensure that a ValidationError is raised if no 'name' property is present in the blob data"""
@@ -206,27 +203,31 @@ class TestBlobField(StorageOperationsMixin, TransactionTestCase):
             ["This field is required."],
         )
 
-    def test_create_object_fails_with_missing_blob(self):
-        """Create an object but fail to copy the blob (because it's missing) then check that
-        no database record was created"""
-        with self.assertRaises(MissingBlobError):
-            obj = ExampleBlobFieldModel.objects.create(
-                blob={"_tmp_path": f"_tmp/{uuid4()}.txt", "name": "missing_blob.txt"}
-            )
-            obj.save()
-        count = ExampleBlobFieldModel.objects.count()
-        self.assertEqual(count, 0)
-
     @override_settings(GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True)
     def test_create_object_succeeds_with_overridden_path(self):
         """Through the ORM, we may need to create blobs directly at the destination"""
 
-        blob_name = self._prefix_blob_name("create_object_succeeds_with_overridden_path.txt")
-        self._create_test_blob(self.bucket, blob_name, "")
-        obj = ExampleBlobFieldModel.objects.create(blob={"path": blob_name})
-        obj.save()
+        with self.captureOnCommitCallbacks(execute=False) as callbacks:
+            blob_name = self._prefix_blob_name("create_object_succeeds_with_overridden_path.txt")
+            self._create_test_blob(self.bucket, blob_name)
+            ExampleBlobFieldModel.objects.create(blob={"path": blob_name})
+
+        # There should be no callback executed when the blob field value is overwritten directly
+        self.assertEqual(len(callbacks), 0)
         count = ExampleBlobFieldModel.objects.count()
         self.assertEqual(count, 1)
+
+    def test_create_object_fails_with_missing_blob(self):
+        """Create an object but fail to copy the blob (because it's missing) then check that
+        no database record was created"""
+        with self.assertRaises(MissingBlobError):
+            with self.captureOnCommitCallbacks(execute=True) as callbacks:
+                ExampleBlobFieldModel.objects.create(
+                    blob={"_tmp_path": f"_tmp/{uuid4()}.txt", "name": "missing_blob.txt"}
+                )
+            self.assertEqual(len(callbacks), 1)
+            count = ExampleBlobFieldModel.objects.count()
+            self.assertEqual(count, 0)
 
 
 class TestBlankBlobField(BlobModelFactoryMixin, StorageOperationsMixin, TransactionTestCase):
@@ -383,6 +384,24 @@ class TestCallableBlobField(BlobModelFactoryMixin, StorageOperationsMixin, TestC
                 )
                 instance = form.save()
                 self.assertEqual(mock_on_commit.call_count, 4)
+
+    @override_settings(GCP_STORAGE_OVERRIDE_GET_DESTINATION_PATH_CALLBACK=get_destination_path_for_test)
+    def test_update_attributes_callback_execution(self):
+        with self.captureOnCommitCallbacks(execute=True) as callbacks:
+            tmp_blob = self._create_temporary_blob(self.bucket)
+            name = self._prefix_blob_name("test_attribute_error.txt")
+
+            obj = ExampleUpdateAttributesBlobFieldModel.objects.create(
+                category="test", blob={"_tmp_path": tmp_blob.name, "name": name}
+            )
+
+            # Callbacks are executed now at the end of this context manager
+
+        obj.refresh_from_db()
+        self.assertEqual(len(callbacks), 1)
+        blob = get_blob(obj, "blob")
+        self.assertEqual(blob.metadata["category"], "test")
+        self.assertEqual(blob.content_type, "image/png")
 
 
 class TestModelBlobField(BlobModelFactoryMixin, StorageOperationsMixin, TestCase):

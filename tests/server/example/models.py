@@ -363,3 +363,45 @@ class ExampleReadOnlyBlobFieldModel(Model):
         """Metaclass defining this model to reside in the example app"""
 
         app_label = "example"
+
+
+def update_attributes(attributes, instance, original_name, existing_path, temporary_path, adding, bucket):
+    """Update the attributes set on the blob upon move to its destination path
+
+    These attributes can be any valid attributes that are set on GCP blobs, such as content-type and metadata.
+
+    This callback is executed prior to the save() method so the file will be residing in the ingress directory.
+    It's advised not to download the file during this stage due to the duration of that operation (we recommend that
+    if full file download is required, these attributes are set later in a separate or async task).
+
+    In some cases we've seen the first few bytes of files being streamed in order to read and extract values from headers
+    which is a neat approach.
+
+    See https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.blob.Blob
+    """
+    attributes["content_type"] = "image/png"
+    attributes["metadata"] = {"category": instance.category}
+    return attributes
+
+
+class ExampleUpdateAttributesBlobFieldModel(Model):
+    """
+    As ExampleBlobFieldModel but showing use of the update_attributes callback
+    (This is mostly used for widget development and testing)
+    """
+
+    category = CharField(max_length=20, blank=True, null=True)
+
+    blob = BlobField(
+        get_destination_path=get_destination_path,
+        update_attributes=update_attributes,
+        store_key="media",
+        blank=True,
+        null=True,
+        help_text="On save, metadata should be updated on the blob.",
+    )
+
+    class Meta:
+        """Metaclass defining this model to reside in the example app"""
+
+        app_label = "example"

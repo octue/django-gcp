@@ -105,6 +105,7 @@ class BlobField(models.JSONField):
         max_size_bytes=DEFAULT_MAX_SIZE_BYTES,
         overwrite_mode=DEFAULT_OVERWRITE_MODE,
         on_change=None,
+        update_attributes=None,
         **kwargs,
     ):
         self._validated = False
@@ -117,7 +118,9 @@ class BlobField(models.JSONField):
         self._choices_set_explicitly = "choices" in kwargs
         self.overwrite_mode = overwrite_mode
         self.get_destination_path = get_destination_path
+        self.update_attributes = update_attributes
         self.ingress_to = ingress_to
+        self.ingress_path = None
         self.store_key = store_key
         self.accept_mimetype = accept_mimetype
         self.max_size_bytes = max_size_bytes
@@ -152,6 +155,7 @@ class BlobField(models.JSONField):
             *super().check(**kwargs),
             *self._check_explicit(),
             *self._check_get_destination_path(),
+            *self._check_update_attributes(),
             *self._check_ingress_to(),
             *self._check_overwrite_mode(),
             *self._check_on_change(),
@@ -164,6 +168,7 @@ class BlobField(models.JSONField):
         kwargs["accept_mimetype"] = self.accept_mimetype
         kwargs["overwrite_mode"] = self.overwrite_mode
         kwargs["get_destination_path"] = self.get_destination_path
+        kwargs["update_attributes"] = self.update_attributes
         kwargs["on_change"] = self.on_change
         return name, path, args, kwargs
 
@@ -248,15 +253,29 @@ class BlobField(models.JSONField):
 
                 elif adding_valid or updating_blank_to_valid or updating_valid_to_valid:
                     new_value = {}
+
+                    allow_overwrite = self._get_allow_overwrite(add)
+
+                    attributes = self._update_attributes(
+                        getattr(value, "attributes", {}),
+                        instance=model_instance,
+                        original_name=value["name"],
+                        existing_path=existing_path,
+                        temporary_path=value["_tmp_path"],
+                        adding=add,
+                        bucket=self.storage.bucket,
+                    )
+
                     new_value["path"], allow_overwrite = self._get_destination_path(
                         instance=model_instance,
                         original_name=value["name"],
-                        attributes=getattr(value, "attributes", None),
+                        attributes=attributes,
                         allow_overwrite=self._get_allow_overwrite(add),
                         existing_path=existing_path,
                         temporary_path=value["_tmp_path"],
                         bucket=self.storage.bucket,
                     )
+
                     logger.info(
                         "Adding/updating cloud object via temporary ingress at %s to %s",
                         value["_tmp_path"],
@@ -275,7 +294,7 @@ class BlobField(models.JSONField):
                             new_value["path"],
                             move=True,
                             overwrite=allow_overwrite,
-                            attributes=value.get("attributes", None),
+                            attributes=attributes,
                         )
                         if self.on_change is not None:
                             self.on_change(new_value, instance=model_instance)
@@ -482,6 +501,17 @@ class BlobField(models.JSONField):
             ]
         return []
 
+    def _check_update_attributes(self):
+        if self.update_attributes is not None and not callable(self.update_attributes):
+            return [
+                checks.Error(
+                    f"'update_attributes' argument in {self.__class__.__name__} must be None, or a callable function that updates attributes to be set on ingressed blobs.",
+                    obj=self,
+                    id="fields.E201",
+                )
+            ]
+        return []
+
     def _check_on_change(self):
         if self.on_change is not None and not callable(self.on_change):
             return [
@@ -604,3 +634,17 @@ class BlobField(models.JSONField):
             self.get_destination_path,
         )
         return get_destination_path(*args, **kwargs)
+
+    def _update_attributes(self, attributes, **kwargs):
+        """Call the update_attributes callback unless an override is defined in
+        settings. This funcitonality is intended for test purposes only, because
+        patching the callback in a test framework is a struggle
+        """
+        update_attributes = getattr(
+            settings,
+            "GCP_STORAGE_OVERRIDE_UPDATE_ATTRIBUTES_CALLBACK",
+            self.update_attributes,
+        )
+        if update_attributes is not None:
+            return update_attributes(attributes, **kwargs)
+        return attributes
