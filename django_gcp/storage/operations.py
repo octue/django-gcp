@@ -1,6 +1,8 @@
+from contextlib import contextmanager
 import datetime
 import logging
 
+from django.test.utils import override_settings
 from django.utils import timezone
 from google.cloud.exceptions import NotFound, PreconditionFailed
 from google.cloud.storage.blob import Blob
@@ -198,3 +200,34 @@ def get_signed_upload_url(bucket, blob_name, timedelta=None, max_size_bytes=None
         headers["X-Goog-Content-Length-Range"]: content_length_range
 
     return blob.generate_signed_url(expiration=timezone.now() + timedelta, method="PUT", **kwargs)
+
+
+@contextmanager
+def uploaded_blob(instance, field_name, local_path, destination_path=None, allow_overwrite=False, delete_on_exit=False):
+    """A context manager enabling the preparation of an instance with a blob uploaded from a local path.
+    Optionally override the destination path (the ultimate path of the blob within the destination bucket) and allow_overwrite parameter.
+
+    Usage:
+
+    ```py
+    my_instance = MyModel()
+    with uploaded_blob(my_instance, 'my_field', '/path/to/local/file') as field_value
+        my_instance.my_field = field_value
+        my_instance.save()
+    ```
+
+    """
+
+    with override_settings(GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True):
+        field_value = upload_blob(
+            instance,
+            field_name=field_name,
+            local_path=local_path,
+            destination_path=destination_path,
+            allow_overwrite=allow_overwrite,
+        )
+        try:
+            yield field_value
+        finally:
+            if delete_on_exit:
+                raise NotImplementedError("Deletion on exit is not yet implemented")
