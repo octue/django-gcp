@@ -1,12 +1,17 @@
 # pylint: disable=missing-docstring
 
-import os
 from datetime import date
+import os
+import tempfile
 from uuid import uuid4
-from django.test import SimpleTestCase
-from django_gcp.exceptions import AttemptedOverwriteError, MissingBlobError
-from django_gcp.storage.operations import copy_blob, delete_blob, get_generations
+
+from django.test import SimpleTestCase, TestCase
 from google.cloud import storage
+
+from django_gcp.exceptions import AttemptedOverwriteError, MissingBlobError
+from django_gcp.storage.blob_utils import get_blob
+from django_gcp.storage.operations import copy_blob, delete_blob, get_generations, uploaded_blob
+from tests.server.example.models import ExampleBlobFieldModel
 
 
 class StorageOperationsMixin:
@@ -187,3 +192,31 @@ class TestStorageOperations(StorageOperationsMixin, SimpleTestCase):
         self.assertEqual(len(generations), 2)
         self.assertIn(first_version.generation, generations)
         self.assertIn(second_version.generation, generations)
+
+
+class TestStorageOperationsWithDatabase(StorageOperationsMixin, TestCase):
+    def test_uploaded_blob(self):
+        """Ensure that test_uploaded_blob will upload a blob and leave it there"""
+
+        # Create a local file to upload
+        with tempfile.TemporaryDirectory() as tmpdir:
+            local_path = os.path.join(tmpdir, "test_file.txt")
+            with open(local_path, "w"):
+                pass  # Create an empty file
+
+            self.assertTrue(os.path.exists(local_path))
+
+            # Test with no destination path
+            instance = ExampleBlobFieldModel()
+            field_name = "blob"
+            with uploaded_blob(instance, field_name, local_path) as value:
+                instance.blob = value
+                instance.save()
+            assert get_blob(instance, "blob").exists()
+
+            # Test raises exception on not implemented yet
+            with self.assertRaises(NotImplementedError):
+                instance2 = ExampleBlobFieldModel()
+                with uploaded_blob(instance2, field_name, local_path, delete_on_exit=True) as value:
+                    instance2.blob = value
+                    instance2.save()
