@@ -56,8 +56,9 @@ def upload_blob(
             instance,
             original_name=local_path,
             attributes=attributes,
-            allow_overwrite=allow_overwrite,
             existing_path=existing_path,
+            temporary_path=None,
+            allow_overwrite=allow_overwrite,
             bucket=field.storage.bucket,
         )
 
