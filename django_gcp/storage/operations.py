@@ -197,7 +197,8 @@ def get_signed_upload_url(bucket, blob_name, timedelta=None, max_size_bytes=None
     if max_size_bytes is not None:
         content_length_range = f"0,{max_size_bytes}"
         headers = kwargs.pop("headers", {})
-        headers["X-Goog-Content-Length-Range"]: content_length_range
+        headers["X-Goog-Content-Length-Range"] = content_length_range
+        kwargs["headers"] = headers
 
     return blob.generate_signed_url(expiration=timezone.now() + timedelta, method="PUT", **kwargs)
 
