@@ -111,6 +111,18 @@ class TestBlobFieldAdmin(StorageOperationsMixin, TestCase):
             widget.signed_ingress_url.startswith("https://storage.googleapis.com/example-media-assets/_tmp")
         )
 
+    def test_full_clean_executes_in_overridden_context(self):
+        """Ensure that full_clean() can be legitimately called
+        on a model while in an overridden context
+        """
+
+        blob_name = self._prefix_blob_name("test_full_clean_executes_in_overridden_context.txt")
+        self._create_test_blob(self.bucket, blob_name, "")
+        with override_settings(GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True):
+            obj = ExampleBlobFieldModel(blob={"path": blob_name})
+            obj.full_clean()
+            obj.save()
+
     @override_settings(GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True)
     def test_change_view_loads_normally(self):
         """Ensure we can load a change view"""
