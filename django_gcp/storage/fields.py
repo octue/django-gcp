@@ -199,125 +199,125 @@ class BlobField(models.JSONField):
         """Clean the value to ensure correct state and on_commit hooks.
         This method is called during clean_fields on model save.
         """
-        if not skip_validation and not self._validated:
-            self.validate(value, model_instance)
 
-        try:
-            # Cross-field validation: ensure value is not greater than another field
-            add = model_instance._state.adding
+        # An escape hatch allowing you to set the path directly. This is dangerous and should only be done
+        # explicitly for the purpose of data migration and manipulation. You should never allow an untrusted
+        # client to set paths directly, because knowing the path of a pre-existing object allows you to assume
+        # access to it. Tip: You can use django's override_settings context manager to set this temporarily.
+        if getattr(
+            settings,
+            "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE",
+            DEFAULT_OVERRIDE_BLOBFIELD_VALUE,
+        ):
+            logger.warning(
+                "Overriding %s value to %s",
+                self.__class__.__name__,
+                value,
+            )
+            new_value = value
 
+        else:
+            # Validate the value given
+            if not skip_validation and not self._validated:
+                self.validate(value, model_instance)
+
+            # Clean {} --> None
             value = self._clean_blank_value(getattr(model_instance, self.attname))
 
+            # Get model state
+            add = model_instance._state.adding
             existing_path = None if add else self._get_existing_path(model_instance)
 
-            # An escape hatch allowing you to set the path directly. This is dangerous and should only be done
-            # explicitly for the purpose of data migration and manipulation. You should never allow an untrusted
-            # client to set paths directly, because knowing the path of a pre-existing object allows you to assume
-            # access to it. Tip: You can use django's override_settings context manager to set this temporarily.
-            if getattr(
-                settings,
-                "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE",
-                DEFAULT_OVERRIDE_BLOBFIELD_VALUE,
-            ):
-                logger.warning(
-                    "Overriding %s value to %s",
-                    self.__class__.__name__,
-                    value,
+            # There are six scenarios to deal with:
+            adding_blank = add and value is None
+            adding_valid = add and value is not None
+            updating_valid_to_valid = not add and self._get_valid_to_valid(model_instance)
+            updating_valid_to_blank = not add and self._get_valid_to_blank(model_instance)
+            updating_blank_to_valid = not add and self._get_blank_to_valid(model_instance)
+            unchanged = not add and self._get_unchanged(model_instance)
+
+            # Branch based on scenarios
+            if unchanged:
+                new_value = {"path": value["path"]} if value is not None else None
+
+            elif adding_blank or updating_valid_to_blank:
+                new_value = None
+
+                # Trigger the on_change callback at the end of the commit when we know the
+                # database transaction will work
+                def on_commit_blank():
+                    if self.on_change is not None:
+                        self.on_change(new_value, instance=model_instance)
+
+                # clean may happen outside transations so we must
+                # actually register the transaction during pre-save,
+                # store the callback here temporarily
+                self._on_commit_blank = on_commit_blank
+
+            elif adding_valid or updating_blank_to_valid or updating_valid_to_valid:
+                new_value = {}
+
+                allow_overwrite = self._get_allow_overwrite(add)
+
+                attributes = self._update_attributes(
+                    getattr(value, "attributes", {}),
+                    instance=model_instance,
+                    original_name=value["name"],
+                    existing_path=existing_path,
+                    temporary_path=value["_tmp_path"],
+                    adding=add,
+                    bucket=self.storage.bucket,
                 )
-                new_value = value
-            else:
-                # There are six scenarios to deal with:
-                adding_blank = add and value is None
-                adding_valid = add and value is not None
-                updating_valid_to_valid = not add and self._get_valid_to_valid(model_instance)
-                updating_valid_to_blank = not add and self._get_valid_to_blank(model_instance)
-                updating_blank_to_valid = not add and self._get_blank_to_valid(model_instance)
-                unchanged = not add and self._get_unchanged(model_instance)
 
-                if unchanged:
-                    new_value = {"path": value["path"]} if value is not None else None
+                new_value["path"], allow_overwrite = self._get_destination_path(
+                    instance=model_instance,
+                    original_name=value["name"],
+                    attributes=attributes,
+                    allow_overwrite=self._get_allow_overwrite(add),
+                    existing_path=existing_path,
+                    temporary_path=value["_tmp_path"],
+                    bucket=self.storage.bucket,
+                )
 
-                elif adding_blank or updating_valid_to_blank:
-                    new_value = None
+                logger.info(
+                    "Adding/updating cloud object via temporary ingress at %s to %s",
+                    value["_tmp_path"],
+                    new_value["path"],
+                )
 
-                    # Trigger the on_change callback at the end of the commit when we know the
-                    # database transaction will work
-                    def on_commit_blank():
-                        if self.on_change is not None:
-                            self.on_change(new_value, instance=model_instance)
-
-                    # clean may happen outside transations so we must
-                    # actually register the transaction during pre-save,
-                    # store the callback here temporarily
-                    self._on_commit_blank = on_commit_blank
-
-                elif adding_valid or updating_blank_to_valid or updating_valid_to_valid:
-                    new_value = {}
-
-                    allow_overwrite = self._get_allow_overwrite(add)
-
-                    attributes = self._update_attributes(
-                        getattr(value, "attributes", {}),
-                        instance=model_instance,
-                        original_name=value["name"],
-                        existing_path=existing_path,
-                        temporary_path=value["_tmp_path"],
-                        adding=add,
-                        bucket=self.storage.bucket,
-                    )
-
-                    new_value["path"], allow_overwrite = self._get_destination_path(
-                        instance=model_instance,
-                        original_name=value["name"],
+                # Trigger the copy only on successful commit of the transaction. We have to
+                # capture the dual edge cases of the file not moving correctly, and the database
+                # row not saving (eg due to validation errors in other model fields).
+                # https://stackoverflow.com/questions/33180727/trigering-post-save-signal-only-after-transaction-has-completed
+                def on_commit_valid():
+                    copy_blob(
+                        self.storage.bucket,
+                        value["_tmp_path"],
+                        self.storage.bucket,
+                        new_value["path"],
+                        move=True,
+                        overwrite=allow_overwrite,
                         attributes=attributes,
-                        allow_overwrite=self._get_allow_overwrite(add),
-                        existing_path=existing_path,
-                        temporary_path=value["_tmp_path"],
-                        bucket=self.storage.bucket,
                     )
+                    if self.on_change is not None:
+                        self.on_change(new_value, instance=model_instance)
 
-                    logger.info(
-                        "Adding/updating cloud object via temporary ingress at %s to %s",
-                        value["_tmp_path"],
-                        new_value["path"],
-                    )
+                logger.info(
+                    "Registered move of %s to %s to happen on transaction commit",
+                    value["_tmp_path"],
+                    new_value["path"],
+                )
+                self._on_commit_valid = on_commit_valid
 
-                    # Trigger the copy only on successful commit of the transaction. We have to
-                    # capture the dual edge cases of the file not moving correctly, and the database
-                    # row not saving (eg due to validation errors in other model fields).
-                    # https://stackoverflow.com/questions/33180727/trigering-post-save-signal-only-after-transaction-has-completed
-                    def on_commit_valid():
-                        copy_blob(
-                            self.storage.bucket,
-                            value["_tmp_path"],
-                            self.storage.bucket,
-                            new_value["path"],
-                            move=True,
-                            overwrite=allow_overwrite,
-                            attributes=attributes,
-                        )
-                        if self.on_change is not None:
-                            self.on_change(new_value, instance=model_instance)
+            else:
+                # Raise unknown edge cases rather than failing silently
+                raise ValueError(
+                    f"Unable to determine field state for {self._get_fieldname(model_instance)}. The most likely cause of this doing an operation (like migration) without setting GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True. Otherwise, please contact the django_gcp developers and describe what you're doing along with this exception stacktrace. Value was: {json.dumps(value)}"
+                )
 
-                    logger.info(
-                        "Registered move of %s to %s to happen on transaction commit",
-                        value["_tmp_path"],
-                        new_value["path"],
-                    )
-                    self._on_commit_valid = on_commit_valid
-
-                else:
-                    # Raise unknown edge cases rather than failing silently
-                    raise ValueError(
-                        f"Unable to determine field state for {self._get_fieldname(model_instance)}. The most likely cause of this doing an operation (like migration) without setting GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True. Otherwise, please contact the django_gcp developers and describe what you're doing along with this exception stacktrace. Value was: {json.dumps(value)}"
-                    )
-
-            # Cache DB values in the instance so you can reuse it without multiple DB queries
-            # pylint: disable-next=protected-access
-            model_instance._state.fields_cache[self.attname] = new_value
-
-        except ValidationError as e:
-            raise e
+        # Cache DB values in the instance so you can reuse it without multiple DB queries
+        # pylint: disable-next=protected-access
+        model_instance._state.fields_cache[self.attname] = new_value
 
         self._cleaned = True
 
