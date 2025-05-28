@@ -117,8 +117,7 @@ class TestBlobFieldAdmin(StorageOperationsMixin, TestCase):
 
         blob_name = self._prefix_blob_name("test_change_view_loads_normally.txt")
         self._create_test_blob(self.bucket, blob_name, "")
-        with override_settings(GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE=True):
-            obj = ExampleBlobFieldModel.objects.create(blob={"path": blob_name})
+        obj = ExampleBlobFieldModel.objects.create(blob={"path": blob_name})
 
         # Assert that the view loads
         response = self.client.get(get_admin_change_view_url(obj))
