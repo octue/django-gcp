@@ -1,7 +1,7 @@
-import django_gcp.storage.fields
 from django.db import migrations
 from django.test import override_settings
 
+import django_gcp.storage.fields
 import tests.server.example.models
 
 

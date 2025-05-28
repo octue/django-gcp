@@ -1,8 +1,8 @@
 from datetime import timedelta
+
 from django.conf import settings as django_settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.signals import setting_changed
-
 
 DEFAULT_GZIP_CONTENT_TYPES = (
     "text/css",

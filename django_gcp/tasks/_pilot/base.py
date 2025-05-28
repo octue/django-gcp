@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from typing import Any, Callable, Dict, Generator, List, Tuple, Union
+
 from google import auth
 from google.auth import iam
 from google.auth.credentials import Credentials
@@ -15,7 +16,6 @@ from googleapiclient.errors import HttpError
 from requests import Response
 
 from . import exceptions
-
 
 DEFAULT_PROJECT = os.environ.get("GCP_PROJECT", None)
 DEFAULT_LOCATION = os.environ.get("GCP_LOCATION", None)

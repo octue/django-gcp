@@ -1,6 +1,5 @@
 from django_gcp.tasks import OnDemandTask, PeriodicTask, SubscriberTask
 
-
 # NOTE: See the following link for a discussion on disabling pylint when overriding the `run` method.
 # https://stackoverflow.com/questions/73454704/how-to-define-keyword-variadic-arguments-in-a-notimplementedyet-abc-method-avoi
 

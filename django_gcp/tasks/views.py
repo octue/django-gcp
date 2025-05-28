@@ -1,5 +1,6 @@
 import json
 from typing import Any, Dict
+
 from django.apps import apps
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator

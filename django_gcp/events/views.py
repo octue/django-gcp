@@ -1,5 +1,6 @@
 import json
 import logging
+
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -7,7 +8,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from .signals import event_received
-
 
 logger = logging.getLogger(__name__)
 

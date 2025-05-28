@@ -7,6 +7,7 @@
 # pylint: disable=no-member
 
 from django.test import SimpleTestCase, override_settings
+
 from django_gcp.tasks.tasks import apply_resource_affix
 
 

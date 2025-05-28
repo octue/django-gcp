@@ -8,6 +8,7 @@
 
 import json
 from unittest.mock import patch
+
 from django.test import TestCase, override_settings
 from django.urls import reverse
 

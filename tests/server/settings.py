@@ -111,7 +111,7 @@ LOGGING = {
     "disable_existing_loggers": True,
     "root": {"handlers": ["gcp_structured_logging", "gcp_error_reporting"]},
     "formatters": {
-        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s " "%(message)s"},
+        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s %(message)s"},
     },
     "filters": {
         "require_debug_false": {

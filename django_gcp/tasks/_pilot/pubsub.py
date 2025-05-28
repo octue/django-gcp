@@ -1,8 +1,9 @@
 # https://googleapis.dev/python/pubsub/latest/index.html
 import base64
-import json
 from dataclasses import dataclass
+import json
 from typing import Any, AsyncIterator, Callable, Dict, Union
+
 from google.api_core.exceptions import AlreadyExists, NotFound
 from google.cloud import pubsub_v1
 from google.protobuf.field_mask_pb2 import FieldMask
