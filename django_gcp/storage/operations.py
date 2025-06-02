@@ -11,6 +11,8 @@ from django_gcp.exceptions import AttemptedOverwriteError, MissingBlobError
 
 logger = logging.getLogger(__name__)
 
+UNLIMITED_MAX_SIZE = 0
+
 
 def blob_exists(bucket, blob_name):
     """Quick check that a blob with a given name exists in a bucket"""
@@ -182,7 +184,7 @@ def get_generations(bucket, blob_name):
     return list(bucket.client.list_blobs(bucket.name, versions=True, prefix=blob_name))
 
 
-def get_signed_upload_url(bucket, blob_name, timedelta=None, max_size_bytes=None, **kwargs):
+def get_signed_upload_url(bucket, blob_name, timedelta=None, max_size_bytes=UNLIMITED_MAX_SIZE, **kwargs):
     """Get a signed URL for uploading a blob to GCS
 
     :param google.cloud.storage.Bucket bucket: The bucket to which the blob will be uploaded
@@ -195,7 +197,8 @@ def get_signed_upload_url(bucket, blob_name, timedelta=None, max_size_bytes=None
         timedelta = datetime.timedelta(minutes=60)
 
     blob = bucket.blob(blob_name)
-    if max_size_bytes is not None:
+
+    if max_size_bytes != 0:
         content_length_range = f"0,{max_size_bytes}"
         headers = kwargs.pop("headers", {})
         headers["X-Goog-Content-Length-Range"] = content_length_range

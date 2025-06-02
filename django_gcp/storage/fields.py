@@ -12,15 +12,10 @@ from django.utils.translation import gettext_lazy as _
 
 from .forms import CloudObjectFormField
 from .gcloud import GoogleCloudStorage
-from .operations import blob_exists, copy_blob, get_signed_upload_url
+from .operations import UNLIMITED_MAX_SIZE, blob_exists, copy_blob, get_signed_upload_url
 from .widgets import DEFAULT_ACCEPT_MIMETYPE, CloudObjectWidget
 
 logger = logging.getLogger(__name__)
-
-
-# 32 megabyte default size chosen to be consistent with Cloud Run's
-# largest request size
-DEFAULT_MAX_SIZE_BYTES = 32 * 1024 * 1024
 
 DEFAULT_OVERWRITE_MODE = "never"
 
@@ -102,8 +97,8 @@ class BlobField(models.JSONField):
         ingress_to="_tmp/",
         store_key="media",
         accept_mimetype=DEFAULT_ACCEPT_MIMETYPE,
-        max_size_bytes=DEFAULT_MAX_SIZE_BYTES,
         overwrite_mode=DEFAULT_OVERWRITE_MODE,
+        max_size_bytes=None,
         on_change=None,
         update_attributes=None,
         **kwargs,
@@ -114,6 +109,7 @@ class BlobField(models.JSONField):
         self._on_commit_valid = None
         self._versioning_enabled = None
         self._temporary_path = None
+        self._max_size_bytes = max_size_bytes
         self._primary_key_set_explicitly = "primary_key" in kwargs
         self._choices_set_explicitly = "choices" in kwargs
         self.overwrite_mode = overwrite_mode
@@ -123,7 +119,6 @@ class BlobField(models.JSONField):
         self.ingress_path = None
         self.store_key = store_key
         self.accept_mimetype = accept_mimetype
-        self.max_size_bytes = max_size_bytes
         self.on_change = on_change
         kwargs["default"] = kwargs.pop("default", None)
         kwargs["help_text"] = kwargs.pop("help_text", "GCP cloud storage object")
@@ -178,6 +173,7 @@ class BlobField(models.JSONField):
             widget = CloudObjectWidget(
                 accept_mimetype=self.accept_mimetype,
                 signed_ingress_url=self._get_signed_ingress_url(),
+                max_size_bytes=self.max_size_bytes,
                 ingress_path=self._get_temporary_path(),
             )
 
@@ -193,6 +189,23 @@ class BlobField(models.JSONField):
             settings,
             "GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE",
             DEFAULT_OVERRIDE_BLOBFIELD_VALUE,
+        )
+
+    @property
+    def max_size_bytes(self):
+        """Shortcut to determine the max size in bytes allowable as an upload
+
+        Defaults to unlimited upload size (which is dangerous, but since you're
+        signing a URL for the user to upload we assume you've established trust
+        in the user and know what you're doing!).
+        """
+        if self._max_size_bytes is not None:
+            return self._max_size_bytes
+
+        return getattr(
+            settings,
+            "GCP_STORAGE_BLOBFIELD_MAX_SIZE_BYTES",
+            UNLIMITED_MAX_SIZE,
         )
 
     def clean(self, value, model_instance, skip_validation=False):

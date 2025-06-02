@@ -3,6 +3,8 @@ import json
 from django.conf import settings
 from django.forms import Widget
 
+from .operations import UNLIMITED_MAX_SIZE
+
 DEFAULT_ACCEPT_MIMETYPE = "*/*"
 
 
@@ -28,6 +30,7 @@ class CloudObjectWidget(Widget):
         self,
         *args,
         signed_ingress_url=None,
+        max_size_bytes=UNLIMITED_MAX_SIZE,
         ingress_path=None,
         accept_mimetype=DEFAULT_ACCEPT_MIMETYPE,
         **kwargs,
@@ -37,6 +40,7 @@ class CloudObjectWidget(Widget):
         self._kwargs = kwargs
         self.accept_mimetype = accept_mimetype
         self.signed_ingress_url = signed_ingress_url
+        self.max_size_bytes = max_size_bytes
         self.ingress_path = ingress_path
 
         if "unfold" in settings.INSTALLED_APPS:
@@ -44,7 +48,7 @@ class CloudObjectWidget(Widget):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-
+        context["max_size_bytes"] = self.max_size_bytes
         context["signed_ingress_url"] = self.signed_ingress_url
         context["ingress_path"] = self.ingress_path
         context["accept_mimetype"] = self.accept_mimetype

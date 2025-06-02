@@ -158,6 +158,11 @@ LOGGING = {
 # HERE'S HOW TO SET UP STATIC, MEDIA AND EXTRA STORAGE
 # ---------------------------------------------------------------------------
 
+# LIMIT SIZE OF BLOBFIELD UPLOADS
+# This can be customized per BlobField. Default if not given is unlimited upload
+# size, which is unwise if your users are not both trusted and competent
+GCP_STORAGE_BLOBFIELD_MAX_SIZE_BYTES = 32 * 1024 * 1024
+
 # MEDIA FILES
 DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
 GCP_STORAGE_MEDIA = {"bucket_name": "example-media-assets"}
