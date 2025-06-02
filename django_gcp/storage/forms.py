@@ -1,8 +1,8 @@
 import logging
+
 from django.forms.fields import JSONField
 
 from .widgets import CloudObjectWidget
-
 
 logger = logging.getLogger(__name__)
 

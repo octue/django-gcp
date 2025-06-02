@@ -1,11 +1,11 @@
+from datetime import datetime
 import os
 import subprocess
 import time
-from datetime import datetime
+
 import throttle
 from watchdog.events import FileModifiedEvent, FileSystemEventHandler
 from watchdog.observers import Observer
-
 
 MAX_CALLS = 1
 MIN_PERIOD_BETWEEN_CALLS = 1

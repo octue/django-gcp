@@ -20,11 +20,18 @@ repos:
       - id: check-json5
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.11.0
     hooks:
       - id: ruff
+        name: Ruff lint
         args: [--fix, --exit-non-zero-on-fix]
+
+      - id: ruff
+        name: Ruff isort
+        args: [check, --select, I, --fix]
+
       - id: ruff-format
+        name: Ruff format
 
   - repo: https://github.com/windpioneers/pre-commit-hooks
     rev: 0.0.5

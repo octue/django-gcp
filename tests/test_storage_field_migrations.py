@@ -2,6 +2,7 @@
 # pylint: disable=missing-docstring
 
 import json
+
 from django.db import connection
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 

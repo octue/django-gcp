@@ -1,7 +1,7 @@
-import io
-import zlib
 from gzip import GzipFile
+import io
 from typing import Optional
+import zlib
 
 from .utils import to_bytes
 

@@ -7,13 +7,14 @@
 # pylint: disable=no-member
 
 import base64
-import json
 from datetime import datetime, timezone
+import json
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
-from django.test import TestCase
-from django_gcp.events.utils import decode_pubsub_message, get_event_url, make_pubsub_message
 
+from django.test import TestCase
+
+from django_gcp.events.utils import decode_pubsub_message, get_event_url, make_pubsub_message
 
 DEFAULT_SUBSCRIPTION = "projects/my-project/subscriptions/my-subscription"
 

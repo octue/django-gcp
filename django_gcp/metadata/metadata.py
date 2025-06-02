@@ -4,7 +4,6 @@ from urllib.request import Request, urlopen
 
 from ..exceptions import NotOnCloudRunError
 
-
 ENDPOINTS = {
     "project_id": "computeMetadata/v1/project/project-id",
     "project_number": "/computeMetadata/v1/project/numeric-project-id",

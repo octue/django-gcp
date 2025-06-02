@@ -1,11 +1,11 @@
 # More Information <https://cloud.google.com/scheduler/docs/reference/rest>
 import os
 from typing import Dict, Generator
+
 from google.api_core.exceptions import NotFound
 from google.cloud import scheduler
 
 from .base import AppEngineBasedService, GoogleCloudPilotAPI
-
 
 DEFAULT_TIMEZONE = os.environ.get("TIMEZONE", "Europe/London")  # UTC
 MAX_TIMEOUT = 30 * 60  # max allowed to HTTP endpoints is 30 minutes

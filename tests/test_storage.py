@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import gzip
 import mimetypes
 from unittest import mock
+from zoneinfo import ZoneInfo
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
@@ -17,7 +18,6 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from google.cloud.exceptions import NotFound
 from google.cloud.storage.blob import Blob
-from zoneinfo import ZoneInfo
 
 from django_gcp.storage import gcloud
 

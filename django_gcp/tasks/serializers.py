@@ -1,9 +1,9 @@
-import json
 from datetime import datetime
+import json
+
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.fields.files import FieldFile
-
 
 DEFAULT_TIMEZONE = getattr(settings, "TIMEZONE", "UTC")
 

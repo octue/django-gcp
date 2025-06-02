@@ -1,6 +1,7 @@
 import logging
 import mimetypes
 from tempfile import SpooledTemporaryFile
+
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import File
@@ -14,7 +15,6 @@ from google.cloud.storage.blob import _quote
 from .compress import CompressedFileMixin, CompressStorageMixin
 from .settings import StorageSettings
 from .utils import clean_name, get_available_overwrite_name, safe_join, to_bytes
-
 
 CONTENT_ENCODING = "content_encoding"
 CONTENT_TYPE = "content_type"

@@ -3,8 +3,8 @@ from django.urls import include, re_path
 from django.views.generic.base import RedirectView
 
 from django_gcp import urls as django_gcp_urls
-from .example import urls as example_urls
 
+from .example import urls as example_urls
 
 admin.autodiscover()
 

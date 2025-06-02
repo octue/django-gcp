@@ -5,7 +5,6 @@ from __future__ import absolute_import, unicode_literals
 
 import sys
 
-
 # INFORMATION
 # This script manages the test server, so it can be run and
 # interacted with as its own application from the root level

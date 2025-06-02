@@ -191,12 +191,17 @@ $(document).ready(function($) {
       // var field = wrapper.find("input[type=hidden]");
       var file = wrapper.find(".gcp-file-input").get(0).files[0];
       const signed_ingress_url = wrapper.data("signed-ingress-url")
-      // const ingress_path = wrapper.data("ingress-path")
+      const max_size_bytes = wrapper.data("max-size-bytes")
+      const headers = {}
+      if (max_size_bytes !== 0) {
+        headers["X-Goog-Content-Length-Range"] = `0,${max_size_bytes}`
+      }
       $.ajax({
         url: signed_ingress_url,
         type: "PUT",
         data: file,
         contentType: "application/octet-stream",
+        headers: headers,
         success: function() {
           // field.val(JSON.stringify({_tmp_path: ingress_path, name: file.name, content_type: file.type}));
           window.gcp_number_of_files--;

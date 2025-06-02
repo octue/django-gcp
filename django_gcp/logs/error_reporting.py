@@ -2,6 +2,7 @@
 # pylint: disable=broad-except
 
 from logging import StreamHandler
+
 from django.conf import settings
 from google.cloud import error_reporting
 

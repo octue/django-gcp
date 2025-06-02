@@ -111,7 +111,7 @@ LOGGING = {
     "disable_existing_loggers": True,
     "root": {"handlers": ["gcp_structured_logging", "gcp_error_reporting"]},
     "formatters": {
-        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s " "%(message)s"},
+        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s %(message)s"},
     },
     "filters": {
         "require_debug_false": {
@@ -157,6 +157,11 @@ LOGGING = {
 # ---------------------------------------------------------------------------
 # HERE'S HOW TO SET UP STATIC, MEDIA AND EXTRA STORAGE
 # ---------------------------------------------------------------------------
+
+# LIMIT SIZE OF BLOBFIELD UPLOADS
+# This can be customized per BlobField. Default if not given is unlimited upload
+# size, which is unwise if your users are not both trusted and competent
+GCP_STORAGE_BLOBFIELD_MAX_SIZE_BYTES = 32 * 1024 * 1024
 
 # MEDIA FILES
 DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
