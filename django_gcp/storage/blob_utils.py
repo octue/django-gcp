@@ -88,6 +88,10 @@ class BlobFieldMixin:
         """Get blob name for the given model field name"""
         return get_blob_name(self, field_name)
 
+    @classmethod
+    def get_bucket(cls, field_name):
+        return cls._meta.get_field(field_name).storage.bucket
+
     def get_console_url(self, field_name):
         """Get a URL to where the file resides in GCP cloud console"""
         return get_console_url(self, field_name)
