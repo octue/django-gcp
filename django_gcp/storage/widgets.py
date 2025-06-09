@@ -44,7 +44,7 @@ class CloudObjectWidget(Widget):
         self.ingress_path = ingress_path
 
         if "unfold" in settings.INSTALLED_APPS:
-            self.template_name = "django_gcp/contrib/unfold/cloud_object_widget.html"
+            self.template_name = "unfold/contrib/django_gcp/cloud_object_widget.html"
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
