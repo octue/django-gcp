@@ -16,7 +16,7 @@ class BlobFieldModelAdminMixin:
             "download_url": get_signed_download_url(obj, field_name),
             "console_url": get_console_url(obj, field_name),
         }
-        return mark_safe(render_to_string("django_gcp/contrib/unfold/cloud_object_readonly_widget.html", context))
+        return mark_safe(render_to_string("unfold/contrib/django_gcp/cloud_object_readonly_widget.html", context))
 
     def _replace_blob_field_names(self, fields, fields_to_replace):
         blob_fields = set(f.name for f in self.model._meta.get_fields() if isinstance(f, BlobField))

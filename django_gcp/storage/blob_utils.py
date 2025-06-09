@@ -111,3 +111,6 @@ class BlobFieldMixin:
     def get_signed_download_url(self, field_name, expiration=None):
         """Get a signed URL to the blob with the response disposition set"""
         return get_signed_download_url(self, field_name, expiration)
+
+    # def override_path(self, field_name, path):
+    #     """Set a blobfield path manually, avoiding any quality control, checks or ingress"""
