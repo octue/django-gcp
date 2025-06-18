@@ -1,10 +1,16 @@
-version: '3.8'
-
 # Developers:
 #
 #  This file is under version control; changes made here will affect everyone.
 #  If you need to customise just for yourself, add your personal overrides to docker-compose.developer.yml
+
+# Networking:
 #
+#  This setup runs containers on the same network as the database container, with the
+#     network_mode: service:db
+#  definition. This allows "forwardPorts" in devcontainer.json to include 5432 (postgres),
+#  6437 (redis), 8123 (tasks emulator). Use "forwardPorts instead of "ports" properties here,
+#  to enable forwarding from a Codespace (which doesn't work otherwise).
+
 services:
   web:
     build:
@@ -27,9 +33,7 @@ services:
     # Overrides default command so things don't shut down after the process ends
     command: sleep infinity
 
-    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function to include 5432
-    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally, because adding the "ports" property to this
-    # file will not forward from a Codespace.
+    # Run on the same network as the database container
     network_mode: service:db
 
     # Use the non-root user for all processes
@@ -42,6 +46,13 @@ services:
       - seccomp:unconfined
 
     # Ensure the database is started so that test commands and django server can start
+    depends_on:
+      - db
+
+  tasks:
+    image: ghcr.io/aertje/cloud-tasks-emulator:latest
+    command: -host 0.0.0.0 -port 8123 -queue "projects/octue-django-gcp/locations/europe-west1/queues/example-primary"
+    network_mode: service:db
     depends_on:
       - db
 

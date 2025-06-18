@@ -287,25 +287,6 @@ class AccountManagerMixin:
         return policy
 
 
-class AppEngineBasedService:
-    # This mixin must be used for all clients that uses GCP's resources that are based on App Engine
-    # such as Cloud Scheduler.
-    # They have a peculiar behaviour because the App Engine, when enabled the first time,
-    # is created in a region and this region cannot be changed ever.
-    # So these clients cannot just choose a desired region to work on, they must use the App Engine's
-    # previously chosen region.
-    def _set_location(self, location: str = None):
-        project_location = self._get_project_default_location()
-
-        explicit_location = location
-        if explicit_location and explicit_location != project_location:
-            logger.warning(
-                f"Location {explicit_location} cannot be set in {self.__class__.__name__}. "
-                f"It uses App Engine's default location for your project: {project_location}"
-            )
-        return project_location
-
-
 def friendly_http_error(func):
     _reasons = {
         "notFound": exceptions.NotFound,

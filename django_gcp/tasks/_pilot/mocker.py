@@ -18,7 +18,6 @@ class patch_auth:  # pylint: disable=invalid-name
         managers = [
             patch("google.auth.default", return_value=(credentials, project_id)),
             patch("django_gcp.tasks._pilot.base.GoogleCloudPilotAPI._set_location", return_value=location),
-            patch("django_gcp.tasks._pilot.base.AppEngineBasedService._set_location", return_value=location),
         ]
         self.stack = ExitStack()
         for mgr in managers:

@@ -17,9 +17,9 @@ from google.cloud import pubsub_v1
 from django_gcp.events.utils import decode_pubsub_message
 from django_gcp.exceptions import DuplicateTaskError, IncompatibleSettingsError, IncorrectTaskUsageError
 
-from ._patch_cloud_scheduler import CloudScheduler
-from ._patch_cloud_tasks import CloudTasks
 from ._pilot.pubsub import CloudPublisher, CloudSubscriber
+from ._pilot.scheduler import CloudScheduler
+from ._pilot.tasks import CloudTasks
 from .helpers import run_coroutine
 from .serializers import deserialize, serialize
 
@@ -218,7 +218,10 @@ class Task(metaclass=TaskMeta):
 
     @property
     def __client(self):
-        return CloudTasks(location=self.manager.region)
+        emulator = self.manager.get_emulator_transport()
+        if emulator is None:
+            return CloudTasks(location=self.manager.region)
+        return CloudTasks(location=self.manager.region, transport=emulator)
 
 
 class OnDemandTask(Task):

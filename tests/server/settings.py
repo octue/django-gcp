@@ -81,9 +81,9 @@ TEMPLATES = [
 ]
 
 ALLOWED_HOSTS = [
-    "localhost",
-    ".loca.lt",
-]  # Adding loca.lt allows developers to expose the example server using localtunnel
+    "localhost",  # Access from your local machine
+    "127.0.0.1",  # Use 127.0.0.1 for tasks emulator requests (force ipv4 instead of ipv6)
+]
 
 DATABASES = {"default": get_db_conf()}
 
@@ -190,12 +190,41 @@ GCP_STORAGE_EXTRA_STORES = {"extra-versioned": {"bucket_name": "example-extra-ve
 # HERE'S HOW TO SET UP TASKS
 # ---------------------------------------------------------------------------
 
-GCP_TASKS_DEFAULT_QUEUE_NAME = "example-primary"
-GCP_TASKS_DELIMITER = "--"
-# This is the domain on which the worker app can receive requests
-# You can use localtunnel to easily create your own public domain to
-# run end-to-end integration tests with a real GCP project
-GCP_TASKS_DOMAIN = "https://outrageous-horny-giraffe.loca.lt"
-GCP_TASKS_EAGER_EXECUTE = False
+# The region your queue(s) are in
 GCP_TASKS_REGION = "europe-west1"
-GCP_TASKS_RESOURCE_PREFIX = "django-gcp"
+
+# Used in construction of resource names
+GCP_TASKS_DELIMITER = "--"
+
+# You can override the default queue in the task class
+GCP_TASKS_DEFAULT_QUEUE_NAME = "example-primary"
+
+# Any queues and scheduler jobs created by django-gcp will have this as a prefix/suffix
+# to aid with cleanup of automatically created resources
+GCP_TASKS_RESOURCE_AFFIX = "django-gcp"
+
+# Set the domain on which the worker can receive requests.
+# In production:
+#    - must be a real address using https eg
+#      GCP_TASKS_DOMAIN = "https://worker.myapp.com"
+#      GCP_TASKS_EMULATOR_TARGET = None
+#
+# In local development:
+#    - we recommend using https://github.com/aertje/cloud-tasks-emulator
+#    - see django-gcp/.devcontainer/docker-compose.yml for how to setup
+#    - this domain and target...
+#       - sends tasks to the emulator instead of GCP
+#       - routes the task directly back to the dev server
+#    - you could alternatively run local worker (eg on port 8100) and route tasks there
+GCP_TASKS_DOMAIN = "http://127.0.0.1:8000"
+GCP_TASKS_EMULATOR_TARGET = "127.0.0.1:8123"  # Remove or set to None in production
+
+# In local development (alternative):
+#    - you can use GCP_TASKS_EAGER_EXECUTE = True
+#    - this will execute tasks immediately and synchronously (as they are enqueued)
+#    - no need for an emulator, but beware...
+#    - strictly speaking, the code runs out of sequence (before the end
+#      of the current database transaction, instead of after it) which
+#      can cause race conditions if the task requires instance values that
+#      have not been committed to the db yet.
+GCP_TASKS_EAGER_EXECUTE = False

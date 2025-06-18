@@ -1,19 +1,54 @@
 # Reference: https://googleapis.dev/python/cloudtasks/latest/tasks_v2/cloud_tasks.html
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, Union
 import uuid
 
-from google.api_core.exceptions import FailedPrecondition
+from django.conf import settings
+from google.api_core.exceptions import FailedPrecondition, NotFound
 from google.cloud import tasks_v2
+from google.cloud.tasks_v2.services.cloud_tasks.transports.base import CloudTasksTransport
 from google.protobuf import timestamp_pb2
+from googleapiclient.discovery import Resource
 
 from . import exceptions
-from .base import AppEngineBasedService, GoogleCloudPilotAPI
+from .base import GoogleCloudPilotAPI
 
 
-class CloudTasks(AppEngineBasedService, GoogleCloudPilotAPI):
-    _client_class = tasks_v2.CloudTasksClient
+class CloudTasksClient(tasks_v2.CloudTasksClient):
+    """CloudTasksClient using swappable transport to enable emulation"""
+
+    @property
+    def transport(self) -> CloudTasksTransport:
+        """Returns the transport used by the client instance.
+
+        Returns:
+            CloudTasksTransport: The transport used by the client
+                instance.
+        """
+
+        return self._transport
+
+    @property
+    def api_endpoint(self):
+        """Return the API endpoint used by the client instance.
+
+        Returns:
+            str: The API endpoint used by the client instance.
+        """
+        return getattr(settings, "GCP_TASKS_EMULATOR_TARGET")
+        # return self._api_endpoint
+
+
+class CloudTasks(GoogleCloudPilotAPI):
+    _client_class = CloudTasksClient
     DEFAULT_METHOD = tasks_v2.HttpMethod.POST
+
+    def _build_client(self, **kwargs) -> Union[Resource, _client_class]:
+        kwargs.update(self._get_client_extra_kwargs())
+        # Add credentials unless using a custom transport (where they should be supplied directly)
+        if "transport" not in kwargs.keys():
+            kwargs["credentials"] = self.credentials
+        return self._client_class(**kwargs)
 
     def _parent_path(self, project_id: str = None) -> str:
         return f"projects/{project_id or self.project_id}/locations/{self.location}"
@@ -88,16 +123,19 @@ class CloudTasks(AppEngineBasedService, GoogleCloudPilotAPI):
 
             task.schedule_time = timestamp
 
+        resource = f"Queue {queue_path}"
         try:
             response = self.client.create_task(parent=queue_path, task=task)
-        except FailedPrecondition as exc:
-            if "a queue with this name existed recently" in exc.message:
-                raise exceptions.DeletedRecently(resource=f"Queue {queue_name}") from exc
-            if exc.message != "Queue does not exist.":
-                raise
 
-            self._create_queue(queue_name=queue_name, project_id=project_id)
-            response = self.client.create_task(parent=queue_path, task=task)
+        except NotFound as exc:
+            raise exceptions.DoesNotExist(resource) from exc
+
+        except FailedPrecondition as exc:
+            resource = f"Queue {queue_name}"
+            if "a queue with this name existed recently" in exc.message:
+                raise exceptions.DeletedRecently(resource) from exc
+            raise
+
         return response
 
     def _create_queue(

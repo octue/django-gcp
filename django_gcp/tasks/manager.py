@@ -2,12 +2,14 @@ import asyncio
 import logging
 
 from django.conf import settings
+from google.cloud.tasks_v2.services.cloud_tasks.transports import CloudTasksGrpcTransport
+import grpc
 
 from django_gcp import exceptions
 
 from . import tasks
-from ._patch_cloud_scheduler import CloudScheduler
 from ._pilot.pubsub import CloudSubscriber
+from ._pilot.scheduler import CloudScheduler
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +61,11 @@ class TaskManager:
     def domain(self):
         """Return the GCP_TASKS_DOMAIN setting or a default"""
         _domain = getattr(settings, "GCP_TASKS_DOMAIN")
-        if not _domain.startswith("https://"):
-            message = f"The GCP_TASKS_DOMAIN setting is invalid for use with a GCP PubSub push subscription. Endpoints need to be valid and secure (setting is: {_domain})."
-            raise exceptions.InvalidEndpointError(message)
+        eager_executing = bool(self.eager_execute)
+        emulating = bool(self.emulator_target)
+        allow_insecure = eager_executing or emulating
+        if not allow_insecure and not _domain.startswith("https://"):
+            raise exceptions.InvalidTaskDomainError(_domain)
         return _domain
 
     @property
@@ -78,6 +82,26 @@ class TaskManager:
     def resource_affix(self):
         """Return the GCP_TASKS_RESOURCE_AFFIX setting or a default"""
         return getattr(settings, "GCP_TASKS_RESOURCE_AFFIX", None)
+
+    @property
+    def emulator_target(self):
+        """Return the GCP_TASKS_EMULATOR_TARGET setting or a default"""
+        return getattr(settings, "GCP_TASKS_EMULATOR_TARGET", None)
+
+    def get_emulator_transport(self):
+        """If GCP_TASKS_EMULATOR_ADDRESS return an insecure GRPC transport
+        to send tasks to the emulator instead of the real Cloud Tasks.
+
+        Typical value is "127.0.0.1:8123"
+
+        If value is None or Unset, the gcp tasks client is used directly
+        (it will construct its own transport).
+        """
+        if self.emulator_target is not None:
+            channel = grpc.insecure_channel(self.emulator_target)
+            return CloudTasksGrpcTransport(channel=channel)
+
+        return None
 
     def register_task(self, task_class):
         """Record the presence of a task class in this manager
