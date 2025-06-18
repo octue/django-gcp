@@ -6,8 +6,8 @@ from django.conf import settings
 from django_gcp import exceptions
 
 from . import tasks
-from ._patch_cloud_scheduler import CloudScheduler
 from ._pilot.pubsub import CloudSubscriber
+from ._pilot.scheduler import CloudScheduler
 
 logger = logging.getLogger(__name__)
 
