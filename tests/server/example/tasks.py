@@ -1,4 +1,10 @@
+from datetime import datetime
+
 from django_gcp.tasks import OnDemandTask, PeriodicTask, SubscriberTask
+
+from .models import ExampleCallbackBlobFieldModel
+
+# tests.server.example.models
 
 # NOTE: See the following link for a discussion on disabling pylint when overriding the `run` method.
 # https://stackoverflow.com/questions/73454704/how-to-define-keyword-variadic-arguments-in-a-notimplementedyet-abc-method-avoi
@@ -76,3 +82,14 @@ class MySubscriberTask(SubscriberTask):
 
     def run(self, **kwargs):  # pylint: disable=arguments-differ
         print("Received message from Pub/Sub on MySubscriberTask:\n", kwargs)
+
+
+class ProcessBlobTask(OnDemandTask):
+    """Demonstrates how you'd run some async processing task every time
+    a blob field changed (see models.ExampleCallbackBlobFieldModel)
+    """
+
+    def run(self, **kwargs):
+        instance = ExampleCallbackBlobFieldModel.objects.get(id=kwargs["id"])
+        instance.activity = f"Awesome! Task executed at {datetime.now().isoformat()}"
+        instance.save()

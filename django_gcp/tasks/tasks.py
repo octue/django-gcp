@@ -218,7 +218,10 @@ class Task(metaclass=TaskMeta):
 
     @property
     def __client(self):
-        return CloudTasks(location=self.manager.region)
+        emulator = self.manager.get_emulator_transport()
+        if emulator is None:
+            return CloudTasks(location=self.manager.region)
+        return CloudTasks(location=self.manager.region, transport=emulator)
 
 
 class OnDemandTask(Task):

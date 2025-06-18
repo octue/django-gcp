@@ -77,7 +77,7 @@ class CommandsTest(SimpleTestCase):
             out,
         )
         self.assertIn(
-            "- [+] myperiodictask",
+            "- [+] django-gcp--myperiodictask",
             out,
         )
 

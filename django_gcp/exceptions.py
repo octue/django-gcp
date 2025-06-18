@@ -10,11 +10,11 @@ class IncorrectTaskUsageError(Exception):
     """Raised when one of the Task classes is directly instantiated, instead of subclassed"""
 
 
-class InvalidEndpointError(Exception):
-    """Raised when a specified endpoint isn't valid"""
+class InvalidTaskDomainError(Exception):
+    """Raised when the specified tasks domain isn't valid"""
 
     def __init__(self, endpoint):
-        message = f"The endpoint is invalid for use with a GCP pub/sub push subscription. Endpoints need to be valid and secure. ({endpoint}) "
+        message = f"The GCP_TASKS_DOMAIN setting is invalid for use with GCP Tasks or PubSub push subscriptions. Domain must use https:// protocol in production. Given value: {endpoint}"
         super().__init__(message)
 
 

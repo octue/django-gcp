@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import os
 from uuid import uuid4
 
@@ -6,6 +7,8 @@ from django.core.exceptions import ValidationError
 from django.db.models import CharField, FileField, Model, UUIDField
 
 from django_gcp.storage.fields import BlobField
+
+logger = logging.getLogger(__name__)
 
 
 # Disabled to show the argument range in the example:
@@ -207,11 +210,16 @@ class ExampleBlobFieldModel(Model):
 def my_on_change_callback(value, instance):
     """Demonstrate the on_change callback functionality
 
-    This callback is changed AFTER the commit of the current transaction
+    This callback is changed AFTER the commit of the current transaction, meaning
+    that ingressed blobs should have been copied to their ultimate destinations and
+    the paths updated. However, GCP can take a short while to register the new blobs
+    so to avoid race conditions, if working with blob objects you should implement a
+    retryer.
 
     It is designed for lightweight work like triggering further processing
     tasks or sending emails, etc, which must be done only if the transaction
-    succeeded.
+    succeeded. If more significant work is required, you can dispatch a task
+    as demonstrated below).
 
     If you need to make a change to the model as a result of the field
     preparation which must be included in the *same* transaction as the change
@@ -225,14 +233,25 @@ def my_on_change_callback(value, instance):
     instance.
     """
     dt = datetime.now().isoformat()
+
+    # The on_change is called AFTER the commit of the current transaction, so...
     instance.refresh_from_db()
-    # The on_change is called AFTER the commit of the current transaction, so
     if value is None:
         print("You removed the blob")
         instance.activity = f"Removed blob on {dt}"
     else:
         print(f"Do something with the value {value} and instance {instance}")
         instance.activity = f"Changed blob on {dt}"
+
+    # Say you wanted to do more heavyweight processing. You can
+    # dispatch a task to do so like this:
+    from tests.server.example.tasks import (
+        ProcessBlobTask,  # Avoid circular import (tasks are only registered on app ready)
+    )
+
+    logger.info("Enqueueing task to reprocess blob on instance id=%s", instance.id)
+    ProcessBlobTask().enqueue(id=instance.id)
+
     instance.save()
 
 
@@ -405,3 +424,17 @@ class ExampleUpdateAttributesBlobFieldModel(Model):
         """Metaclass defining this model to reside in the example app"""
 
         app_label = "example"
+
+
+# class ExampleTaskDispatchModel(Model):
+#     """A basic model showing how you'd dispatch a task on model save"""
+
+#     category = CharField(max_length=20, blank=True, null=True)
+
+#     class Meta:
+#         """Metaclass defining this model to reside in the example app"""
+
+#         app_label = "example"
+
+#     def save(self, *args, **kwargs):
+#         super().save(

@@ -51,7 +51,7 @@
   },
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [80, 443, 5000, 7045, 7046, 7047, 7048, 7049, 8000, 8080],
+  "forwardPorts": [5432, 6379, 8000, 8132],
 
   // Use 'postAttachCommand' to run commands after the container is created and attached (ie git is available).
   // This is preferential to postCreateCommand as invoking git (eg for private poetry installs or addition of
