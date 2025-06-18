@@ -3,10 +3,8 @@ from datetime import datetime, timedelta
 from typing import Dict, Union
 import uuid
 
-from django.conf import settings
 from google.api_core.exceptions import FailedPrecondition, NotFound
 from google.cloud import tasks_v2
-from google.cloud.tasks_v2.services.cloud_tasks.transports.base import CloudTasksTransport
 from google.protobuf import timestamp_pb2
 from googleapiclient.discovery import Resource
 
@@ -14,33 +12,8 @@ from . import exceptions
 from .base import GoogleCloudPilotAPI
 
 
-class CloudTasksClient(tasks_v2.CloudTasksClient):
-    """CloudTasksClient using swappable transport to enable emulation"""
-
-    @property
-    def transport(self) -> CloudTasksTransport:
-        """Returns the transport used by the client instance.
-
-        Returns:
-            CloudTasksTransport: The transport used by the client
-                instance.
-        """
-
-        return self._transport
-
-    @property
-    def api_endpoint(self):
-        """Return the API endpoint used by the client instance.
-
-        Returns:
-            str: The API endpoint used by the client instance.
-        """
-        return getattr(settings, "GCP_TASKS_EMULATOR_TARGET")
-        # return self._api_endpoint
-
-
 class CloudTasks(GoogleCloudPilotAPI):
-    _client_class = CloudTasksClient
+    _client_class = tasks_v2.CloudTasksClient
     DEFAULT_METHOD = tasks_v2.HttpMethod.POST
 
     def _build_client(self, **kwargs) -> Union[Resource, _client_class]:

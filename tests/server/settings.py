@@ -206,8 +206,8 @@ GCP_TASKS_RESOURCE_AFFIX = "django-gcp"
 # Set the domain on which the worker can receive requests.
 # In production:
 #    - must be a real address using https eg
-#      GCP_TASKS_DOMAIN = "https://worker.myapp.com"
-#      GCP_TASKS_EMULATOR_TARGET = None
+GCP_TASKS_DOMAIN = "https://worker.myapp.com"
+GCP_TASKS_EMULATOR_TARGET = None
 #
 # In local development:
 #    - we recommend using https://github.com/aertje/cloud-tasks-emulator
@@ -216,8 +216,8 @@ GCP_TASKS_RESOURCE_AFFIX = "django-gcp"
 #       - sends tasks to the emulator instead of GCP
 #       - routes the task directly back to the dev server
 #    - you could alternatively run local worker (eg on port 8100) and route tasks there
-GCP_TASKS_DOMAIN = "http://127.0.0.1:8000"
-GCP_TASKS_EMULATOR_TARGET = "127.0.0.1:8123"  # Remove or set to None in production
+# GCP_TASKS_DOMAIN = "http://127.0.0.1:8000"
+# GCP_TASKS_EMULATOR_TARGET = "127.0.0.1:8123"  # Remove or set to None in production
 
 # In local development (alternative):
 #    - you can use GCP_TASKS_EAGER_EXECUTE = True
