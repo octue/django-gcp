@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install poetry
         uses: snok/install-poetry@v1.4.1
@@ -26,7 +26,7 @@ jobs:
         run: echo "package_version=$(poetry version -s)" >> $GITHUB_OUTPUT
 
       - name: Create release
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.1.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, no need to create your own.
         with:
@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install poetry
         uses: snok/install-poetry@v1.4.1
@@ -54,4 +54,4 @@ jobs:
         run: poetry build
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.10.3
+        uses: pypa/gh-action-pypi-publish@v1.13.0
