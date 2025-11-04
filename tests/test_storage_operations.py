@@ -214,6 +214,15 @@ class TestStorageOperationsWithDatabase(StorageOperationsMixin, TestCase):
                 instance.save()
             assert get_blob(instance, "blob").exists()
 
+            # Test with a file-like
+            instance = ExampleBlobFieldModel()
+            field_name = "blob"
+            with open(local_path, "rb") as local_fp:
+                with uploaded_blob(instance, field_name, local_fp) as value:
+                    instance.blob = value
+                    instance.save()
+            assert get_blob(instance, "blob").exists()
+
             # Test raises exception on not implemented yet
             with self.assertRaises(NotImplementedError):
                 instance2 = ExampleBlobFieldModel()

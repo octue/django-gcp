@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import datetime
 import logging
+import os
 
 from django.test.utils import override_settings
 from django.utils import timezone
@@ -23,7 +24,7 @@ def blob_exists(bucket, blob_name):
 def upload_blob(
     instance,
     field_name,
-    local_path,
+    local_file,
     destination_path=None,
     attributes=None,
     allow_overwrite=False,
@@ -43,7 +44,7 @@ def upload_blob(
 
     :param django.db.Model instance: An instance of a django Model which has a BlobField
     :param str field_name: The name of the BlobField attribute on the instance
-    :param str local_path: The path to the file to upload
+    :param str|file-like local_path: The path to the file to upload (or a file-like object with a name attribute such as a ZipExtFile)
     :param str destination_path: The path to upload the file to. If None, the remote path will be generated
     from the BlobField. If setting this value, take care to override the value of the field on the instance
     so it's path matches; this is not updated for you.
@@ -51,12 +52,19 @@ def upload_blob(
     :param bool allow_overwrite: If true, allows existing blobs at the path to be overwritten. If destination_path is not given, this is provided to the get_destination_path callback (and may be overridden by that callback per its specification)
     :param str existing_path: If destination_path is None, this is provided to the get_destination_path callback to simulate behaviour where there is an existing path
     """
-    # Get the field (which
+
+    if isinstance(local_file, (str, bytes, os.PathLike)):
+        is_path_like = True
+        original_name = local_file
+    else:
+        is_path_like = False
+        original_name = local_file.name
+
     field = instance._meta.get_field(field_name)
     if destination_path is None:
         destination_path, allow_overwrite = field.get_destination_path(
             instance,
-            original_name=local_path,
+            original_name=original_name,
             attributes=attributes,
             existing_path=existing_path,
             temporary_path=None,
@@ -71,9 +79,11 @@ def upload_blob(
     attributes = attributes or {}
 
     # Upload the file
-    Blob(destination_path, bucket=field.storage.bucket).upload_from_filename(
-        local_path, if_generation_match=if_generation_match, **attributes
-    )
+    blob = Blob(destination_path, bucket=field.storage.bucket)
+    if is_path_like:
+        blob.upload_from_filename(local_file, if_generation_match=if_generation_match, **attributes)
+    else:
+        blob.upload_from_file(local_file, if_generation_match=if_generation_match, **attributes)
 
     # Return the field value
     return {"path": destination_path}
@@ -208,7 +218,7 @@ def get_signed_upload_url(bucket, blob_name, timedelta=None, max_size_bytes=UNLI
 
 
 @contextmanager
-def uploaded_blob(instance, field_name, local_path, destination_path=None, allow_overwrite=False, delete_on_exit=False):
+def uploaded_blob(instance, field_name, local_file, destination_path=None, allow_overwrite=False, delete_on_exit=False):
     """A context manager enabling the preparation of an instance with a blob uploaded from a local path.
     Optionally override the destination path (the ultimate path of the blob within the destination bucket) and allow_overwrite parameter.
 
@@ -227,7 +237,7 @@ def uploaded_blob(instance, field_name, local_path, destination_path=None, allow
         field_value = upload_blob(
             instance,
             field_name=field_name,
-            local_path=local_path,
+            local_file=local_file,
             destination_path=destination_path,
             allow_overwrite=allow_overwrite,
         )
