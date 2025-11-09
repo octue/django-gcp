@@ -123,8 +123,8 @@ class BlobField(models.JSONField):
         kwargs["default"] = kwargs.pop("default", None)
         kwargs["help_text"] = kwargs.pop("help_text", "GCP cloud storage object")
 
-        # Note, if you want to define overrides, then use the GCP_STORAGE_EXTRA_STORES
-        # setting with a different key
+        # Note: store_key corresponds to a storage alias in the STORAGES setting.
+        # For example, store_key="versioned" would look up STORAGES["versioned"]["OPTIONS"]
         self.storage = GoogleCloudStorage(store_key=store_key)
 
         # We should consider if there's a good use case for customising the storage class:

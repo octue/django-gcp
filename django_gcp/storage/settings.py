@@ -63,14 +63,36 @@ class StorageSettings:
 
     @property
     def _stores_settings(self):
-        """Get a complete dict of all stores defined in settings.py (media + static + extras)"""
-        all_stores = {
-            "media": getattr(django_settings, "GCP_STORAGE_MEDIA", None),
-            "static": getattr(django_settings, "GCP_STORAGE_STATIC", None),
-            **getattr(django_settings, "GCP_STORAGE_EXTRA_STORES", {}),
-        }
+        """Get a complete dict of all stores defined in settings.py (media + static + extras)
 
-        return dict((k, v) for k, v in all_stores.items() if v is not None)
+        Reads from Django's STORAGES setting (Django 5.1+) and maps storage aliases to store keys.
+        - 'default' alias maps to 'media' store key
+        - 'staticfiles' alias maps to 'static' store key
+        - Other aliases use their name as the store key
+        """
+        storages_config = getattr(django_settings, "STORAGES", {})
+        all_stores = {}
+
+        for alias, config in storages_config.items():
+            backend = config.get("BACKEND", "")
+
+            # Only process django_gcp storage backends
+            if "django_gcp.storage" in backend:
+                options = config.get("OPTIONS", {})
+
+                # Map Django's standard aliases to our internal store keys
+                if alias == "default":
+                    store_key = "media"
+                elif alias == "staticfiles":
+                    store_key = "static"
+                else:
+                    # For extra stores, use the alias as the store key
+                    # unless explicitly specified in OPTIONS
+                    store_key = options.pop("store_key", alias)
+
+                all_stores[store_key] = options
+
+        return all_stores
 
     @property
     def _store_settings(self):
@@ -79,7 +101,9 @@ class StorageSettings:
             return self._stores_settings[self._store_key]
         except KeyError as e:
             raise ImproperlyConfigured(
-                f"Mismatch: specified store key '{self._store_key}' does not match 'media', 'static', or any store key defined in GCP_STORAGE_EXTRA_STORES"
+                f"Storage with key '{self._store_key}' not found in STORAGES setting. "
+                f"Available stores: {list(self._stores_settings.keys())}. "
+                f"Please ensure STORAGES['{self._store_key}'] or STORAGES['default'/'staticfiles'] is configured with a django_gcp.storage backend."
             ) from e
 
     def _handle_settings_changed(self, **kwargs):
