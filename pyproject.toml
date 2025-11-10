@@ -1,6 +1,6 @@
 [project]
 name = "django-gcp"
-version = "0.20.1"
+version = "0.21.0"
 description = "Utilities to run Django on Google Cloud Platform"
 authors = [{name="Tom Clark"}]
 license = "MIT"
@@ -9,7 +9,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -17,7 +16,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 keywords = ["django", "google", "cloud", "run", "gcloud", "gcp", "storage", "tasks", "events", "pubsub"]
-requires-python = ">=3.9,<4"
+requires-python = ">=3.10,<4"
 
 dependencies = [
 "Django>=4.0,<5.1",
