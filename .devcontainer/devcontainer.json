@@ -64,7 +64,6 @@
 
   // Use devcontainer features
   "features": {
-    "ghcr.io/devcontainers/features/terraform:1": {},
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installZsh": true,
       "configureZshAsDefaultShell": true,
@@ -88,7 +87,11 @@
     },
     "ghcr.io/devcontainers/features/node:1": {
       "nodeGypDependencies": false,
-      "version": "latest"
-    }
+      "version": "24"
+    },
+    "ghcr.io/devcontainers-extra/features/terraform-asdf:2": {
+      "version": "1.5.2"
+    },
+    "ghcr.io/dhoeric/features/terraformer:1": {}
   }
 }

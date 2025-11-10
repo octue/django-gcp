@@ -15,15 +15,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Install poetry
-        uses: snok/install-poetry@v1.4.1
-
-      - name: Check pyproject.toml file
-        run: poetry check
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: 'pyproject.toml'
+          python-version: 3.13
 
       - name: Get package version
         id: get-package-version
-        run: echo "package_version=$(poetry version -s)" >> $GITHUB_OUTPUT
+        run: echo "package_version=$(uv version --short)" >> $GITHUB_OUTPUT
 
       - name: Create release
         uses: actions/create-release@v1.1.4
@@ -47,11 +48,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Install poetry
-        uses: snok/install-poetry@v1.4.1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: 'pyproject.toml'
+          python-version: 3.13
 
       - name: Build a binary wheel and a source tarball
-        run: poetry build
+        run: uv build
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@v1.13.0

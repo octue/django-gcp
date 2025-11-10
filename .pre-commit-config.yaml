@@ -41,6 +41,11 @@ repos:
           - '^main$'
           - '^([a-z][a-z0-9#]*)(-[a-z0-9#]+)*$'
 
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.7.7
+    hooks:
+      - id: uv-lock
+
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: 'v2.2.1'
     hooks:

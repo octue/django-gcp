@@ -17,7 +17,6 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
       args:
-        VARIANT: '3.9'
         INSTALL_NODE: 'true'
         NODE_VERSION: 'lts/*'
 
