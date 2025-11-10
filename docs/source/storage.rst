@@ -55,32 +55,122 @@ Setup Media and Static Storage
 ------------------------------
 
 The most common types of storage are for media and static files, using the storage backend.
-We derived a custom storage type for each, making it easier to name them.
+We provide custom storage classes for each, making it easier to configure them.
 
-In your ``settings.py`` file, do:
+In your ``settings.py`` file, configure the ``STORAGES`` setting (Django 5.1+):
 
 .. code-block:: python
 
-    # Set the default storage (for media files)
+    STORAGES = {
+        "default": {
+            "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+            "OPTIONS": {
+                "bucket_name": "app-assets-environment-media",
+                "base_url": "https://storage.googleapis.com/app-assets-environment-media/",
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
+            "OPTIONS": {
+                "bucket_name": "app-assets-environment-static",
+                "base_url": "https://storage.googleapis.com/app-assets-environment-static/",
+            },
+        },
+    }
+
+.. note::
+   The ``base_url`` option specifies the URL prefix for accessing files. If you omit it,
+   Django will use the ``MEDIA_URL`` setting for the 'default' storage and ``STATIC_URL``
+   for the 'staticfiles' storage. Using ``base_url`` in OPTIONS keeps all storage
+   configuration in one place and prevents URL/bucket_name drift.
+
+   You can customise the base URLs to use your own CDN, eg ``https://static.example.com/``
+
+
+Migrating from Django <5.1
+---------------------------
+
+If you're upgrading from an earlier version of django-gcp that used Django <5.1, you'll need to migrate your settings
+from the old ``DEFAULT_FILE_STORAGE``, ``STATICFILES_STORAGE``, and ``GCP_STORAGE_*`` format to the new ``STORAGES`` format.
+
+**Before (Django <5.1):**
+
+.. code-block:: python
+
     DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
     GCP_STORAGE_MEDIA = {
-        "bucket_name": "app-assets-environment-media" # Or whatever name you chose
+        "bucket_name": "my-media-bucket",
+        "location": "media/",
     }
 
-    # Set the static file storage
-    #   This allows `manage.py collectstatic` to automatically upload your static files
     STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
     GCP_STORAGE_STATIC = {
-      "bucket_name": "app-assets-environment-static" # or whatever name you chose
+        "bucket_name": "my-static-bucket",
     }
 
-    # Point the urls to the store locations
-    #   You could customise the base URLs later with your own cdn, eg https://static.you.com
-    #   But that's only if you feel like being ultra fancy
-    MEDIA_URL = f"https://storage.googleapis.com/{GCP_STORAGE_MEDIA_NAME}/"
-    MEDIA_ROOT = "/media/"
-    STATIC_URL = f"https://storage.googleapis.com/{GCP_STORAGE_STATIC_NAME}/"
-    STATIC_ROOT = "/static/"
+    GCP_STORAGE_EXTRA_STORES = {
+        "versioned": {
+            "bucket_name": "my-versioned-bucket",
+        }
+    }
+
+**After (Django 5.1+):**
+
+.. code-block:: python
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+            "OPTIONS": {
+                "bucket_name": "my-media-bucket",
+                "base_url": "https://storage.googleapis.com/my-media-bucket/",
+                "location": "media/",
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
+            "OPTIONS": {
+                "bucket_name": "my-static-bucket",
+                "base_url": "https://storage.googleapis.com/my-static-bucket/",
+            },
+        },
+        "versioned": {
+            "BACKEND": "django_gcp.storage.GoogleCloudStorage",
+            "OPTIONS": {
+                "bucket_name": "my-versioned-bucket",
+                "base_url": "https://storage.googleapis.com/my-versioned-bucket/",
+            },
+        },
+    }
+
+Key changes:
+
+- ``DEFAULT_FILE_STORAGE`` → ``STORAGES["default"]["BACKEND"]``
+- ``STATICFILES_STORAGE`` → ``STORAGES["staticfiles"]["BACKEND"]``
+- ``GCP_STORAGE_MEDIA`` → ``STORAGES["default"]["OPTIONS"]``
+- ``GCP_STORAGE_STATIC`` → ``STORAGES["staticfiles"]["OPTIONS"]``
+- ``GCP_STORAGE_EXTRA_STORES`` → additional entries in ``STORAGES`` dict
+- ``MEDIA_URL``/``STATIC_URL`` → ``base_url`` in ``OPTIONS`` (recommended to keep config in one place)
+
+**BlobField store_key changes:**
+
+If you use ``BlobField`` in your models, you must update the ``store_key`` parameter:
+
+- ``store_key="media"`` → ``store_key="default"``
+- ``store_key="static"`` → ``store_key="staticfiles"``
+- Extra stores now use the STORAGES alias directly (e.g., ``store_key="versioned"`` matches ``STORAGES["versioned"]``)
+
+Example:
+
+.. code-block:: python
+
+    # OLD
+    blob = BlobField(store_key="media", ...)
+
+    # NEW
+    blob = BlobField(store_key="default", ...)
+
+Note that project-level settings like ``GCP_PROJECT_ID`` and ``GCP_CREDENTIALS`` remain at the root level of your settings file.
 
 
 Default and Extra stores
@@ -92,18 +182,44 @@ Default and Extra stores
 
       Any number of extra stores can be added, each corresponding to a different bucket in GCS.
 
-      You'll need to give each one a "storage key" to identify it. In your ``settings.py``, include extra stores as:
+      Simply add additional entries to the ``STORAGES`` dict. Each storage alias can be used to identify
+      the storage backend you want to use. In your ``settings.py``:
 
       .. code-block:: python
 
-         GCP_STORAGE_EXTRA_STORES = {
-             "my_fun_store_key": {
-                 "bucket_name": "all-the-fun-datafiles"
+         STORAGES = {
+             "default": {
+                 "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                 "OPTIONS": {
+                     "bucket_name": "my-media-bucket",
+                     "base_url": "https://storage.googleapis.com/my-media-bucket/",
+                 },
              },
-             "my_sad_store_key": {
-                 "bucket_name": "all-the-sad-datafiles"
-             }
+             "staticfiles": {
+                 "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
+                 "OPTIONS": {
+                     "bucket_name": "my-static-bucket",
+                     "base_url": "https://storage.googleapis.com/my-static-bucket/",
+                 },
+             },
+             "my-fun-store": {
+                 "BACKEND": "django_gcp.storage.GoogleCloudStorage",
+                 "OPTIONS": {
+                     "bucket_name": "all-the-fun-datafiles",
+                     "base_url": "https://storage.googleapis.com/all-the-fun-datafiles/",
+                 },
+             },
+             "my-sad-store": {
+                 "BACKEND": "django_gcp.storage.GoogleCloudStorage",
+                 "OPTIONS": {
+                     "bucket_name": "all-the-sad-datafiles",
+                     "base_url": "https://storage.googleapis.com/all-the-sad-datafiles/",
+                 },
+             },
          }
+
+      For extra stores, you can access them using ``BlobField(store_key="my-fun-store")`` or by
+      using ``storages["my-fun-store"]`` in your code.
 
 
    .. group-tab:: Default Storage
@@ -254,16 +370,21 @@ Works as a standard drop-in storage backend.
 Storage Settings Options
 ------------------------
 
-Each store can be set up with different options, passed within the dict given to ``GCP_STORAGE_MEDIA``, ``GCP_STORAGE_STATIC`` or within the dicts given to ``GCP_STORAGE_EXTRA_STORES``.
+Each store can be set up with different options, passed within the ``OPTIONS`` dict for each storage backend in the ``STORAGES`` setting.
 
 For example, to set the media storage up so that files go to a different location than the root of the bucket, you'd use:
 
 .. code-block:: python
 
-    GCP_STORAGE_MEDIA = {
-        "bucket_name": "app-assets-environment-media"
-        "location": "not/the/bucket/root/",
-        # ... and whatever other options you want
+    STORAGES = {
+        "default": {
+            "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+            "OPTIONS": {
+                "bucket_name": "app-assets-environment-media",
+                "location": "not/the/bucket/root/",
+                # ... and whatever other options you want
+            },
+        },
     }
 
 The full range of options (and their defaults, which apply to all stores) is as follows:

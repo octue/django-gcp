@@ -95,7 +95,14 @@ class GCloudStorageTests(GCloudTestCase):
         """
         Test opening a file and writing to it
         """
-        with override_settings(GCP_STORAGE_MEDIA={"bucket_name": self.bucket_name, "default_acl": "projectPrivate"}):
+        with override_settings(
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {"bucket_name": self.bucket_name, "default_acl": "projectPrivate"},
+                }
+            }
+        ):
             data = "This is some test write data."
 
             # Simulate the file not existing before the write
@@ -149,7 +156,14 @@ class GCloudStorageTests(GCloudTestCase):
         filename = "ủⓝï℅ⅆℇ.txt"
         content = ContentFile(data)
 
-        with override_settings(GCP_STORAGE_MEDIA={"bucket_name": self.bucket_name, "default_acl": "publicRead"}):
+        with override_settings(
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {"bucket_name": self.bucket_name, "default_acl": "publicRead"},
+                }
+            }
+        ):
             self.storage.save(filename, content)
             self.storage._client.bucket.assert_called_with(self.bucket_name)
             self.storage._bucket.get_blob().upload_from_file.assert_called_with(
@@ -330,7 +344,14 @@ class GCloudStorageTests(GCloudTestCase):
     def test_url_public_object(self):
         url = f"https://example.com/mah-bukkit/{self.filename}"
 
-        with override_settings(GCP_STORAGE_MEDIA={"bucket_name": self.bucket_name, "default_acl": "publicRead"}):
+        with override_settings(
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {"bucket_name": self.bucket_name, "default_acl": "publicRead"},
+                }
+            }
+        ):
             self.storage._bucket = mock.MagicMock()
             blob = mock.MagicMock()
             blob.public_url = url
@@ -356,7 +377,14 @@ class GCloudStorageTests(GCloudTestCase):
 
     def test_url_not_public_file_with_custom_expires(self):
         expiration = timedelta(seconds=3600)
-        with override_settings(GCP_STORAGE_MEDIA={"bucket_name": self.bucket_name, "expiration": expiration}):
+        with override_settings(
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {"bucket_name": self.bucket_name, "expiration": expiration},
+                }
+            }
+        ):
             secret_filename = "secret_file.txt"
             self.storage._bucket = mock.MagicMock()
             blob = mock.MagicMock()
@@ -370,20 +398,30 @@ class GCloudStorageTests(GCloudTestCase):
 
     def test_custom_endpoint(self):
         with override_settings(
-            GCP_STORAGE_MEDIA={
-                "bucket_name": self.bucket_name,
-                "custom_endpoint": "https://example.com",
-                "default_acl": "publicRead",
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {
+                        "bucket_name": self.bucket_name,
+                        "custom_endpoint": "https://example.com",
+                        "default_acl": "publicRead",
+                    },
+                }
             }
         ):
             url = f"{self.storage.settings.custom_endpoint}/{self.filename}"
             self.assertEqual(self.storage.url(self.filename), url)
 
         with override_settings(
-            GCP_STORAGE_MEDIA={
-                "bucket_name": self.bucket_name,
-                "custom_endpoint": "https://example.com",
-                "default_acl": "projectPrivate",
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {
+                        "bucket_name": self.bucket_name,
+                        "custom_endpoint": "https://example.com",
+                        "default_acl": "projectPrivate",
+                    },
+                }
             }
         ):
             bucket_name = "hyacinth"
@@ -403,18 +441,28 @@ class GCloudStorageTests(GCloudTestCase):
 
     def test_get_available_name(self):
         with override_settings(
-            GCP_STORAGE_MEDIA={
-                "bucket_name": self.bucket_name,
-                "file_overwrite": True,
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {
+                        "bucket_name": self.bucket_name,
+                        "file_overwrite": True,
+                    },
+                }
             }
         ):
             self.assertEqual(self.storage.get_available_name(self.filename), self.filename)
             self.storage._bucket = mock.MagicMock()
             self.storage._bucket.get_blob.return_value = None
         with override_settings(
-            GCP_STORAGE_MEDIA={
-                "bucket_name": self.bucket_name,
-                "file_overwrite": False,
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {
+                        "bucket_name": self.bucket_name,
+                        "file_overwrite": False,
+                    },
+                }
             }
         ):
             self.assertEqual(self.storage.get_available_name(self.filename), self.filename)
@@ -430,10 +478,15 @@ class GCloudStorageTests(GCloudTestCase):
         content = ContentFile(data)
         cache_control = "public, max-age=604800"
         with override_settings(
-            GCP_STORAGE_MEDIA={
-                "bucket_name": self.bucket_name,
-                "file_overwrite": True,
-                "object_parameters": {"cache_control": cache_control},
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {
+                        "bucket_name": self.bucket_name,
+                        "file_overwrite": True,
+                        "object_parameters": {"cache_control": cache_control},
+                    },
+                }
             }
         ):
             self.storage.save(filename, content)
@@ -466,9 +519,14 @@ class GCloudStorageTests(GCloudTestCase):
         Test saving a file with gzip enabled.
         """
         with override_settings(
-            GCP_STORAGE_MEDIA={
-                "bucket_name": self.bucket_name,
-                "gzip": True,
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {
+                        "bucket_name": self.bucket_name,
+                        "gzip": True,
+                    },
+                }
             }
         ):
             name = "test_storage_save.css"
@@ -494,9 +552,14 @@ class GCloudStorageTests(GCloudTestCase):
         Test saving the same file content twice with gzip enabled.
         """
         with override_settings(
-            GCP_STORAGE_MEDIA={
-                "bucket_name": self.bucket_name,
-                "gzip": True,
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {
+                        "bucket_name": self.bucket_name,
+                        "gzip": True,
+                    },
+                }
             }
         ):
             name = "test_storage_save.css"
@@ -535,9 +598,14 @@ class GCloudStorageTests(GCloudTestCase):
         msg = "'location' option in GCP_STORAGE_ cannot begin with a leading slash. Found '/'. Use '' instead."
         with self.assertRaises(ImproperlyConfigured, msg=msg):
             with override_settings(
-                GCP_STORAGE_MEDIA={
-                    "bucket_name": self.bucket_name,
-                    "location": "/",
+                STORAGES={
+                    "default": {
+                        "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                        "OPTIONS": {
+                            "bucket_name": self.bucket_name,
+                            "location": "/",
+                        },
+                    }
                 }
             ):
                 self.storage.settings.check()
@@ -546,17 +614,27 @@ class GCloudStorageTests(GCloudTestCase):
 class GCloudStorageClassTests(GCloudTestCase):
     def test_override_settings(self):
         with override_settings(
-            GCP_STORAGE_MEDIA={
-                "bucket_name": "test_media",
-                "location": "foo1",
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {
+                        "bucket_name": "test_media",
+                        "location": "foo1",
+                    },
+                }
             }
         ):
             storage = gcloud.GoogleCloudStorage()
             self.assertEqual(storage.settings.location, "foo1")
         with override_settings(
-            GCP_STORAGE_MEDIA={
-                "bucket_name": "test_media",
-                "location": "foo2",
+            STORAGES={
+                "default": {
+                    "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                    "OPTIONS": {
+                        "bucket_name": "test_media",
+                        "location": "foo2",
+                    },
+                }
             }
         ):
             storage = gcloud.GoogleCloudStorage()

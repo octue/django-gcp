@@ -163,27 +163,45 @@ LOGGING = {
 # size, which is unwise if your users are not both trusted and competent
 GCP_STORAGE_BLOBFIELD_MAX_SIZE_BYTES = 0  # 32 * 1024 * 1024
 
-# MEDIA FILES
-DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
-GCP_STORAGE_MEDIA = {"bucket_name": "example-media-assets"}
-MEDIA_URL = f"https://storage.googleapis.com/{GCP_STORAGE_MEDIA['bucket_name']}/"
-MEDIA_ROOT = "/media/"
-
-# STATIC FILES (FOR USING THE CLOUD STORE)
-STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
-GCP_STORAGE_STATIC = {"bucket_name": "example-static-assets"}
-STATIC_URL = f"https://storage.googleapis.com/{GCP_STORAGE_STATIC['bucket_name']}/"
-STATIC_ROOT = "/static/"
+# STORAGES CONFIGURATION (Django 5.1+)
+STORAGES = {
+    "default": {
+        "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+        "OPTIONS": {
+            "bucket_name": "example-media-assets",
+            "base_url": "https://storage.googleapis.com/example-media-assets/",
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
+        "OPTIONS": {
+            "bucket_name": "example-static-assets",
+            "base_url": "https://storage.googleapis.com/example-static-assets/",
+        },
+    },
+    "extra-versioned": {
+        "BACKEND": "django_gcp.storage.GoogleCloudStorage",
+        "OPTIONS": {
+            "bucket_name": "example-extra-versioned-assets",
+            "base_url": "https://storage.googleapis.com/example-extra-versioned-assets/",
+        },
+    },
+}
 
 # STATIC FILES (FOR USING LOCAL STORAGE)
 # DEVELOPERS ONLY - Use these alternative settings for local development of CSS files,
 # to avoid collectstatic taking forever each time you change the CSS.
-# STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+# STORAGES = {
+#     "default": {
+#         "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+#         "OPTIONS": {"bucket_name": "example-media-assets"},
+#     },
+#     "staticfiles": {
+#         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+#     },
+# }
 # STATIC_URL = "/static/"
 # STATIC_ROOT = os.path.join(BASE_DIR, "static")
-
-# EXTRA STORES
-GCP_STORAGE_EXTRA_STORES = {"extra-versioned": {"bucket_name": "example-extra-versioned-assets"}}
 
 
 # ---------------------------------------------------------------------------
