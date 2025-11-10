@@ -65,24 +65,26 @@ In your ``settings.py`` file, configure the ``STORAGES`` setting (Django 5.1+):
         "default": {
             "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
             "OPTIONS": {
-                "bucket_name": "app-assets-environment-media",  # Or whatever name you chose
+                "bucket_name": "app-assets-environment-media",
+                "base_url": "https://storage.googleapis.com/app-assets-environment-media/",
             },
         },
         "staticfiles": {
             "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
             "OPTIONS": {
-                "bucket_name": "app-assets-environment-static",  # Or whatever name you chose
+                "bucket_name": "app-assets-environment-static",
+                "base_url": "https://storage.googleapis.com/app-assets-environment-static/",
             },
         },
     }
 
-    # Point the URLs to the store locations
-    #   You could customise the base URLs later with your own CDN, eg https://static.you.com
-    #   But that's only if you feel like being ultra fancy
-    MEDIA_URL = "https://storage.googleapis.com/app-assets-environment-media/"
-    MEDIA_ROOT = "/media/"
-    STATIC_URL = "https://storage.googleapis.com/app-assets-environment-static/"
-    STATIC_ROOT = "/static/"
+.. note::
+   The ``base_url`` option specifies the URL prefix for accessing files. If you omit it,
+   Django will use the ``MEDIA_URL`` setting for the 'default' storage and ``STATIC_URL``
+   for the 'staticfiles' storage. Using ``base_url`` in OPTIONS keeps all storage
+   configuration in one place and prevents URL/bucket_name drift.
+
+   You can customise the base URLs to use your own CDN, eg ``https://static.example.com/``
 
 
 Migrating from Django <5.1
@@ -121,6 +123,7 @@ from the old ``DEFAULT_FILE_STORAGE``, ``STATICFILES_STORAGE``, and ``GCP_STORAG
             "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
             "OPTIONS": {
                 "bucket_name": "my-media-bucket",
+                "base_url": "https://storage.googleapis.com/my-media-bucket/",
                 "location": "media/",
             },
         },
@@ -128,12 +131,14 @@ from the old ``DEFAULT_FILE_STORAGE``, ``STATICFILES_STORAGE``, and ``GCP_STORAG
             "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
             "OPTIONS": {
                 "bucket_name": "my-static-bucket",
+                "base_url": "https://storage.googleapis.com/my-static-bucket/",
             },
         },
         "versioned": {
             "BACKEND": "django_gcp.storage.GoogleCloudStorage",
             "OPTIONS": {
                 "bucket_name": "my-versioned-bucket",
+                "base_url": "https://storage.googleapis.com/my-versioned-bucket/",
             },
         },
     }
@@ -145,6 +150,25 @@ Key changes:
 - ``GCP_STORAGE_MEDIA`` → ``STORAGES["default"]["OPTIONS"]``
 - ``GCP_STORAGE_STATIC`` → ``STORAGES["staticfiles"]["OPTIONS"]``
 - ``GCP_STORAGE_EXTRA_STORES`` → additional entries in ``STORAGES`` dict
+- ``MEDIA_URL``/``STATIC_URL`` → ``base_url`` in ``OPTIONS`` (recommended to keep config in one place)
+
+**BlobField store_key changes:**
+
+If you use ``BlobField`` in your models, you must update the ``store_key`` parameter:
+
+- ``store_key="media"`` → ``store_key="default"``
+- ``store_key="static"`` → ``store_key="staticfiles"``
+- Extra stores now use the STORAGES alias directly (e.g., ``store_key="versioned"`` matches ``STORAGES["versioned"]``)
+
+Example:
+
+.. code-block:: python
+
+    # OLD
+    blob = BlobField(store_key="media", ...)
+
+    # NEW
+    blob = BlobField(store_key="default", ...)
 
 Note that project-level settings like ``GCP_PROJECT_ID`` and ``GCP_CREDENTIALS`` remain at the root level of your settings file.
 
@@ -166,21 +190,36 @@ Default and Extra stores
          STORAGES = {
              "default": {
                  "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
-                 "OPTIONS": {"bucket_name": "my-media-bucket"},
+                 "OPTIONS": {
+                     "bucket_name": "my-media-bucket",
+                     "base_url": "https://storage.googleapis.com/my-media-bucket/",
+                 },
              },
              "staticfiles": {
                  "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
-                 "OPTIONS": {"bucket_name": "my-static-bucket"},
+                 "OPTIONS": {
+                     "bucket_name": "my-static-bucket",
+                     "base_url": "https://storage.googleapis.com/my-static-bucket/",
+                 },
              },
              "my-fun-store": {
                  "BACKEND": "django_gcp.storage.GoogleCloudStorage",
-                 "OPTIONS": {"bucket_name": "all-the-fun-datafiles"},
+                 "OPTIONS": {
+                     "bucket_name": "all-the-fun-datafiles",
+                     "base_url": "https://storage.googleapis.com/all-the-fun-datafiles/",
+                 },
              },
              "my-sad-store": {
                  "BACKEND": "django_gcp.storage.GoogleCloudStorage",
-                 "OPTIONS": {"bucket_name": "all-the-sad-datafiles"},
+                 "OPTIONS": {
+                     "bucket_name": "all-the-sad-datafiles",
+                     "base_url": "https://storage.googleapis.com/all-the-sad-datafiles/",
+                 },
              },
          }
+
+      For extra stores, you can access them using ``BlobField(store_key="my-fun-store")`` or by
+      using ``storages["my-fun-store"]`` in your code.
 
 
    .. group-tab:: Default Storage

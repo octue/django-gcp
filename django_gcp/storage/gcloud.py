@@ -341,15 +341,15 @@ class GoogleCloudMediaStorage(GoogleCloudStorage):  # pylint: disable=abstract-m
     STORAGES setting. Configuration options are passed via STORAGES['default']['OPTIONS'].
 
     This actually behaves exactly as a default instantiation of the base
-    ``GoogleCloudStorage`` class with store_key='media', but is there to make
+    ``GoogleCloudStorage`` class with store_key='default', but is there to make
     configuration more explicit for first-timers.
 
     """
 
     def __init__(self, **overrides):
-        if overrides.pop("store_key", "media") != "media":
-            raise ValueError("You cannot instantiate GoogleCloudMediaStorage with a store_key other than 'media'")
-        super().__init__(store_key="media", **overrides)
+        if overrides.pop("store_key", "default") != "default":
+            raise ValueError("You cannot instantiate GoogleCloudMediaStorage with a store_key other than 'default'")
+        super().__init__(store_key="default", **overrides)
 
 
 class GoogleCloudStaticStorage(GoogleCloudStorage):  # pylint: disable=abstract-method
@@ -367,6 +367,6 @@ class GoogleCloudStaticStorage(GoogleCloudStorage):  # pylint: disable=abstract-
     """
 
     def __init__(self, **overrides):
-        if overrides.pop("store_key", "static") != "static":
-            raise ValueError("You cannot instantiate GoogleCloudStaticStorage with a store_key other than 'static'")
-        super().__init__(store_key="static", **overrides)
+        if overrides.pop("store_key", "staticfiles") != "staticfiles":
+            raise ValueError("You cannot instantiate GoogleCloudStaticStorage with a store_key other than 'staticfiles'")
+        super().__init__(store_key="staticfiles", **overrides)

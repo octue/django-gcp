@@ -63,12 +63,13 @@ class StorageSettings:
 
     @property
     def _stores_settings(self):
-        """Get a complete dict of all stores defined in settings.py (media + static + extras)
+        """Get a complete dict of all stores defined in settings.py
 
-        Reads from Django's STORAGES setting (Django 5.1+) and maps storage aliases to store keys.
-        - 'default' alias maps to 'media' store key
-        - 'staticfiles' alias maps to 'static' store key
-        - Other aliases use their name as the store key
+        Reads from Django's STORAGES setting (Django 5.1+). The storage alias (key in STORAGES dict)
+        is used as the store_key. For example:
+        - STORAGES["default"] is accessed with store_key="default"
+        - STORAGES["staticfiles"] is accessed with store_key="staticfiles"
+        - STORAGES["my-custom"] is accessed with store_key="my-custom"
         """
         storages_config = getattr(django_settings, "STORAGES", {})
         all_stores = {}
@@ -79,18 +80,7 @@ class StorageSettings:
             # Only process django_gcp storage backends
             if "django_gcp.storage" in backend:
                 options = config.get("OPTIONS", {})
-
-                # Map Django's standard aliases to our internal store keys
-                if alias == "default":
-                    store_key = "media"
-                elif alias == "staticfiles":
-                    store_key = "static"
-                else:
-                    # For extra stores, use the alias as the store key
-                    # unless explicitly specified in OPTIONS
-                    store_key = options.pop("store_key", alias)
-
-                all_stores[store_key] = options
+                all_stores[alias] = options
 
         return all_stores
 

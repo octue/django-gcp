@@ -169,27 +169,24 @@ STORAGES = {
         "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
         "OPTIONS": {
             "bucket_name": "example-media-assets",
+            "base_url": "https://storage.googleapis.com/example-media-assets/",
         },
     },
     "staticfiles": {
         "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
         "OPTIONS": {
             "bucket_name": "example-static-assets",
+            "base_url": "https://storage.googleapis.com/example-static-assets/",
         },
     },
     "extra-versioned": {
         "BACKEND": "django_gcp.storage.GoogleCloudStorage",
         "OPTIONS": {
             "bucket_name": "example-extra-versioned-assets",
+            "base_url": "https://storage.googleapis.com/example-extra-versioned-assets/",
         },
     },
 }
-
-# Media and static URLs
-MEDIA_URL = "https://storage.googleapis.com/example-media-assets/"
-MEDIA_ROOT = "/media/"
-STATIC_URL = "https://storage.googleapis.com/example-static-assets/"
-STATIC_ROOT = "/static/"
 
 # STATIC FILES (FOR USING LOCAL STORAGE)
 # DEVELOPERS ONLY - Use these alternative settings for local development of CSS files,

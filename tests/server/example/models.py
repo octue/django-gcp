@@ -163,7 +163,7 @@ class ExampleBlankBlobFieldModel(Model):
     category = CharField(max_length=20, blank=True, null=True)
     blob = BlobField(
         get_destination_path=get_destination_path,
-        store_key="media",
+        store_key="default",
         blank=True,
         null=True,
         help_text="Shows typical behaviour of the blobfield, with name collision prevention so you should be able to change the file as many times as you like. The field is blankable (saving with no file selected should succeed).",
@@ -197,7 +197,7 @@ class ExampleBlobFieldModel(Model):
     #   Then the old field is removed (see migration 0003).
     blob = BlobField(
         get_destination_path=get_destination_path,
-        store_key="media",
+        store_key="default",
         help_text="Shows typical behaviour of the blobfield, with name collision prevention so you should be able to change the file as many times as you like, but it is not blankable or nullable (attempt to save with no file selected to see validation error).",
     )
 
@@ -265,7 +265,7 @@ class ExampleCallbackBlobFieldModel(Model):
     activity = CharField(max_length=60, blank=True, null=True)
     blob = BlobField(
         get_destination_path=get_destination_path,
-        store_key="media",
+        store_key="default",
         blank=True,
         null=True,
         on_change=my_on_change_callback,
@@ -292,7 +292,7 @@ class ExampleNeverOverwriteBlobFieldModel(Model):
     id = UUIDField(primary_key=True, default=uuid4, editable=False)
     blob = BlobField(
         get_destination_path=get_destination_path_from_id,
-        store_key="media",
+        store_key="default",
         overwrite_mode="never",
         help_text="You can create a model like this, but if you attempt to select a different file during update, you should see an exception. You need to override the widget to show read-only in this case.",
     )
@@ -316,17 +316,17 @@ class ExampleMultipleBlobFieldModel(Model):
 
     blob1 = BlobField(
         get_destination_path=get_destination_path,
-        store_key="media",
+        store_key="default",
         help_text="The get_destination_path function gives these unique names",
     )
     blob2 = BlobField(
         get_destination_path=get_destination_path,
-        store_key="media",
+        store_key="default",
         help_text="The get_destination_path function gives these unique names",
     )
     blob3 = BlobField(
         get_destination_path=get_destination_path,
-        store_key="media",
+        store_key="default",
         help_text="The get_destination_path function gives these unique names",
     )
 
@@ -342,7 +342,7 @@ class ExamplePathValidationBlobFieldModel(Model):
     id = UUIDField(primary_key=True, default=uuid4, editable=False)
     blob = BlobField(
         get_destination_path=get_destination_path_and_validate,
-        store_key="media",
+        store_key="default",
         overwrite_mode="never",
         help_text="If you upload a file that doesn't end with .txt, you should see a validation error in the admin.",
     )
@@ -364,7 +364,7 @@ class ExampleReadOnlyBlobFieldModel(Model):
 
     example_read_only_blob = BlobField(
         get_destination_path=get_destination_path,
-        store_key="media",
+        store_key="default",
         help_text="The widget should be read-only always",
         blank=True,  # So we can demo read-only behaviour
         null=True,  # in the admin without creating blobs
@@ -372,7 +372,7 @@ class ExampleReadOnlyBlobFieldModel(Model):
 
     example_create_only_blob = BlobField(
         get_destination_path=get_destination_path,
-        store_key="media",
+        store_key="default",
         help_text="The widget should be as normal for object addition, read-only in a change form",
         blank=True,  # So we can demo read-only behaviour
         null=True,  # in the admin without creating blobs
@@ -414,7 +414,7 @@ class ExampleUpdateAttributesBlobFieldModel(Model):
     blob = BlobField(
         get_destination_path=get_destination_path,
         update_attributes=update_attributes,
-        store_key="media",
+        store_key="default",
         blank=True,
         null=True,
         help_text="On save, metadata should be updated on the blob.",

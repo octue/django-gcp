@@ -22,6 +22,7 @@ This release drops support for Django <5.1 and migrates to Django's new ``STORAG
 - **Minimum Django version**: Now requires Django >=5.1,<6.0 (was >=4.0,<5.1)
 - **Settings format**: The old ``DEFAULT_FILE_STORAGE``, ``STATICFILES_STORAGE``, ``GCP_STORAGE_MEDIA``, ``GCP_STORAGE_STATIC``, and ``GCP_STORAGE_EXTRA_STORES`` settings are no longer supported
 - **New format**: Use Django's ``STORAGES`` dict setting (introduced in Django 4.2, required in Django 5.1+)
+- **BlobField store_key**: Must be updated to use Django's storage aliases (``"default"``, ``"staticfiles"``, etc.)
 
 **Migration guide:**
 
@@ -39,10 +40,24 @@ New settings::
     STORAGES = {
         "default": {
             "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
-            "OPTIONS": {"bucket_name": "my-media"},
+            "OPTIONS": {
+                "bucket_name": "my-media",
+                "base_url": "https://storage.googleapis.com/my-media/",
+            },
         },
         "staticfiles": {
             "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
-            "OPTIONS": {"bucket_name": "my-static"},
+            "OPTIONS": {
+                "bucket_name": "my-static",
+                "base_url": "https://storage.googleapis.com/my-static/",
+            },
         },
     }
+
+BlobField changes::
+
+    # OLD
+    blob = BlobField(store_key="media", ...)
+
+    # NEW
+    blob = BlobField(store_key="default", ...)
