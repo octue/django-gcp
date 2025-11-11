@@ -54,6 +54,16 @@ repos:
           - 'prettier@2.2.1'
           - 'prettier-plugin-tailwindcss@0.2.6'
 
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: 'v1.103.0'
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_tflint
+      - id: terraform_validate
+      # Trivy has interesting output but lots of failures on things
+      # we've deliberately (and correctly) done...
+      # - id: terraform_trivy
+
   - repo: https://github.com/octue/conventional-commits
     rev: 0.9.0
     hooks:
