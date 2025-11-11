@@ -12,18 +12,17 @@ git config --global --add safe.directory /workspace
 # Install precommit hooks
 pre-commit install && pre-commit install -t commit-msg
 
+# Install claude code
+#   NOTE: You may have to redo this, sometimes it doesn't
+#   take after container rebuilds.
+npm install -g @anthropic-ai/claude-code
+
+# Install localtunnel
+npm install -g localtunnel
+
 # Set zsh history location
 #     This is done in postAttach so it's not overridden by the oh-my-zsh devcontainer feature
-#
-#     We leave you to decide, but if you put this into a folder that's been mapped
-#     into the container, then history will persist over container rebuilds :)
-#
-#     !!!IMPORTANT!!!
-#     Make sure your .zsh_history file is NOT committed into your repository or docker builds,
-#     as it can contain sensitive information. So in this case, you should add
-#         .devcontainer/.zsh_history
-#     to your .gitignore and .dockerignore files.
-export HISTFILE="/workspace/.devcontainer/.zsh_history"
+export HISTFILE="/command-history/.zsh_history"
 
 # Add aliases to zshrc file
 echo '# Aliases to avoid typing "python manage.py" repeatedly' >> ~/.zshrc

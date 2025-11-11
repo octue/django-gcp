@@ -1,0 +1,17 @@
+services:
+  web:
+    volumes:
+      # Map the workspace
+      - ..:/workspace:cached
+      # Map your local directories to persist credentials and command history...
+      # I keep everything in a .config directory so it looks something like this...
+      - $HOME/.config/claude/django-gcp:/claude/config
+      - $HOME/.config/gcloud/django-gcp:/gcp/config
+      - $HOME/.config/history/django-gcp:/command-history
+      - $HOME/.config/terraform/django-gcp:/home/vscode/.terraform.d
+
+    environment:
+      # Define where tools should find the things you've mapped in
+      - CLAUDE_CONFIG_DIR=/claude/config
+      - CLOUDSDK_CONFIG=/gcp/config
+      - GOOGLE_APPLICATION_CREDENTIALS=/gcp/config/your-service-account-key-file.json
