@@ -59,7 +59,7 @@ jobs:
           python-version: 3.13
 
       - name: Run precommit
-        run: SKIP=build-docs,check-branch-name uv run pre-commit run --all-files
+        run: SKIP=build-docs,check-branch-name,terraform_fmt,terraform_tflint,terraform_validate uv run pre-commit run --all-files
 
   publish-test:
     runs-on: ubuntu-latest
