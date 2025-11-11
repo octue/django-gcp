@@ -16,8 +16,9 @@ Helpers are provided for:
 * `Events (PubSub and EventArc) <https://cloud.google.com/pubsub>`_,
 * `Structured Cloud Logging <https://cloud.google.com/logging>`_ and `Error Reporting <https://cloud.google.com/error-reporting>`_
 * `Cloud Run (Metadata) <https://cloud.google.com/run/docs/container-contract#metadata-server>`_
-* `Cloud Tasks <https://cloud.google.com/tasks>`_ and
-* `Cloud Scheduler <https://cloud.google.com/scheduler>`_.
+* `Cloud Tasks <https://cloud.google.com/tasks>`_,
+* `Cloud Scheduler <https://cloud.google.com/scheduler>`_, and
+* `Cloud Workflows <https://cloud.google.com/workflows>`_.
 
 
 .. _aims:
@@ -31,7 +32,7 @@ The ultimate goals are to:
 
 - **Enable event-based integration** between django and various GCP services.
 
-- **Simplify the use of GCP resources in django** including Storage, Logging, Erorr Reporting, Run, PubSub, Tasks and Scheduler.
+- **Simplify the use of GCP resources in django** including Storage, Logging, Error Reporting, Run, PubSub, Tasks, Scheduler, and Workflows.
 
 .. TIP::
     For example, if we have *both* a Store *and* a PubSub subscription to events on that store, we can do smart things in django when files or their metadata change.
@@ -70,6 +71,7 @@ Contents
    logs
    storage
    tasks
+   workflows
    projects
    api
    license
