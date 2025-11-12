@@ -1,6 +1,6 @@
 [project]
 name = "django-gcp"
-version = "0.21.0"
+version = "0.22.0"
 description = "Utilities to run Django on Google Cloud Platform"
 authors = [{name="Tom Clark"}]
 license = "MIT"
@@ -29,6 +29,7 @@ dependencies = [
 "google-cloud-scheduler>=2,<3",
 "google-cloud-storage>=3,<4",
 "google-cloud-tasks>=2,<3",
+"google-cloud-workflows>=1,<2",
 "werkzeug>=3,<4",
 "pyopenssl>=25.1,<26",
 ]
@@ -96,6 +97,7 @@ packages = [
   "django_gcp.storage",
   "django_gcp.tasks",
   "django_gcp.tasks._pilot",
+  "django_gcp.workflows",
 ]
 
 [tool.setuptools.package-data]

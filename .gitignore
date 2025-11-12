@@ -161,3 +161,4 @@ notebooks/
 # Tools caches
 .ruff_cache
 .poetry_cache
+.claude

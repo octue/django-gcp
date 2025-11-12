@@ -21,7 +21,7 @@ resource "google_service_account" "dev_lukasvinclav" {
 
 resource "google_project_iam_binding" "errorreporting_writer" {
   project = var.project
-  role = "roles/errorreporting.writer"
+  role    = "roles/errorreporting.writer"
   members = [
     "serviceAccount:${google_service_account.dev_thclark.email}",
     "serviceAccount:${google_service_account.dev_lukasvinclav.email}",
@@ -32,7 +32,7 @@ resource "google_project_iam_binding" "errorreporting_writer" {
 # Allow django-gcp.tasks to create and update task queues
 resource "google_project_iam_binding" "cloudtasks_admin" {
   project = var.project
-  role = "roles/cloudtasks.admin"
+  role    = "roles/cloudtasks.admin"
   members = [
     "serviceAccount:${google_service_account.dev_thclark.email}",
     "serviceAccount:${google_service_account.dev_lukasvinclav.email}",

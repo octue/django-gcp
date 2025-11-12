@@ -32,6 +32,7 @@
       // IN ALPHABETIC ORDER: Add the IDs of extensions you want installed when the container is created.
       "extensions": [
         "4ops.terraform",
+        "anthropic.claude-code",
         "charliermarsh.ruff",
         "erikphansen.vscode-toggle-column-selection",
         "esbenp.prettier-vscode",

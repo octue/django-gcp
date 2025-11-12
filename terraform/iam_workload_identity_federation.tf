@@ -1,28 +1,28 @@
 
 resource "google_iam_workload_identity_pool" "github_actions_pool" {
-    display_name              = "github-actions-pool"
-    project                   = var.project
-    workload_identity_pool_id = "github-actions-pool"
+  display_name              = "github-actions-pool"
+  project                   = var.project
+  workload_identity_pool_id = "github-actions-pool"
 }
 
 
 resource "google_iam_workload_identity_pool_provider" "github_actions_provider" {
-    display_name                       = "Github Actions Provider"
-    project                            = var.project_number
-    workload_identity_pool_id          = "github-actions-pool"
-    workload_identity_pool_provider_id = "github-actions-provider"
-    attribute_condition = <<EOT
+  display_name                       = "Github Actions Provider"
+  project                            = var.project_number
+  workload_identity_pool_id          = "github-actions-pool"
+  workload_identity_pool_provider_id = "github-actions-provider"
+  attribute_condition                = <<EOT
         attribute.repository == "${var.github_repository}"
     EOT
-    attribute_mapping = {
-        "google.subject"       = "assertion.sub"
-        "attribute.actor"      = "assertion.actor"
-        "attribute.aud"        = "assertion.aud"
-        "attribute.repository" = "assertion.repository"
-    }
-    oidc {
-        issuer_uri        = "https://token.actions.githubusercontent.com"
-    }
+  attribute_mapping = {
+    "google.subject"       = "assertion.sub"
+    "attribute.actor"      = "assertion.actor"
+    "attribute.aud"        = "assertion.aud"
+    "attribute.repository" = "assertion.repository"
+  }
+  oidc {
+    issuer_uri = "https://token.actions.githubusercontent.com"
+  }
 }
 
 

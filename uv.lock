@@ -674,7 +674,7 @@ wheels = [
 
 [[package]]
 name = "django-gcp"
-version = "0.21.0"
+version = "0.22.0"
 source = { editable = "." }
 dependencies = [
     { name = "django" },
@@ -686,6 +686,7 @@ dependencies = [
     { name = "google-cloud-scheduler" },
     { name = "google-cloud-storage" },
     { name = "google-cloud-tasks" },
+    { name = "google-cloud-workflows" },
     { name = "pyopenssl" },
     { name = "python-dateutil" },
     { name = "werkzeug" },
@@ -727,6 +728,7 @@ requires-dist = [
     { name = "google-cloud-scheduler", specifier = ">=2,<3" },
     { name = "google-cloud-storage", specifier = ">=3,<4" },
     { name = "google-cloud-tasks", specifier = ">=2,<3" },
+    { name = "google-cloud-workflows", specifier = ">=1,<2" },
     { name = "pyopenssl", specifier = ">=25.1,<26" },
     { name = "python-dateutil", specifier = ">=2,<3" },
     { name = "werkzeug", specifier = ">=3,<4" },
@@ -1076,6 +1078,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/86/b6/44a74a2478990fde2bfc504b3c83e80be1ab9c5bde3f8f00a13578341b6f/google_cloud_tasks-2.20.0.tar.gz", hash = "sha256:733cf440a25d34fe1cdb4e6c946d173bd83a2c22c3d7b2c76a24591f3c160412", size = 344143, upload-time = "2025-10-20T14:57:23.544Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/de/48/3c7a26ec216dd0cd58b86a74915026a5b9c2e43ae48bdd6df9554d33698b/google_cloud_tasks-2.20.0-py3-none-any.whl", hash = "sha256:3d261a8d1f3ab90454b3e2780f484373031b0b6061506571190dc5c300768422", size = 290144, upload-time = "2025-10-20T14:54:14.17Z" },
+]
+
+[[package]]
+name = "google-cloud-workflows"
+version = "1.19.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-api-core", extra = ["grpc"] },
+    { name = "google-auth" },
+    { name = "grpcio" },
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8e/24/5b251b552d04703ec6cbd042cfb5cbc237363bf1c738d2c535e4e916e077/google_cloud_workflows-1.19.0.tar.gz", hash = "sha256:48e0e282ec97f3610f3ef9b7c2f469eed01c02b34836673d735f9692428f3471", size = 209810, upload-time = "2025-10-20T14:57:41.864Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/af/dd0f1873000cbef249b24952500851045d4338c0f69bfb0c8e42efd76bf6/google_cloud_workflows-1.19.0-py3-none-any.whl", hash = "sha256:9498a0b5aba2eead2f465ec32cd40bafb09aac2cb4ebe975dd92823fa4ca3382", size = 199181, upload-time = "2025-10-20T14:55:42.287Z" },
 ]
 
 [[package]]

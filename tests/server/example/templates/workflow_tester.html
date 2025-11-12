@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workflow Tester - django-gcp</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, sans-serif;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      h1 {
+        color: #333;
+        border-bottom: 3px solid #4285f4;
+        padding-bottom: 10px;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: #555;
+      }
+      input[type='number'],
+      input[type='text'] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+      input[type='checkbox'] {
+        margin-right: 8px;
+      }
+      button {
+        background: #4285f4;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      button:hover {
+        background: #3367d6;
+      }
+      button.secondary {
+        background: #34a853;
+      }
+      button.secondary:hover {
+        background: #2d8e47;
+      }
+      .message {
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+      }
+      .message.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .message.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .message.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      .execution-info {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 4px;
+        border-left: 4px solid #4285f4;
+      }
+      .execution-info h3 {
+        margin-top: 0;
+        color: #333;
+      }
+      .info-row {
+        display: flex;
+        padding: 8px 0;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .info-label {
+        font-weight: 600;
+        width: 150px;
+        color: #666;
+      }
+      .info-value {
+        flex: 1;
+        color: #333;
+        word-break: break-all;
+      }
+      .state-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .state-active {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .state-succeeded {
+        background: #d4edda;
+        color: #155724;
+      }
+      .state-failed {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      a.console-link {
+        color: #4285f4;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      a.console-link:hover {
+        text-decoration: underline;
+      }
+      .divider {
+        height: 1px;
+        background: #e0e0e0;
+        margin: 30px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔄 Workflow Tester</h1>
+    <p>
+      Test the django-gcp workflows integration by invoking the sample workflow
+      and checking its status.
+    </p>
+
+    {% if message %}
+    <div class="message {{ message_type }}">{{ message }}</div>
+    {% endif %} {% if execution %}
+    <div class="container">
+      <div class="execution-info">
+        <h3>Execution Details</h3>
+        <div class="info-row">
+          <div class="info-label">Execution ID:</div>
+          <div class="info-value"><code>{{ execution.id }}</code></div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">State:</div>
+          <div class="info-value">
+            <span class="state-badge state-{{ execution.state|lower }}">
+              {{ execution.state }}
+            </span>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Start Time:</div>
+          <div class="info-value">{{ execution.start_time|default:"N/A" }}</div>
+        </div>
+        {% if execution.end_time %}
+        <div class="info-row">
+          <div class="info-label">End Time:</div>
+          <div class="info-value">{{ execution.end_time }}</div>
+        </div>
+        {% endif %} {% if execution.result %}
+        <div class="info-row">
+          <div class="info-label">Result:</div>
+          <div class="info-value"><pre>{{ execution.result }}</pre></div>
+        </div>
+        {% endif %}
+        <div class="info-row">
+          <div class="info-label">GCP Console:</div>
+          <div class="info-value">
+            <a
+              href="{{ execution.console_url }}"
+              target="_blank"
+              class="console-link"
+            >
+              View in GCP Console →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="check_status" />
+        <div class="form-group">
+          <label for="execution_id">Check Status for Execution ID:</label>
+          <input
+            type="text"
+            id="execution_id"
+            name="execution_id"
+            value="{{ execution.id }}"
+            required
+          />
+        </div>
+        <button type="submit" class="secondary">🔍 Check Status</button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div class="container">
+      <h2>Invoke New Workflow</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="invoke" />
+
+        <div class="form-group">
+          <label for="duration">Duration (seconds):</label>
+          <input
+            type="number"
+            id="duration"
+            name="duration"
+            value="5"
+            min="1"
+            max="300"
+            required
+          />
+          <small style="color: #666">How long should the workflow run?</small>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input
+              type="checkbox"
+              id="should_fail"
+              name="should_fail"
+              value="true"
+            />
+            Should Fail
+          </label>
+          <small style="color: #666"
+            >Check this to make the workflow fail intentionally</small
+          >
+        </div>
+
+        <button type="submit">▶️ Invoke Workflow</button>
+      </form>
+    </div>
+
+    <div class="container">
+      <h2>Check Existing Execution</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="check_status" />
+
+        <div class="form-group">
+          <label for="execution_id_check">Execution ID:</label>
+          <input
+            type="text"
+            id="execution_id_check"
+            name="execution_id"
+            placeholder="e.g., 01234567-89ab-cdef-0123-456789abcdef"
+            required
+          />
+          <small style="color: #666"
+            >Enter an execution ID to check its status</small
+          >
+        </div>
+
+        <button type="submit" class="secondary">🔍 Check Status</button>
+      </form>
+    </div>
+
+    <div
+      style="
+        margin-top: 40px;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+      "
+    >
+      <h3>💡 Tips</h3>
+      <ul style="color: #666">
+        <li>Invoke a workflow with a duration (e.g., 10 seconds)</li>
+        <li>
+          The workflow will sleep for the specified duration, then either
+          succeed or fail
+        </li>
+        <li>Use the "Check Status" button to poll for results</li>
+        <li>
+          Click the "View in GCP Console" link to see detailed execution logs
+        </li>
+        <li>
+          States: <strong>ACTIVE</strong> (running),
+          <strong>SUCCEEDED</strong> (completed),
+          <strong>FAILED</strong> (error)
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

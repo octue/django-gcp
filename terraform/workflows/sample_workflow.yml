@@ -1,0 +1,50 @@
+main:
+  params: [args]
+  steps:
+    - init:
+        assign:
+          - duration: ${default(map.get(args, "duration"), 5)}
+          - should_fail: ${default(map.get(args, "should_fail"), false)}
+          - start_time: ${sys.now()}
+
+    - log_start:
+        call: sys.log
+        args:
+          text: ${"Starting workflow with duration=" + string(duration) + "s, should_fail=" + string(should_fail)}
+          severity: INFO
+
+    - wait_for_duration:
+        call: sys.sleep
+        args:
+          seconds: ${duration}
+
+    - check_failure:
+        switch:
+          - condition: ${should_fail}
+            next: fail_step
+        next: success_step
+
+    - fail_step:
+        call: sys.log
+        args:
+          text: 'Workflow intentionally failing as requested'
+          severity: ERROR
+        next: raise_error
+
+    - raise_error:
+        raise:
+          message: ${"Workflow failed intentionally after " + string(duration) + " seconds"}
+
+    - success_step:
+        call: sys.log
+        args:
+          text: ${"Workflow completed successfully after " + string(duration) + " seconds"}
+          severity: INFO
+
+    - finish:
+        return:
+          status: 'success'
+          duration: ${duration}
+          should_fail: ${should_fail}
+          start_time: ${start_time}
+          end_time: ${sys.now()}

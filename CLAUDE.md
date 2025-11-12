@@ -1,0 +1,1 @@
+- The terraform folder for this repo contains infrastructure definitions used for live testing of the module. It contains definitions for example queus, buckets and so on.

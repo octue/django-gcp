@@ -7,9 +7,9 @@
 # buckets and they're all the same, there's not a lot of point!
 
 locals {
-    members = [
-        local.github_actions_service_account.member_signature
-    ]
+  members = [
+    local.github_actions_service_account.member_signature
+  ]
 }
 
 
@@ -22,6 +22,6 @@ resource "google_project_iam_binding" "iam_serviceaccountuser" {
 
 resource "google_project_iam_binding" "storage_objectadmin" {
   project = var.project
-  role = "roles/storage.objectAdmin"
+  role    = "roles/storage.objectAdmin"
   members = local.members
 }
