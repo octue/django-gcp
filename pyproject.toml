@@ -1,6 +1,6 @@
 [project]
 name = "django-gcp"
-version = "0.22.0"
+version = "0.22.2"
 description = "Utilities to run Django on Google Cloud Platform"
 authors = [{name="Tom Clark"}]
 license = "MIT"
@@ -27,7 +27,7 @@ dependencies = [
 "google-cloud-error-reporting>=1.9,<2",
 "google-cloud-pubsub>=2,<3",
 "google-cloud-scheduler>=2,<3",
-"google-cloud-storage>=3,<4",
+"google-cloud-storage>=2,<4",
 "google-cloud-tasks>=2,<3",
 "google-cloud-workflows>=1,<2",
 "werkzeug>=3,<4",

@@ -674,7 +674,7 @@ wheels = [
 
 [[package]]
 name = "django-gcp"
-version = "0.22.0"
+version = "0.22.2"
 source = { editable = "." }
 dependencies = [
     { name = "django" },
@@ -726,7 +726,7 @@ requires-dist = [
     { name = "google-cloud-error-reporting", specifier = ">=1.9,<2" },
     { name = "google-cloud-pubsub", specifier = ">=2,<3" },
     { name = "google-cloud-scheduler", specifier = ">=2,<3" },
-    { name = "google-cloud-storage", specifier = ">=3,<4" },
+    { name = "google-cloud-storage", specifier = ">=2,<4" },
     { name = "google-cloud-tasks", specifier = ">=2,<3" },
     { name = "google-cloud-workflows", specifier = ">=1,<2" },
     { name = "pyopenssl", specifier = ">=25.1,<26" },
