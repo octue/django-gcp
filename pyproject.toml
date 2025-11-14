@@ -1,6 +1,6 @@
 [project]
 name = "django-gcp"
-version = "0.22.2"
+version = "0.22.3"
 description = "Utilities to run Django on Google Cloud Platform"
 authors = [{name="Tom Clark"}]
 license = "MIT"
@@ -101,7 +101,11 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
-django_gcp = ["py.typed"]
+django_gcp = [
+    "py.typed",
+    "static/**/*",
+    "templates/**/*",
+]
 
 [build-system]
 build-backend = "setuptools.build_meta"
