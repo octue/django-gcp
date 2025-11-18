@@ -178,7 +178,7 @@ class Task(metaclass=TaskMeta):
 
         payload = serialize(task_kwargs)
         if self.manager.eager_execute:
-            return self.run(**deserialize(payload))
+            return self.execute(payload)
 
         api_kwargs = api_kwargs or {}
         api_kwargs.update(
