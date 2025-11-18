@@ -104,3 +104,13 @@ class TasksEnqueueingTest(SimpleTestCase):
             with override_settings(GCP_TASKS_DISABLE_EXECUTE=True, GCP_TASKS_EAGER_EXECUTE=True):
                 with self.assertRaises(IncompatibleSettingsError):
                     MyOnDemandTask().enqueue(a="1")
+
+    def test_enqueueing_with_eager_execute(self):
+        """Assert that tasks are successfully executed if GCP_TASKS_EAGER_EXECUTE is true"""
+
+        with patch("tests.server.example.tasks.MyOnDemandTask.run", return_value=None) as patched_run:
+            with override_settings(GCP_TASKS_DISABLE_EXECUTE=False, GCP_TASKS_EAGER_EXECUTE=True):
+                result = MyOnDemandTask().enqueue(a="1")
+
+        self.assertIsNone(result)
+        patched_run.assert_called_once()

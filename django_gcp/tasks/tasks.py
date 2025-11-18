@@ -111,19 +111,15 @@ class Task(metaclass=TaskMeta):
             api_kwargs=dict(delay_in_seconds=delay_in_seconds),
         )
 
-    def execute(self, request_body):
-        """Deserialises the received request and calls the run() method"""
-        try:
-            task_kwargs = self._body_to_kwargs(request_body=request_body)
-        except Exception as e:
-            logger.warning(e, exc_info=True)
-            return f"Unable to parse request arguments. Error was: {e}", 400
+    def execute(self, **task_kwargs):
+        """Executes the run() method
 
-        try:
-            return self.run(**task_kwargs), 200
-        except Exception as e:
-            logger.error(e, exc_info=True)
-            return "Error running task", 500
+        This simple wrapper allows subsubclasses to retain a simple run()
+        method api, whilst a subclass overloads execute() to add common
+        functionality.
+        """
+
+        return self.run(**task_kwargs)
 
     @property
     def manager(self):
@@ -176,10 +172,10 @@ class Task(metaclass=TaskMeta):
         if self.manager.disable_execute:
             return None
 
-        payload = serialize(task_kwargs)
         if self.manager.eager_execute:
-            return self.execute(payload)
+            return self.execute(**task_kwargs)
 
+        payload = serialize(task_kwargs)
         api_kwargs = api_kwargs or {}
         api_kwargs.update(
             dict(
