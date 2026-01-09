@@ -164,26 +164,44 @@ LOGGING = {
 GCP_STORAGE_BLOBFIELD_MAX_SIZE_BYTES = 0  # 32 * 1024 * 1024
 
 # MEDIA FILES
-DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
-GCP_STORAGE_MEDIA = {"bucket_name": "example-media-assets"}
+GCP_STORAGE_MEDIA = {"bucket_name": os.environ.get("GCP_TEST_BUCKET_MEDIA", "example-media-assets")}
 MEDIA_URL = f"https://storage.googleapis.com/{GCP_STORAGE_MEDIA['bucket_name']}/"
 MEDIA_ROOT = "/media/"
 
 # STATIC FILES (FOR USING THE CLOUD STORE)
-STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
-GCP_STORAGE_STATIC = {"bucket_name": "example-static-assets"}
+GCP_STORAGE_STATIC = {"bucket_name": os.environ.get("GCP_TEST_BUCKET_STATIC", "example-static-assets")}
 STATIC_URL = f"https://storage.googleapis.com/{GCP_STORAGE_STATIC['bucket_name']}/"
 STATIC_ROOT = "/static/"
+
+# STORAGES configuration (Django 4.2+)
+# This replaces the deprecated DEFAULT_FILE_STORAGE and STATICFILES_STORAGE settings
+STORAGES = {
+    "default": {
+        "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
+    },
+}
 
 # STATIC FILES (FOR USING LOCAL STORAGE)
 # DEVELOPERS ONLY - Use these alternative settings for local development of CSS files,
 # to avoid collectstatic taking forever each time you change the CSS.
-# STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+# STORAGES = {
+#     "default": {
+#         "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+#     },
+#     "staticfiles": {
+#         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+#     },
+# }
 # STATIC_URL = "/static/"
 # STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # EXTRA STORES
-GCP_STORAGE_EXTRA_STORES = {"extra-versioned": {"bucket_name": "example-extra-versioned-assets"}}
+GCP_STORAGE_EXTRA_STORES = {
+    "extra-versioned": {"bucket_name": os.environ.get("GCP_TEST_BUCKET_EXTRA", "example-extra-versioned-assets")}
+}
 
 
 # ---------------------------------------------------------------------------

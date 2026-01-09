@@ -61,26 +61,36 @@ In your ``settings.py`` file, do:
 
 .. code-block:: python
 
-    # Set the default storage (for media files)
-    DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
+    # Configure the bucket names for media and static storage
     GCP_STORAGE_MEDIA = {
-        "bucket_name": "app-assets-environment-media" # Or whatever name you chose
+        "bucket_name": "app-assets-environment-media"  # Or whatever name you chose
+    }
+    GCP_STORAGE_STATIC = {
+        "bucket_name": "app-assets-environment-static"  # Or whatever name you chose
     }
 
-    # Set the static file storage
-    #   This allows `manage.py collectstatic` to automatically upload your static files
-    STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
-    GCP_STORAGE_STATIC = {
-      "bucket_name": "app-assets-environment-static" # or whatever name you chose
+    # Set the storage backends using STORAGES (Django 4.2+, required for Django 5.1+)
+    STORAGES = {
+        "default": {
+            "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
+        },
     }
 
     # Point the urls to the store locations
     #   You could customise the base URLs later with your own cdn, eg https://static.you.com
     #   But that's only if you feel like being ultra fancy
-    MEDIA_URL = f"https://storage.googleapis.com/{GCP_STORAGE_MEDIA_NAME}/"
+    MEDIA_URL = f"https://storage.googleapis.com/{GCP_STORAGE_MEDIA['bucket_name']}/"
     MEDIA_ROOT = "/media/"
-    STATIC_URL = f"https://storage.googleapis.com/{GCP_STORAGE_STATIC_NAME}/"
+    STATIC_URL = f"https://storage.googleapis.com/{GCP_STORAGE_STATIC['bucket_name']}/"
     STATIC_ROOT = "/static/"
+
+.. note::
+
+    The ``DEFAULT_FILE_STORAGE`` and ``STATICFILES_STORAGE`` settings were deprecated in Django 4.2
+    and removed in Django 5.1. Use the ``STORAGES`` dictionary as shown above.
 
 
 Default and Extra stores

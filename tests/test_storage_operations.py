@@ -28,8 +28,12 @@ class StorageOperationsMixin:
         self.test_path = f"test/{today}--{uid}/"
 
         # Allows us to choose either a regular or versioned bucket
-        self.bucket = self.storage_client.bucket("example-media-assets")
-        self.versioned_bucket = self.storage_client.bucket("example-extra-versioned-assets")
+        from django.conf import settings
+
+        self.bucket = self.storage_client.bucket(settings.GCP_STORAGE_MEDIA["bucket_name"])
+        self.versioned_bucket = self.storage_client.bucket(
+            settings.GCP_STORAGE_EXTRA_STORES["extra-versioned"]["bucket_name"]
+        )
 
     def _prefix_blob_name(self, blob_name):
         """Adds the test prefix to a blob name"""

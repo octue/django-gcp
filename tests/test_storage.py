@@ -12,6 +12,7 @@ import mimetypes
 from unittest import mock
 from zoneinfo import ZoneInfo
 
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
 from django.test import TestCase, override_settings
@@ -570,11 +571,11 @@ class GCloudStorageClassTests(GCloudTestCase):
 
     def test_media_storage_instantiation(self):
         storage = gcloud.GoogleCloudMediaStorage()
-        self.assertEqual(storage.settings.bucket_name, "example-media-assets")
+        self.assertEqual(storage.settings.bucket_name, settings.GCP_STORAGE_MEDIA["bucket_name"])
 
     def test_static_storage_instantiation(self):
         storage = gcloud.GoogleCloudStaticStorage()
-        self.assertEqual(storage.settings.bucket_name, "example-static-assets")
+        self.assertEqual(storage.settings.bucket_name, settings.GCP_STORAGE_STATIC["bucket_name"])
 
     def test_instiantiation_with_store_key_raises_exception(self):
         with self.assertRaises(ValueError):

@@ -7,6 +7,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.test import Client, TestCase, TransactionTestCase, override_settings
@@ -108,7 +109,9 @@ class TestBlobFieldAdmin(StorageOperationsMixin, TestCase):
         widget = response.context_data["adminform"].fields["blob"].widget
         self.assertTrue(hasattr(widget, "signed_ingress_url"))
         self.assertTrue(
-            widget.signed_ingress_url.startswith("https://storage.googleapis.com/example-media-assets/_tmp")
+            widget.signed_ingress_url.startswith(
+                f"https://storage.googleapis.com/{settings.GCP_STORAGE_MEDIA['bucket_name']}/_tmp"
+            )
         )
 
     def test_full_clean_executes_in_overridden_context(self):
@@ -139,7 +142,9 @@ class TestBlobFieldAdmin(StorageOperationsMixin, TestCase):
         widget = response.context_data["adminform"].fields["blob"].widget
         self.assertTrue(hasattr(widget, "signed_ingress_url"))
         self.assertTrue(
-            widget.signed_ingress_url.startswith("https://storage.googleapis.com/example-media-assets/_tmp")
+            widget.signed_ingress_url.startswith(
+                f"https://storage.googleapis.com/{settings.GCP_STORAGE_MEDIA['bucket_name']}/_tmp"
+            )
         )
 
 
