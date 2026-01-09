@@ -719,7 +719,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "django", specifier = ">=4.2,<5.3" },
+    { name = "django", specifier = ">=4.2,<6.1" },
     { name = "django-app-settings", specifier = ">0.7,<0.8" },
     { name = "google-api-python-client", specifier = ">=2,<3" },
     { name = "google-auth", specifier = ">=2.6,<3" },

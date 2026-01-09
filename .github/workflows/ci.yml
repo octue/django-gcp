@@ -102,9 +102,16 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13']
-        django-version: ['>=4.2,<4.3', '>=5.0,<5.1', '>=5.1,<5.2', '>=5.2,<5.3']
+        django-version:
+          ['>=4.2,<4.3', '>=5.0,<5.1', '>=5.1,<5.2', '>=5.2,<5.3', '>=6.0,<6.1']
         database-engine: ['sqlite', 'postgres']
         os: [ubuntu-latest] # [ubuntu-latest, windows-latest, macos-latest] for full coverage but this gets expensive quickly
+        exclude:
+          # Django 6.0 requires Python 3.12+
+          - python-version: '3.10'
+            django-version: '>=6.0,<6.1'
+          - python-version: '3.11'
+            django-version: '>=6.0,<6.1'
 
     permissions:
       id-token: write

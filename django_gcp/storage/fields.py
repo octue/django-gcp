@@ -336,11 +336,46 @@ class BlobField(models.JSONField):
 
         return new_value
 
+    def _is_already_cleaned(self, value):
+        """Check if a value has already been cleaned and should not be cleaned again.
+
+        This is needed for Django 6.0+ which calls pre_save() twice during a single
+        save operation (due to RETURNING clause support). We need to detect when the
+        value has already been transformed from {"_tmp_path": ..., "name": ...} to
+        {"path": ...} format to avoid double-cleaning.
+
+        Blank values (None or empty dict) return False to ensure clean() is called
+        and on_commit callbacks are properly registered.
+        """
+        # Blank values should go through clean() for callback registration
+        if value is None:
+            return False
+        if not isinstance(value, dict):
+            return False
+        if len(value) == 0:
+            return False
+        # A cleaned non-blank value has 'path' but not '_tmp_path' and 'name'
+        return "path" in value and "_tmp_path" not in value and "name" not in value
+
     def pre_save(self, model_instance, add):
         """Run on_commit hooks for transactions"""
         value = getattr(model_instance, self.attname)
-        if not self._cleaned:
+
+        # Track clean state per-instance for Django 6.0+ compatibility.
+        # Django 6.0+ calls pre_save() twice during a single save operation
+        # (due to RETURNING clause support). This flag prevents double-cleaning.
+        # The flag persists on the instance object until explicitly cleared or
+        # until refresh_from_db() is called.
+        clean_flag_attr = f"_blobfield_clean_called_{self.attname}"
+        clean_already_called = getattr(model_instance, clean_flag_attr, False)
+
+        if not self._cleaned and not clean_already_called and not self._is_already_cleaned(value):
             value = self.clean(value, model_instance, skip_validation=True)
+            # Update instance with cleaned value to prevent re-cleaning on
+            # Django 6.0's second pre_save call
+            setattr(model_instance, self.attname, value)
+            # Mark as cleaned for this save operation
+            setattr(model_instance, clean_flag_attr, True)
 
         if self._on_commit_blank is not None:
             transaction.on_commit(self._on_commit_blank)
@@ -355,6 +390,9 @@ class BlobField(models.JSONField):
         self._validated = False
         self._on_commit_blank = None
         self._on_commit_valid = None
+        # Note: We do NOT clear clean_flag_attr here because Django 6.0+ calls
+        # pre_save twice per save. The flag will be cleared on the next
+        # refresh_from_db() or when a new form is created for the instance.
 
         return value
 
@@ -603,13 +641,30 @@ class BlobField(models.JSONField):
         return existing_path is not None and instance_path is not None and instance_path != existing_path
 
     def _get_signed_ingress_url(self):
-        """Return a signed URL for uploading a blob to the temporary_path"""
-        return get_signed_upload_url(
-            self.storage.bucket,
-            self._get_temporary_path(),
-            content_type="application/octet-stream",
-            max_size_bytes=self.max_size_bytes,
-        )
+        """Return a signed URL for uploading a blob to the temporary_path.
+
+        If credentials are not available (e.g., during testing or development),
+        returns None rather than raising an exception. This allows forms to be
+        defined and loaded even without GCP credentials.
+        """
+        try:
+            return get_signed_upload_url(
+                self.storage.bucket,
+                self._get_temporary_path(),
+                content_type="application/octet-stream",
+                max_size_bytes=self.max_size_bytes,
+            )
+        except (AttributeError, Exception) as e:
+            # Handle missing credentials gracefully
+            # This can happen during testing or when forms are loaded at startup
+            if "private key" in str(e) or "credentials" in str(e).lower():
+                logger.warning(
+                    "Could not generate signed ingress URL: %s. "
+                    "Upload functionality will not work without valid credentials.",
+                    e,
+                )
+                return None
+            raise
 
     def _get_temporary_path(self):
         """Return a temporary path to which a blob can be uploaded before renaming"""

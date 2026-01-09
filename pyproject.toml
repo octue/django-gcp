@@ -19,7 +19,7 @@ keywords = ["django", "google", "cloud", "run", "gcloud", "gcp", "storage", "tas
 requires-python = ">=3.10,<4"
 
 dependencies = [
-    "Django>=4.2,<5.3",
+    "Django>=4.2,<6.1",
     "django-app-settings>0.7,<0.8",
     "python-dateutil>=2,<3",
     "google-api-python-client>=2,<3",
