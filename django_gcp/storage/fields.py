@@ -95,7 +95,7 @@ class BlobField(models.JSONField):
         self,
         get_destination_path=None,
         ingress_to="_tmp/",
-        store_key="media",
+        store_key="default",
         accept_mimetype=DEFAULT_ACCEPT_MIMETYPE,
         overwrite_mode=DEFAULT_OVERWRITE_MODE,
         max_size_bytes=None,
@@ -123,8 +123,8 @@ class BlobField(models.JSONField):
         kwargs["default"] = kwargs.pop("default", None)
         kwargs["help_text"] = kwargs.pop("help_text", "GCP cloud storage object")
 
-        # Note, if you want to define overrides, then use the GCP_STORAGE_EXTRA_STORES
-        # setting with a different key
+        # store_key must match an alias in Django's STORAGES setting; OPTIONS for that alias
+        # become this field's storage options.
         self.storage = GoogleCloudStorage(store_key=store_key)
 
         # We should consider if there's a good use case for customising the storage class:
@@ -337,10 +337,49 @@ class BlobField(models.JSONField):
         return new_value
 
     def pre_save(self, model_instance, add):
-        """Run on_commit hooks for transactions"""
+        """Run on_commit hooks for transactions
+
+        Django 6.0+ calls pre_save twice per save (RETURNING clause support; see
+        https://code.djangoproject.com/ticket/36855). clean() registers on_commit
+        callbacks and transforms the ingress dict shape, so calling it twice
+        would double-register callbacks and KeyError on the second pass. We
+        memoise the clean input/output on the instance for the duration of the
+        save, then clear that memo when the transaction commits.
+
+        Field-level flags can't track this because Django uses one BlobField
+        instance per model class, shared across every row.
+        """
+        state = self._get_save_state(model_instance)
         value = getattr(model_instance, self.attname)
+
+        if "output" in state and value in (state["input"], state["output"]):
+            # Django 6.0's second pre_save call within the same save: the value
+            # is either the original input (Django didn't write back) or the
+            # cleaned output (we wrote back). clean() has already run and the
+            # on_commit callback is already registered.
+            return state["output"]
+
+        # Any other state is from a previous save on this instance and is now
+        # stale; discard it before re-cleaning. (We don't clear in an
+        # on_commit wrapper because ``transaction.on_commit`` runs callbacks
+        # immediately when no outer atomic block is active — that would clear
+        # the state before Django 6.0's second pre_save call could read it.)
+        state.clear()
+
         if not self._cleaned:
+            original_value = value
             value = self.clean(value, model_instance, skip_validation=True)
+            # Mirror the cleaned value onto the instance so the second pre_save
+            # call (if any) sees post-cleaned state.
+            setattr(model_instance, self.attname, value)
+            state["input"] = original_value
+            state["output"] = value
+        else:
+            # clean() already ran earlier in this save (e.g., during
+            # form.is_valid()); ``value`` is already in cleaned shape. Memoise
+            # so Django 6.0's second pre_save call short-circuits above.
+            state["input"] = value
+            state["output"] = value
 
         if self._on_commit_blank is not None:
             transaction.on_commit(self._on_commit_blank)
@@ -357,6 +396,17 @@ class BlobField(models.JSONField):
         self._on_commit_valid = None
 
         return value
+
+    def _get_save_state(self, model_instance):
+        """Per-instance scratchpad scoped to this field, used to make pre_save idempotent.
+
+        Lives in a single ``_blobfield_save_state`` dict on the instance, keyed
+        by ``self.attname``. The contents survive until the next save on this
+        instance, at which point ``pre_save`` clears stale entries whose
+        cached value no longer matches the instance.
+        """
+        all_state = model_instance.__dict__.setdefault("_blobfield_save_state", {})
+        return all_state.setdefault(self.attname, {})
 
     def validate(self, value, model_instance):
         """Validate field value contents

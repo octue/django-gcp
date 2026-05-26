@@ -103,11 +103,11 @@ class GoogleCloudFile(CompressedFileMixin, File):
 class GoogleCloudStorage(CompressStorageMixin, Storage):  # pylint: disable=abstract-method
     """Storage class allowing django to use GCS as an object store
 
-    Instantiates as the `media` store by default.
-    Pass `media`, `static` or any of the keys in.
+    Instantiates as the ``default`` store by default. Pass any alias from
+    Django's ``STORAGES`` setting as ``store_key`` to use that store's OPTIONS.
     """
 
-    def __init__(self, store_key="media", **overrides):
+    def __init__(self, store_key="default", **overrides):
         super().__init__()
 
         self.settings = StorageSettings(store_key, **overrides)
@@ -335,24 +335,23 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):  # pylint: disable=abst
 
 
 class GoogleCloudMediaStorage(GoogleCloudStorage):  # pylint: disable=abstract-method
-    """Storage whose bucket name is taken from the GCP_STORAGE_MEDIA_NAME setting
+    """Storage backend for the ``default`` STORAGES alias
 
-    This actually behaves exactly as a default instantiation of the base
-    ``GoogleCloudStorage`` class, but is there to make configuration more
-    explicit for first-timers.
+    Use as the ``BACKEND`` value for ``STORAGES["default"]`` to make the
+    intent explicit when configuring Django settings for first-timers.
 
     """
 
     def __init__(self, **overrides):
-        if overrides.pop("store_key", "media") != "media":
-            raise ValueError("You cannot instantiate GoogleCloudMediaStorage with a store_key other than 'media'")
-        super().__init__(store_key="media", **overrides)
+        if overrides.pop("store_key", "default") != "default":
+            raise ValueError("You cannot instantiate GoogleCloudMediaStorage with a store_key other than 'default'")
+        super().__init__(store_key="default", **overrides)
 
 
 class GoogleCloudStaticStorage(GoogleCloudStorage):  # pylint: disable=abstract-method
-    """Storage defined with an appended bucket name (called "<bucket>-static")
+    """Storage backend for the ``staticfiles`` STORAGES alias
 
-    We define that static files are stored in a different bucket than the (private) media files, which:
+    We recommend storing static files in a different bucket than the (private) media files, which:
         1. gives us less risk of accidentally setting private files as public
         2. allows us easier visual inspection in the console of what's private and what's public static
         3. allows us to set blanket public ACLs on the static bucket
@@ -361,6 +360,8 @@ class GoogleCloudStaticStorage(GoogleCloudStorage):  # pylint: disable=abstract-
     """
 
     def __init__(self, **overrides):
-        if overrides.pop("store_key", "static") != "static":
-            raise ValueError("You cannot instantiate GoogleCloudStaticStorage with a store_key other than 'static'")
-        super().__init__(store_key="static", **overrides)
+        if overrides.pop("store_key", "staticfiles") != "staticfiles":
+            raise ValueError(
+                "You cannot instantiate GoogleCloudStaticStorage with a store_key other than 'staticfiles'"
+            )
+        super().__init__(store_key="staticfiles", **overrides)

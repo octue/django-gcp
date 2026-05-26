@@ -101,8 +101,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13']
-        django-version: ['>=4.2,<4.3', '>=5.0,<5.1']
+        python-version: ['3.12', '3.13']
+        # pyproject allows Django <6.2; add '>=6.1,<6.2' here once Django 6.1 ships.
+        django-version: ['>=5.2,<5.3', '>=6.0,<6.1']
         database-engine: ['sqlite', 'postgres']
         os: [ubuntu-latest] # [ubuntu-latest, windows-latest, macos-latest] for full coverage but this gets expensive quickly
 
