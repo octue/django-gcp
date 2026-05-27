@@ -55,32 +55,39 @@ Setup Media and Static Storage
 ------------------------------
 
 The most common types of storage are for media and static files, using the storage backend.
-We derived a custom storage type for each, making it easier to name them.
+We provide a custom storage class for each, plumbed via Django's ``STORAGES`` setting.
 
 In your ``settings.py`` file, do:
 
 .. code-block:: python
 
-    # Set the default storage (for media files)
-    DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
-    GCP_STORAGE_MEDIA = {
-        "bucket_name": "app-assets-environment-media" # Or whatever name you chose
-    }
-
-    # Set the static file storage
-    #   This allows `manage.py collectstatic` to automatically upload your static files
-    STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
-    GCP_STORAGE_STATIC = {
-      "bucket_name": "app-assets-environment-static" # or whatever name you chose
+    STORAGES = {
+        "default": {
+            "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+            "OPTIONS": {
+                "bucket_name": "app-assets-environment-media",  # Or whatever name you chose
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
+            "OPTIONS": {
+                "bucket_name": "app-assets-environment-static",  # Or whatever name you chose
+            },
+        },
     }
 
     # Point the urls to the store locations
     #   You could customise the base URLs later with your own cdn, eg https://static.you.com
     #   But that's only if you feel like being ultra fancy
-    MEDIA_URL = f"https://storage.googleapis.com/{GCP_STORAGE_MEDIA_NAME}/"
+    MEDIA_URL = f"https://storage.googleapis.com/{STORAGES['default']['OPTIONS']['bucket_name']}/"
     MEDIA_ROOT = "/media/"
-    STATIC_URL = f"https://storage.googleapis.com/{GCP_STORAGE_STATIC_NAME}/"
+    STATIC_URL = f"https://storage.googleapis.com/{STORAGES['staticfiles']['OPTIONS']['bucket_name']}/"
     STATIC_ROOT = "/static/"
+
+.. note::
+    The ``"default"`` alias is what Django reads for ``FileField`` storage, and ``"staticfiles"`` is what
+    ``manage.py collectstatic`` reads for static uploads. These alias names are fixed by Django convention;
+    extra stores can use any name you like.
 
 
 Default and Extra stores
@@ -91,19 +98,35 @@ Default and Extra stores
    .. group-tab:: Extra Stores
 
       Any number of extra stores can be added, each corresponding to a different bucket in GCS.
-
-      You'll need to give each one a "storage key" to identify it. In your ``settings.py``, include extra stores as:
+      Just add additional entries to the ``STORAGES`` dict — each top-level alias becomes a
+      ``store_key`` you can use on ``BlobField`` or pass to ``GoogleCloudStorage``:
 
       .. code-block:: python
 
-         GCP_STORAGE_EXTRA_STORES = {
-             "my_fun_store_key": {
-                 "bucket_name": "all-the-fun-datafiles"
+         STORAGES = {
+             "default": {
+                 "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+                 "OPTIONS": {"bucket_name": "app-assets-environment-media"},
              },
-             "my_sad_store_key": {
-                 "bucket_name": "all-the-sad-datafiles"
-             }
+             "staticfiles": {
+                 "BACKEND": "django_gcp.storage.GoogleCloudStaticStorage",
+                 "OPTIONS": {"bucket_name": "app-assets-environment-static"},
+             },
+             "my-fun-store": {
+                 "BACKEND": "django_gcp.storage.GoogleCloudStorage",
+                 "OPTIONS": {"bucket_name": "all-the-fun-datafiles"},
+             },
+             "my-sad-store": {
+                 "BACKEND": "django_gcp.storage.GoogleCloudStorage",
+                 "OPTIONS": {"bucket_name": "all-the-sad-datafiles"},
+             },
          }
+
+      Then reference an extra store from a ``BlobField`` via its alias:
+
+      .. code-block:: python
+
+         blob = BlobField(store_key="my-fun-store", get_destination_path=...)
 
 
    .. group-tab:: Default Storage
@@ -254,16 +277,24 @@ Works as a standard drop-in storage backend.
 Storage Settings Options
 ------------------------
 
-Each store can be set up with different options, passed within the dict given to ``GCP_STORAGE_MEDIA``, ``GCP_STORAGE_STATIC`` or within the dicts given to ``GCP_STORAGE_EXTRA_STORES``.
+Each store can be set up with different options, passed via the ``OPTIONS`` dict for that
+alias in the ``STORAGES`` setting.
 
-For example, to set the media storage up so that files go to a different location than the root of the bucket, you'd use:
+For example, to set the media storage up so that files go to a different location than the
+root of the bucket, you'd use:
 
 .. code-block:: python
 
-    GCP_STORAGE_MEDIA = {
-        "bucket_name": "app-assets-environment-media"
-        "location": "not/the/bucket/root/",
-        # ... and whatever other options you want
+    STORAGES = {
+        "default": {
+            "BACKEND": "django_gcp.storage.GoogleCloudMediaStorage",
+            "OPTIONS": {
+                "bucket_name": "app-assets-environment-media",
+                "location": "not/the/bucket/root/",
+                # ... and whatever other options you want
+            },
+        },
+        # ... other aliases ...
     }
 
 The full range of options (and their defaults, which apply to all stores) is as follows:
@@ -405,3 +436,54 @@ the credentials provided during :ref:`authentication <authentication>`.
 
 The ``GCP_STORAGE_EXPIRATION`` value is handled by the underlying `Google library  <https://googlecloudplatform.github.io/google-cloud-python/latest/storage/blobs.html#google.cloud.storage.blob.Blob.generate_signed_url>`_.
 It supports `timedelta`, `datetime`, or `integer` seconds since epoch time.
+
+
+Configuration in 0.24 and below
+-------------------------------
+
+Prior to django-gcp 0.25, storage was configured via Django's deprecated
+``DEFAULT_FILE_STORAGE`` and ``STATICFILES_STORAGE`` settings, with options
+held in three separate dicts: ``GCP_STORAGE_MEDIA``, ``GCP_STORAGE_STATIC``,
+and ``GCP_STORAGE_EXTRA_STORES``. ``BlobField`` used ``store_key="media"`` and
+``store_key="static"`` instead of ``"default"``/``"staticfiles"``.
+
+That configuration looked like this:
+
+.. code-block:: python
+
+    # Set the default storage (for media files)
+    DEFAULT_FILE_STORAGE = "django_gcp.storage.GoogleCloudMediaStorage"
+    GCP_STORAGE_MEDIA = {
+        "bucket_name": "app-assets-environment-media"  # Or whatever name you chose
+    }
+
+    # Set the static file storage
+    #   This allows `manage.py collectstatic` to automatically upload your static files
+    STATICFILES_STORAGE = "django_gcp.storage.GoogleCloudStaticStorage"
+    GCP_STORAGE_STATIC = {
+        "bucket_name": "app-assets-environment-static"  # Or whatever name you chose
+    }
+
+    GCP_STORAGE_EXTRA_STORES = {
+        "my_fun_store_key": {"bucket_name": "all-the-fun-datafiles"},
+        "my_sad_store_key": {"bucket_name": "all-the-sad-datafiles"},
+    }
+
+    MEDIA_URL = f"https://storage.googleapis.com/{GCP_STORAGE_MEDIA['bucket_name']}/"
+    MEDIA_ROOT = "/media/"
+    STATIC_URL = f"https://storage.googleapis.com/{GCP_STORAGE_STATIC['bucket_name']}/"
+    STATIC_ROOT = "/static/"
+
+To migrate to 0.25+:
+
+1. Replace the legacy settings above with a single ``STORAGES`` dict (see
+   :ref:`storage` at the top of this page). Each former extra-stores entry
+   becomes a top-level alias under ``STORAGES`` — there is no separate
+   "extra" wrapper anymore.
+2. In every model, rename ``BlobField(store_key="media")`` to
+   ``BlobField(store_key="default")`` and ``store_key="static"`` to
+   ``store_key="staticfiles"``. Any custom store keys keep their names.
+3. Run ``python manage.py makemigrations`` to capture the ``store_key`` change
+   as an ``AlterField`` migration for each affected ``BlobField``.
+4. If you use the ``manage.py cleanup_tmp_files`` management command, update
+   the positional ``store_key`` argument to the new alias name.

@@ -1,0 +1,23 @@
+{% load i18n %}
+{# Margins pulled in to overlay django's readonly box #}
+<div class="gcp-wrapper gcp-readonly-wrapper">
+    <div class="gcp-card">
+        <div class="gcp-readonly-row">
+            <div class="gcp-existing-path">{{ existing_path }}</div>
+
+            {% if console_url is not None %}
+                <a href="{{ console_url }}" target="_blank" class="gcp-readonly-cell">
+                    <span class="material-symbols-outlined gcp-row__icon">cloud</span>
+                    {% trans "View on GCP" %}
+                </a>
+            {% endif %}
+
+            {% if download_url is not None %}
+                <a class="gcp-readonly-cell" href="{{ download_url }}" download>
+                    <span class="material-symbols-outlined gcp-row__icon">download</span>
+                    {% trans "Download" %}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>

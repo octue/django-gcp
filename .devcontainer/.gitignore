@@ -1,2 +1,3 @@
 .zsh_history
 docker-compose.developer.yml
+devcontainer-lock.json

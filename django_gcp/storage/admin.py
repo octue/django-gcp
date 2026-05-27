@@ -10,13 +10,16 @@ from .fields import BlobField
 
 
 class BlobFieldModelAdminMixin:
+    class Media:
+        css = {"all": ["django_gcp/cloud_object_widget.css"]}
+
     def get_readonly_blob_widget(self, obj, field_name):
         context = {
             "existing_path": get_path(obj, field_name),
             "download_url": get_signed_download_url(obj, field_name),
             "console_url": get_console_url(obj, field_name),
         }
-        return mark_safe(render_to_string("unfold/contrib/django_gcp/cloud_object_readonly_widget.html", context))
+        return mark_safe(render_to_string("django_gcp/cloud_object_readonly_widget.html", context))
 
     def _replace_blob_field_names(self, fields, fields_to_replace):
         blob_fields = set(f.name for f in self.model._meta.get_fields() if isinstance(f, BlobField))

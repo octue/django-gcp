@@ -12,14 +12,6 @@ git config --global --add safe.directory /workspace
 # Install precommit hooks
 pre-commit install && pre-commit install -t commit-msg
 
-# Install claude code
-#   NOTE: You may have to redo this, sometimes it doesn't
-#   take after container rebuilds.
-npm install -g @anthropic-ai/claude-code
-
-# Install localtunnel
-npm install -g localtunnel
-
 # Set zsh history location
 #     This is done in postAttach so it's not overridden by the oh-my-zsh devcontainer feature
 export HISTFILE="/command-history/.zsh_history"

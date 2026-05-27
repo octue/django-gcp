@@ -36,7 +36,7 @@ DEFAULT_GCP_STORAGE_SETTINGS = {
 
 
 class StorageSettings:
-    """Combine GCP_ and GCP_STORAGE_ settings for a given store
+    """Combine GCP_ root settings with per-store OPTIONS from Django's STORAGES dict
 
     Settings are determined and cached. Initial determination is done lazily (on first setting access
     rather than on initialisation). This allows this class to be initialised prior to
@@ -63,14 +63,13 @@ class StorageSettings:
 
     @property
     def _stores_settings(self):
-        """Get a complete dict of all stores defined in settings.py (media + static + extras)"""
-        all_stores = {
-            "media": getattr(django_settings, "GCP_STORAGE_MEDIA", None),
-            "static": getattr(django_settings, "GCP_STORAGE_STATIC", None),
-            **getattr(django_settings, "GCP_STORAGE_EXTRA_STORES", {}),
-        }
+        """Get a dict of all STORAGES OPTIONS keyed by alias
 
-        return dict((k, v) for k, v in all_stores.items() if v is not None)
+        Reads from Django's STORAGES setting. Each alias in STORAGES becomes a
+        store_key; the OPTIONS dict for that alias becomes the per-store config.
+        """
+        storages = getattr(django_settings, "STORAGES", {})
+        return {alias: config.get("OPTIONS", {}) for alias, config in storages.items()}
 
     @property
     def _store_settings(self):
@@ -79,11 +78,18 @@ class StorageSettings:
             return self._stores_settings[self._store_key]
         except KeyError as e:
             raise ImproperlyConfigured(
-                f"Mismatch: specified store key '{self._store_key}' does not match 'media', 'static', or any store key defined in GCP_STORAGE_EXTRA_STORES"
+                f"Storage key '{self._store_key}' not found in the STORAGES setting. "
+                f"Available aliases: {sorted(self._stores_settings.keys())}. "
+                f"Did you forget to add '{self._store_key}' to STORAGES, or rename a legacy "
+                f"'media'/'static' store_key to 'default'/'staticfiles'?"
             ) from e
 
     def _handle_settings_changed(self, **kwargs):
-        self._update_settings()
+        # Invalidate lazily so we only re-resolve on the next attribute access.
+        # Migration state can hold StorageSettings instances bound to legacy store_keys
+        # ("media"/"static") that aren't valid against the current STORAGES dict;
+        # eager re-resolution here would crash unrelated setting overrides.
+        self._cache = None
 
     def _update_settings(self):
         """Fetch settings from django configuration, merge with defaults and cache
@@ -125,5 +131,6 @@ class StorageSettings:
         if self.location.startswith("/"):
             correct = self.location.lstrip("/\\")
             raise ImproperlyConfigured(
-                f"'location' option in GCP_STORAGE_ cannot begin with a leading slash. Found '{self.location}'. Use '{correct}' instead."
+                f"'location' option in STORAGES['{self._store_key}']['OPTIONS'] cannot begin with a leading slash. "
+                f"Found '{self.location}'. Use '{correct}' instead."
             )
