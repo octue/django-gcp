@@ -113,7 +113,8 @@ jobs:
 
     services:
       postgres:
-        image: kartoza/postgis:13.0
+        # Django 5.2+ requires PostgreSQL 14+; pin a major version that comfortably covers it.
+        image: kartoza/postgis:16
         env:
           POSTGRES_DB: postgres_db
           POSTGRES_USER: postgres_user
