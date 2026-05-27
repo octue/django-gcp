@@ -1,114 +1,124 @@
-.gcp-field-contents {
-  display: flex;
-  flex-direction: column;
-  margin-left: 160px;
-  padding: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  margin-bottom: 4px;
+/* Styles for django-gcp CloudObjectWidget. Loaded via the widget's
+   Media class. Dark mode follows django-unfold's `class="dark"` on <html>. */
+
+:root {
+  --gcp-border: #e5e7eb;
+  --gcp-bg: #ffffff;
+  --gcp-fg: #111827;
+  --gcp-muted: #6b7280;
+  --gcp-icon: #9ca3af;
+  --gcp-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --gcp-hover-bg: rgb(0 0 0 / 0.025);
+  --gcp-danger-bg: #fee2e2;
+  --gcp-danger-border: #fecaca;
+  --gcp-danger-fg: #ef4444;
+  --gcp-radius: 0.375rem;
+  --gcp-row-h: 2.375rem;
+  --gcp-label-w: 12rem;
 }
 
-.gcp-field-contents > *:not(:last-child) {
-  margin-bottom: 12px
+html.dark {
+  --gcp-border: #374151;
+  --gcp-bg: transparent;
+  --gcp-fg: #f3f4f6;
+  --gcp-muted: #9ca3af;
+  --gcp-icon: #9ca3af;
+  --gcp-hover-bg: rgb(255 255 255 / 0.05);
+  --gcp-danger-bg: rgb(239 68 68 / 0.20);
+  --gcp-danger-border: rgb(239 68 68 / 0.20);
+  --gcp-danger-fg: #f87171;
 }
 
 .gcp-wrapper {
-  max-width: 1200px;
+  max-width: 42rem;
 }
 
-.gcp-readonly-wrapper {
-  margin-bottom: -0.5rem;
-  margin-top: -0.5rem;
-}
-
-.gcp-row-wrapper {
+.gcp-card {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--gcp-border);
+  border-radius: var(--gcp-radius);
+  box-shadow: var(--gcp-shadow);
+  background: var(--gcp-bg);
+  color: var(--gcp-fg);
+  font-size: 0.875rem;
 }
 
-.gcp-row-info {
+.gcp-card__row {
   display: flex;
   flex-direction: column;
 }
 
-.gcp-row-header {
-  font-size: 0.825rem;
-  width: 100%;
-  margin-bottom: 2px;
-  font-weight: 500;
+.gcp-card__row + .gcp-card__row {
+  border-top: 1px solid var(--gcp-border);
 }
 
-.gcp-row-text {
-  margin-left: 1rem;
-  color: var(--link-fg);
+.gcp-row__label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  width: 100%;
+  height: var(--gcp-row-h);
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--gcp-border);
+  color: inherit;
+  text-decoration: none;
+}
+
+.gcp-row__icon {
+  margin-right: 0.5rem;
+  color: var(--gcp-icon);
+}
+
+.gcp-row__body {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  min-width: 0;
+  height: var(--gcp-row-h);
+  align-items: center;
+}
+
+.gcp-existing-path,
+.gcp-selected-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gcp-row-controls {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
   align-items: center;
-
-}
-
-.gcp-row-controls > *:not(:first-child) {
-  margin-left: 12px
-}
-
-.gcp-label {
-  /* Undo the django label css so it aligns correctly */
-  width: auto !important;
-  padding: 0 !important;
-  /* Offset to allow for the border pixels */
-  margin-top: 2px;
-}
-
-/* The actual HTML element displays none, but its label contents are clickable instead, so we style that as a button */
-.gcp-file-input {
-  display: none;
-}
-
-.gcp-selected-name {
-  /* display: block;
-  color: var(--body-quiet-color);
-  padding: .55rem 1rem;
-  margin-left: 0; */
-}
-
-.gcp-button-alert {
-  display: inline-block;
-  text-decoration: none;
-  color: rgb(229, 185, 26);
-  background-color: #d41515;
-  margin: 0;
-  padding: 6px 8px;
-  cursor: pointer;
-  border-radius: 4px;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+  flex-shrink: 0;
 }
 
 .gcp-button {
-  background-color: #FFFFFF;
-  border: 1px solid rgb(209,213,219);
-  border-radius: .5rem;
-  box-sizing: border-box;
-  color: #111827;
-  padding: .55rem 1rem;
-  text-align: center;
-  text-decoration: none #D1D5DB solid;
-  text-decoration-thickness: auto;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--gcp-border);
+  border-radius: var(--gcp-radius);
+  padding: 0.125rem 0.5rem;
+  box-shadow: var(--gcp-shadow);
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  line-height: 1.625;
+  white-space: nowrap;
+  text-decoration: none;
   cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
 }
 
 .gcp-button:hover {
-  background-color: rgb(249,250,251);
+  background-color: var(--gcp-hover-bg);
 }
 
 .gcp-button:focus {
@@ -116,31 +126,95 @@
   outline-offset: 2px;
 }
 
-.gcp-button:focus-visible {
-  box-shadow: none;
+.gcp-button--danger {
+  background-color: var(--gcp-danger-bg);
+  border-color: var(--gcp-danger-border);
+  color: var(--gcp-danger-fg);
 }
 
+.gcp-button--danger:hover {
+  background-color: var(--gcp-danger-bg);
+  filter: brightness(0.97);
+}
+
+.gcp-file-input {
+  display: none;
+}
+
+.gcp-file-input-label {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  height: var(--gcp-row-h);
+  cursor: pointer;
+}
+
+.gcp-select-label {
+  margin-right: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .gcp-card__row {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .gcp-row__label {
+    width: var(--gcp-label-w);
+    border-bottom: 0;
+    border-right: 1px solid var(--gcp-border);
+  }
+}
+
+/* Overlay shown during file upload */
 .gcp-overlay {
   display: none;
-  background-color: rgba(0,0,0, 0.7);
+  position: fixed;
+  inset: 0;
   align-items: center;
   justify-content: center;
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  background-color: rgb(0 0 0 / 0.7);
   z-index: 10000;
   cursor: wait;
 }
 
 .gcp-overlay-text {
-  color: white;
-  font-size: 18px;
-  font-weight: normal;
+  color: #ffffff;
+  font-size: 1.125rem;
   text-align: center;
 }
 
+/* Readonly variant: pull margins in to overlay django's readonly box */
+.gcp-readonly-wrapper {
+  margin-top: -0.5rem;
+  margin-bottom: -0.5rem;
+}
+
+.gcp-readonly-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: var(--gcp-row-h);
+}
+
+.gcp-readonly-cell {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-left: 1px solid var(--gcp-border);
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gcp-readonly-cell:hover {
+  background-color: var(--gcp-hover-bg);
+}
+
+/* State classes toggled by the JS */
 .gcp-disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -152,5 +226,5 @@
 
 .gcp-warning {
   text-decoration: line-through;
-  color:rgba(214, 175, 1)
+  color: #d6af01;
 }

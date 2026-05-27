@@ -56,7 +56,7 @@ services:
       - db
 
   db:
-    image: postgres:13.0
+    image: kartoza/postgis:14
     environment:
       - POSTGRES_DB=postgres_db
       - POSTGRES_USER=postgres_user

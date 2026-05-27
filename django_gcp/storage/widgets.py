@@ -1,6 +1,5 @@
 import json
 
-from django.conf import settings
 from django.forms import Widget
 
 from .operations import UNLIMITED_MAX_SIZE
@@ -42,9 +41,6 @@ class CloudObjectWidget(Widget):
         self.signed_ingress_url = signed_ingress_url
         self.max_size_bytes = max_size_bytes
         self.ingress_path = ingress_path
-
-        if "unfold" in settings.INSTALLED_APPS:
-            self.template_name = "unfold/contrib/django_gcp/cloud_object_widget.html"
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
