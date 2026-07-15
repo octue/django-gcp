@@ -27,8 +27,6 @@ dependencies = [
 "google-cloud-storage>=2,<4",
 "google-cloud-tasks>=2,<3",
 "google-cloud-workflows>=1,<2",
-"werkzeug>=3,<4",
-"pyopenssl>=25.1,<26",
 ]
 
 [project.urls]
@@ -61,6 +59,8 @@ dev = [
 "throttle>=0.2.2,<0.3",
 "tox>=4.23.2,<5",
 "watchdog>=2.1.9,<3",
+"werkzeug>=3,<4",
+"pyopenssl>=25.1",
 ]
 
 [tool.ruff]

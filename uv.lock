@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12, <4"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -560,9 +560,7 @@ dependencies = [
     { name = "google-cloud-storage" },
     { name = "google-cloud-tasks" },
     { name = "google-cloud-workflows" },
-    { name = "pyopenssl" },
     { name = "python-dateutil" },
-    { name = "werkzeug" },
 ]
 
 [package.dev-dependencies]
@@ -576,6 +574,7 @@ dev = [
     { name = "notebook" },
     { name = "pre-commit" },
     { name = "psycopg2-binary" },
+    { name = "pyopenssl" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -588,6 +587,7 @@ dev = [
     { name = "throttle" },
     { name = "tox" },
     { name = "watchdog" },
+    { name = "werkzeug" },
 ]
 
 [package.metadata]
@@ -601,9 +601,7 @@ requires-dist = [
     { name = "google-cloud-storage", specifier = ">=2,<4" },
     { name = "google-cloud-tasks", specifier = ">=2,<3" },
     { name = "google-cloud-workflows", specifier = ">=1,<2" },
-    { name = "pyopenssl", specifier = ">=25.1,<26" },
     { name = "python-dateutil", specifier = ">=2,<3" },
-    { name = "werkzeug", specifier = ">=3,<4" },
 ]
 
 [package.metadata.requires-dev]
@@ -617,6 +615,7 @@ dev = [
     { name = "notebook", specifier = ">=6.5.3,<7" },
     { name = "pre-commit", specifier = ">=2.17.0,<3" },
     { name = "psycopg2-binary", specifier = ">=2.9.3,<3" },
+    { name = "pyopenssl", specifier = ">=25.1" },
     { name = "pytest", specifier = ">=8.3.4,<9" },
     { name = "pytest-asyncio", specifier = ">=0.25.3,<0.26" },
     { name = "pytest-cov", specifier = ">=6.0.0,<7" },
@@ -629,6 +628,7 @@ dev = [
     { name = "throttle", specifier = ">=0.2.2,<0.3" },
     { name = "tox", specifier = ">=4.23.2,<5" },
     { name = "watchdog", specifier = ">=2.1.9,<3" },
+    { name = "werkzeug", specifier = ">=3,<4" },
 ]
 
 [[package]]
