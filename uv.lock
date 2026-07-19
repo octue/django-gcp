@@ -397,9 +397,7 @@ dependencies = [
     { name = "google-cloud-storage" },
     { name = "google-cloud-tasks" },
     { name = "google-cloud-workflows" },
-    { name = "pyopenssl" },
     { name = "python-dateutil" },
-    { name = "werkzeug" },
 ]
 
 [package.dev-dependencies]
@@ -412,6 +410,7 @@ dev = [
     { name = "django-unfold" },
     { name = "pre-commit" },
     { name = "psycopg2-binary" },
+    { name = "pyopenssl" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -424,6 +423,7 @@ dev = [
     { name = "throttle" },
     { name = "tox" },
     { name = "watchdog" },
+    { name = "werkzeug" },
 ]
 
 [package.metadata]
@@ -437,9 +437,7 @@ requires-dist = [
     { name = "google-cloud-storage", specifier = ">=2,<4" },
     { name = "google-cloud-tasks", specifier = ">=2,<3" },
     { name = "google-cloud-workflows", specifier = ">=1,<2" },
-    { name = "pyopenssl", specifier = ">=25.1,<27" },
     { name = "python-dateutil", specifier = ">=2,<3" },
-    { name = "werkzeug", specifier = ">=3,<4" },
 ]
 
 [package.metadata.requires-dev]
@@ -452,6 +450,7 @@ dev = [
     { name = "django-unfold", specifier = ">=0.90,<1" },
     { name = "pre-commit", specifier = ">=4,<5" },
     { name = "psycopg2-binary", specifier = ">=2.9.3,<3" },
+    { name = "pyopenssl", specifier = ">=26,<27" },
     { name = "pytest", specifier = ">=9,<10" },
     { name = "pytest-asyncio", specifier = ">=1,<2" },
     { name = "pytest-cov", specifier = ">=7,<8" },
@@ -464,6 +463,7 @@ dev = [
     { name = "throttle", specifier = ">=0.2.2,<0.3" },
     { name = "tox", specifier = ">=4.23.2,<5" },
     { name = "watchdog", specifier = ">=6,<7" },
+    { name = "werkzeug", specifier = ">=3,<4" },
 ]
 
 [[package]]
