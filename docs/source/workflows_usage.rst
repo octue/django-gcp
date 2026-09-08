@@ -290,6 +290,35 @@ Best practices
 7. **Define workflows in IaC**: Keep workflow definitions (YAML) in version-controlled Terraform/infrastructure code,
    not in Django.
 
+Verifying calls made by workflows
+---------------------------------
+
+Multi-step workflows often need to call back into Django between steps (for example to fetch
+state a Cloud Run job cannot return). Cloud Workflows can authenticate those calls with an
+OIDC identity token (``auth: {type: OIDC, audience: <url>}``); platform IAM may gate the
+intended route, but if the same application is also served publicly you must verify the token
+in-app as well. ``django_gcp`` provides both a view decorator and the underlying function:
+
+.. code-block:: python
+
+    from django_gcp.workflows import workflow_oidc_required
+
+    @workflow_oidc_required
+    def pending_items(request):
+        # request.workflow_oidc_claims carries the verified token claims
+        return JsonResponse({"pending": [...]})
+
+Verification requires a valid signature, an audience exactly matching the request's absolute
+URI, and a verified email in the allowed caller list, configured as:
+
+.. code-block:: python
+
+    GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS = ["workflows@my-project.iam.gserviceaccount.com"]
+
+With the setting absent every caller is rejected. Pass ``allowed_service_account_emails`` to
+the decorator (or to ``verify_workflow_oidc_token(request)`` directly) to override the setting
+per-endpoint.
+
 Limitations
 -----------
 
