@@ -1,12 +1,5 @@
 # Logs
 
-!!! note
-
-    The log handlers included here work well, but we suspect improvements could be made to the
-    structure of the logs to give fuller, more easily filterable results, especially around
-    `trace`/`span` and the contents of the `httpRequest` object.
-    [Pick up the issue here — PRs are welcome!](https://github.com/octue/django-gcp/issues/25)
-
 !!! tip
 
     Quickly set up logging out of the box by dropping the
@@ -26,7 +19,38 @@ Notice particularly that the `django` and `django.server` modules have specific 
 record, for example, request-level information.
 
 `django-gcp` provides `django_gcp.logs.GoogleStructuredLogsHandler`, which adds
-Django-specific behaviour to the Google `StructuredLogsHandler` used under the hood.
+Django-specific behaviour to the Google `StructuredLogHandler` used under the hood. It
+enriches the
+[`httpRequest` field](https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#HttpRequest)
+of a log entry where the record carries request information:
+
+- Entries from the `django.server` logger (the development server's request log) gain the
+  request method, URL, protocol, status, response size and remote IP. The URL for these
+  entries is the request path rather than an absolute URL, because that is all the
+  development server records.
+- Entries whose record carries a Django `HttpRequest` — as the `django.request` logger
+  attaches for 4xx and 5xx responses — gain the request method, URL, protocol, remote IP,
+  user agent, referer and status.
+
+## Request context and trace correlation
+
+Google's logging library can attach request and trace information to **every** log entry
+emitted while handling a request, not only the request log entries described above. To
+enable this, add Google's `RequestMiddleware` to your `MIDDLEWARE` setting:
+
+```python
+MIDDLEWARE = [
+    "google.cloud.logging_v2.handlers.middleware.RequestMiddleware",
+    # ... your other middleware ...
+]
+```
+
+With the middleware installed, each entry logged during a request infers `httpRequest`
+data (method, URL, user agent and protocol) from that request. Trace context is read from
+the `traceparent` or `X-Cloud-Trace-Context` request headers — which Cloud Run and Cloud
+Load Balancing set automatically — and populates the entry's `trace`, `spanId` and
+`traceSampled` fields, so all entries for one request can be grouped and filtered together
+in the Logs Explorer.
 
 ## Error Reporting
 
