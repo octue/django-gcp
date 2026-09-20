@@ -87,3 +87,17 @@ urlpatterns = [
 Using `python manage.py show_urls` you can now see the endpoints for both events and tasks in
 your app. These endpoints verify their callers and reject all requests until an allow-list is
 configured — see [Authenticating endpoints](authentication/endpoints.md).
+
+## Using terraform
+
+We recommend managing your GCP infrastructure — service accounts, IAM bindings, buckets, task
+queues, subscriptions, scheduler jobs, and workflows — with terraform or another dedicated
+infrastructure-as-code tool, rather than creating resources by hand in the console. Declared
+infrastructure is reviewable, reproducible, and much easier to keep consistent with the
+settings this library reads.
+
+The [root of this repository](https://github.com/octue/django-gcp) contains a terraform
+module defining the infrastructure used for live integration testing, which you can use as a
+reference for the resources a `django-gcp` deployment needs. Octue also maintains
+[terraform modules for django applications on GCP](https://github.com/orgs/octue/repositories?q=terraform-octue-django),
+which are a useful starting point for a production deployment.
