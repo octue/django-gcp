@@ -28,7 +28,10 @@ from tests.server.example.tasks import (
 from .test_events_utils import DEFAULT_SUBSCRIPTION
 
 
+@override_settings(GCP_TASKS_DISABLE_AUTH=True)
 class TasksEnqueueingTest(SimpleTestCase):
+    """Tests of task enqueueing and execution mechanics, with endpoint authentication disabled."""
+
     def test_instantiate_task_directly(self):
         with self.assertRaises(IncorrectTaskUsageError):
             OnDemandTask()

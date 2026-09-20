@@ -12,14 +12,17 @@ import json
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from django_gcp.events.utils import decode_pubsub_message, get_event_url, make_pubsub_message
 
 DEFAULT_SUBSCRIPTION = "projects/my-project/subscriptions/my-subscription"
 
 
+@override_settings(GCP_EVENTS_DISABLE_AUTH=True)
 class GCloudEventUtilsTests(TestCase):
+    """Tests of event URL and message utilities, with endpoint authentication disabled."""
+
     @patch("django_gcp.events.signals.event_received.send")
     def test_get_event_url_with_parameters(self, mock):
         """Ensure that push endpoint URLs can be reversed successfully with parameters that are decoded on receipt"""
