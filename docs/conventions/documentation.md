@@ -28,7 +28,7 @@ note-form statements.
 Any setting added or updated must be:
 
 1. fully described in the relevant module page (type, default, and behaviour), and
-2. cross-referenced as a row in the [settings reference](../settings.md) table, linking to
+2. cross-referenced as a row in the [settings reference](../settings/django-settings.md) table, linking to
    that full description.
 
 The table row holds only the type and default; do not duplicate the full description there.

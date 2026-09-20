@@ -13,23 +13,28 @@ nav = [
     { "Authenticating the server" = "authentication/server.md" },
     { "Authenticating events and tasks" = "authentication/events-and-tasks.md" },
   ] },
-  { "Storage" = "storage.md" },
-  { "Events" = "events.md" },
-  { "Tasks" = [
-    { "About" = "tasks/index.md" },
-    { "Usage" = "tasks/usage.md" },
-    { "Settings" = "tasks/settings.md" },
-    { "Workers" = "tasks/workers.md" },
+  { "Services" = [
+    { "Overview" = "services/index.md" },
+    { "Storage" = "services/storage.md" },
+    { "Events" = "services/events.md" },
+    { "Tasks" = [
+      { "About" = "services/tasks/index.md" },
+      { "Usage" = "services/tasks/usage.md" },
+      { "Settings" = "services/tasks/settings.md" },
+      { "Workers" = "services/tasks/workers.md" },
+    ] },
+    { "Workflows" = [
+      { "About" = "services/workflows/index.md" },
+      { "Usage" = "services/workflows/usage.md" },
+      { "Tips" = "services/workflows/tips.md" },
+    ] },
+    { "Logs" = "services/logs.md" },
+    { "Cloud Run" = "services/cloud-run.md" },
   ] },
-  { "Workflows" = [
-    { "About" = "workflows/index.md" },
-    { "Usage" = "workflows/usage.md" },
-    { "Tips" = "workflows/tips.md" },
+  { "Settings" = [
+    { "Django settings" = "settings/django-settings.md" },
+    { "Environment variables" = "settings/environment-variables.md" },
   ] },
-  { "Logs" = "logs.md" },
-  { "Cloud Run" = "cloud-run.md" },
-  { "Projects" = "projects.md" },
-  { "Settings reference" = "settings.md" },
   { "Version history" = "version-history.md" },
   { "License" = "license.md" },
   { "Conventions" = [

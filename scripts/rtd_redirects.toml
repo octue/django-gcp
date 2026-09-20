@@ -1,28 +1,45 @@
-# Read the Docs page redirects from the old Sphinx page URLs to the Zensical site structure.
+# Read the Docs page redirects from old page URLs to the current site structure.
 # Each entry maps an old path (relative to the version root, e.g. /en/latest) to its new
 # location. Sync these to RTD with `python scripts/sync_rtd_redirects.py` (see that file
-# for authentication requirements).
+# for authentication requirements). RTD applies these only when the old URL returns 404,
+# so they are safe to sync ahead of publishing.
 
 [redirects]
+# Sphinx-era pages (pre-0.26.3)
 "/index.html" = "/"
 "/getting_started.html" = "/getting-started/"
 "/authentication.html" = "/authentication/"
 "/authentication_server.html" = "/authentication/server/"
 "/authentication_events_and_tasks.html" = "/authentication/events-and-tasks/"
-"/storage.html" = "/storage/"
-"/events.html" = "/events/"
-"/tasks.html" = "/tasks/"
-"/tasks_about.html" = "/tasks/"
-"/tasks_usage.html" = "/tasks/usage/"
-"/tasks_settings.html" = "/tasks/settings/"
-"/tasks_workers.html" = "/tasks/workers/"
-"/workflows.html" = "/workflows/"
-"/workflows_about.html" = "/workflows/"
-"/workflows_usage.html" = "/workflows/usage/"
-"/workflows_tips.html" = "/workflows/tips/"
-"/logs.html" = "/logs/"
-"/cloud_run.html" = "/cloud-run/"
-"/projects.html" = "/projects/"
+"/storage.html" = "/services/storage/"
+"/events.html" = "/services/events/"
+"/tasks.html" = "/services/tasks/"
+"/tasks_about.html" = "/services/tasks/"
+"/tasks_usage.html" = "/services/tasks/usage/"
+"/tasks_settings.html" = "/services/tasks/settings/"
+"/tasks_workers.html" = "/services/tasks/workers/"
+"/workflows.html" = "/services/workflows/"
+"/workflows_about.html" = "/services/workflows/"
+"/workflows_usage.html" = "/services/workflows/usage/"
+"/workflows_tips.html" = "/services/workflows/tips/"
+"/logs.html" = "/services/logs/"
+"/cloud_run.html" = "/services/cloud-run/"
+"/projects.html" = "/getting-started/"
 "/version_history.html" = "/version-history/"
 "/license.html" = "/license/"
 "/api.html" = "/"
+
+# Pages published in 0.26.3 and moved by the navigation restructure
+"/storage/" = "/services/storage/"
+"/events/" = "/services/events/"
+"/tasks/" = "/services/tasks/"
+"/tasks/usage/" = "/services/tasks/usage/"
+"/tasks/settings/" = "/services/tasks/settings/"
+"/tasks/workers/" = "/services/tasks/workers/"
+"/workflows/" = "/services/workflows/"
+"/workflows/usage/" = "/services/workflows/usage/"
+"/workflows/tips/" = "/services/workflows/tips/"
+"/logs/" = "/services/logs/"
+"/cloud-run/" = "/services/cloud-run/"
+"/projects/" = "/getting-started/"
+"/settings/" = "/settings/django-settings/"

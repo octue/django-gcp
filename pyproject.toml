@@ -1,6 +1,6 @@
 [project]
 name = "django-gcp"
-version = "0.26.3"
+version = "0.26.4"
 description = "Utilities to run Django on Google Cloud Platform"
 authors = [{name="Tom Clark"}]
 license = "MIT"

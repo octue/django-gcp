@@ -1,6 +1,6 @@
 # Authenticating events and tasks
 
-The endpoints that `django-gcp` exposes for [events](../events.md) and [tasks](../tasks/index.md)
+The endpoints that `django-gcp` exposes for [events](../services/events.md) and [tasks](../services/tasks/index.md)
 **do not authenticate their callers out of the box**. Anybody who can reach an events endpoint
 can dispatch a signal into your application, and anybody who can reach a task endpoint can
 trigger task execution.
@@ -23,7 +23,7 @@ Until built-in verification lands, protect the endpoints using one or more of th
    strongest protection, because the request never reaches Django unauthenticated.
 
 2. **Supply a single-use or secret token as an event parameter.** Generate endpoint URLs with
-   [`get_event_url`](../events.md#generating-endpoint-urls), including a token in
+   [`get_event_url`](../services/events.md#generating-endpoint-urls), including a token in
    `event_parameters`, and verify that token in your signal receiver before acting on the
    payload.
 
@@ -36,4 +36,4 @@ Until built-in verification lands, protect the endpoints using one or more of th
 Endpoints called back by Cloud Workflows _can_ be verified in-app today: `django-gcp` provides
 the `workflow_oidc_required` decorator, which verifies the OIDC identity token that Cloud
 Workflows attaches to its calls. See
-[Verifying calls made by workflows](../workflows/usage.md#verifying-calls-made-by-workflows).
+[Verifying calls made by workflows](../services/workflows/usage.md#verifying-calls-made-by-workflows).

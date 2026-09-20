@@ -2,7 +2,7 @@
 
 There are a number of settings required to enable on-demand and scheduled tasks. We recommend
 you go through the following one by one — they are listed in order of importance. All settings
-across the library are indexed in the [settings reference](../settings.md).
+across the library are indexed in the [settings reference](../../settings/django-settings.md).
 
 ## `GCP_TASKS_DEFAULT_QUEUE_NAME`
 
@@ -26,7 +26,7 @@ to the URL of your worker service (see [Deploying workers](workers.md)).
     and receive `https://` traffic.
 
     That is awesome because, assuming you have installed local credentials per
-    [Authenticating the server](../authentication/server.md#locally), it allows you to spin up
+    [Authenticating the server](../../authentication/server.md#locally), it allows you to spin up
     actual real queues and schedules on GCP to get a feel for how this all works.
 
 ## `GCP_TASKS_RESOURCE_AFFIX`
@@ -106,3 +106,19 @@ The address (for example `"127.0.0.1:8123"`) of a local Cloud Tasks emulator. Wh
 are sent to the emulator over an insecure gRPC transport instead of to the real Cloud Tasks
 service. When unset, the GCP tasks client constructs its own transport and talks to the real
 service.
+
+## Environment variables
+
+The tasks backend resolves its project, location, and service account from the process
+environment, not from Django settings. For each, it uses an explicitly-provided value if
+there is one, then the corresponding environment variable below, then a value derived from
+the authenticated credentials:
+
+- `GCP_PROJECT`: the project in which task queues, scheduler jobs, and subscriptions are
+  managed.
+- `GCP_LOCATION`: the location used for those resources (falling back to the project's
+  default location; see also [`GCP_TASKS_REGION`](#gcp_tasks_region)).
+- `GCP_SERVICE_ACCOUNT`: the service account used by the tasks backend.
+
+These are indexed with the library's other environment variables in
+[Environment variables](../../settings/environment-variables.md).
