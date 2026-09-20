@@ -146,9 +146,10 @@ When hooked up to GCP Pub/Sub or Eventarc, the event payload is in the form of a
 message. These messages have a
 [specific format](https://cloud.google.com/pubsub/docs/reference/rest/v1/PubsubMessage).
 
-To allow you to interact directly with Pub/Sub (that is, publish messages to a topic), or to
-test your signals, `django-gcp` includes a `make_pubsub_message` utility that provides an easy,
-pythonic way of constructing a Pub/Sub message.
+To test your signals, `django-gcp` includes a `make_pubsub_message` utility that provides an
+easy, pythonic way of constructing the message body that a push subscription delivers. (To
+publish a message to a topic, use the Pub/Sub client library instead — see
+[Sending an event to Pub/Sub](#sending-an-event-to-pubsub) below.)
 
 For example, to test the signal receiver above with a replica of a real Pub/Sub message payload:
 
@@ -169,6 +170,51 @@ class YourTests(TestCase):
 
         self.assertEqual(response.status_code, 201)
 ```
+
+## Sending an event to Pub/Sub
+
+`django-gcp` handles the receiving side of an event flow: Pub/Sub pushes events to the
+events endpoint, which dispatches them as Django signals. To send an event, publish a
+message to a topic using the
+[official Pub/Sub client library](https://cloud.google.com/pubsub/docs/publisher), which is
+already installed as a dependency of `django-gcp`.
+
+Publish JSON-encoded data, with optional attributes (string keys and values only), like this:
+
+```python
+import json
+from google.cloud import pubsub_v1
+
+publisher = pubsub_v1.PublisherClient()
+topic_path = publisher.topic_path("your-project-id", "your-topic-id")
+
+future = publisher.publish(
+    topic_path,
+    json.dumps({"my": "data"}).encode("utf-8"),
+    an_attribute="its-value",
+)
+
+# publish() batches messages and returns a future; result() blocks until
+# the message has been accepted by Pub/Sub and returns its message ID.
+message_id = future.result()
+```
+
+The client authenticates using Application Default Credentials, exactly as described in
+[Authentication](../authentication/index.md), and the authenticated principal requires the
+`roles/pubsub.publisher` role on the topic (or project). Instantiate the `PublisherClient`
+once at module level rather than per-call: creating a client is expensive, and a shared
+client batches messages efficiently.
+
+If the topic has a push subscription targeting the events endpoint of a Django application
+(this one or another), the published message arrives at that application as an
+`event_received` signal, and `decode_pubsub_message` recovers the data and attributes in
+the receiver — see [Creating a receiver](#creating-a-receiver) above.
+
+!!! note
+
+    A `SubscriberTask` (see [Tasks](tasks/usage.md)) has a `publish()` convenience method
+    that sends a message to its own topic. It exists to support integration testing of the
+    task, not for general publishing.
 
 ## Exception handling
 
