@@ -5,13 +5,13 @@ from typing import Dict, Generator
 from google.api_core.exceptions import NotFound
 from google.cloud import scheduler
 
-from .base import GoogleCloudPilotAPI
+from .base import GoogleCloudClient
 
 DEFAULT_TIMEZONE = os.environ.get("TIMEZONE", "Europe/London")  # UTC
 MAX_TIMEOUT = 30 * 60  # max allowed to HTTP endpoints is 30 minutes
 
 
-class CloudScheduler(GoogleCloudPilotAPI):
+class CloudScheduler(GoogleCloudClient):
     _client_class = scheduler.CloudSchedulerClient
     DEFAULT_METHOD = scheduler.HttpMethod.POST
 

@@ -26,7 +26,7 @@ class ExampleAppViewTest(SimpleTestCase):
         url = reverse("enqueue-on-demand")
 
         with self.settings(GCP_TASKS_DOMAIN="https://the-domain.com"):
-            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
+            with patch("django_gcp.tasks.clients.cloud_tasks.CloudTasks.push") as patched_push:
                 with patch_auth():
                     response = self.client.post(path=url, content_type="application/json")
 

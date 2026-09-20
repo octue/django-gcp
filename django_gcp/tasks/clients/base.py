@@ -26,7 +26,14 @@ MINIMAL_SCOPES = [
 ]
 
 
-class GoogleCloudPilotAPI(abc.ABC):
+class GoogleCloudClient(abc.ABC):
+    """Base class for the internal Google Cloud service clients
+
+    Resolves credentials (including optional service account impersonation), project ID
+    and location, provides OIDC token configuration for push targets, and instantiates
+    the concrete ``_client_class`` set by each subclass.
+    """
+
     _client_class = None
     _scopes: List[str] = []
     _iam_roles: List[str] = []

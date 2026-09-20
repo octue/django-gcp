@@ -5,10 +5,10 @@ from google.api_core.exceptions import AlreadyExists, NotFound
 from google.cloud import pubsub_v1
 from google.pubsub_v1 import PushConfig, Subscription, types
 
-from .base import GoogleCloudPilotAPI
+from .base import GoogleCloudClient
 
 
-class CloudPublisher(GoogleCloudPilotAPI):
+class CloudPublisher(GoogleCloudClient):
     _client_class = pubsub_v1.PublisherClient
     _service_name = "Cloud Pub/Sub"
     _google_managed_service = True
@@ -78,7 +78,7 @@ class CloudPublisher(GoogleCloudPilotAPI):
             return future.result()
 
 
-class CloudSubscriber(GoogleCloudPilotAPI):
+class CloudSubscriber(GoogleCloudClient):
     _client_class = pubsub_v1.SubscriberClient
     _service_name = "Cloud Pub/Sub"
     _google_managed_service = True

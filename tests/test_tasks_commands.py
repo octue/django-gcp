@@ -17,10 +17,10 @@ from ._utils import patch_auth
 
 class CommandsTest(SimpleTestCase):
     def patch_schedule(self, **kwargs):
-        return patch("django_gcp.tasks._pilot.scheduler.CloudScheduler.put", **kwargs)
+        return patch("django_gcp.tasks.clients.scheduler.CloudScheduler.put", **kwargs)
 
     def patch_subscribe(self, **kwargs):
-        return patch("django_gcp.tasks._pilot.pubsub.CloudSubscriber.create_subscription", **kwargs)
+        return patch("django_gcp.tasks.clients.pubsub.CloudSubscriber.create_subscription", **kwargs)
 
     def patch_get_scheduled(self, names: List[str] = None, **kwargs):
         jobs = []
@@ -28,10 +28,10 @@ class CommandsTest(SimpleTestCase):
             job = Mock()
             job.name = f"/app/jobs/{name}"
             jobs.append(job)
-        return patch("django_gcp.tasks._pilot.scheduler.CloudScheduler.list", return_value=jobs, **kwargs)
+        return patch("django_gcp.tasks.clients.scheduler.CloudScheduler.list", return_value=jobs, **kwargs)
 
     def patch_delete_schedule(self):
-        return patch("django_gcp.tasks._pilot.scheduler.CloudScheduler.delete")
+        return patch("django_gcp.tasks.clients.scheduler.CloudScheduler.delete")
 
     def _assert_command(
         self,

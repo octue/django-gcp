@@ -91,7 +91,7 @@ packages = [
   "django_gcp.metadata",
   "django_gcp.storage",
   "django_gcp.tasks",
-  "django_gcp.tasks._pilot",
+  "django_gcp.tasks.clients",
   "django_gcp.workflows",
 ]
 

@@ -42,14 +42,14 @@ class TasksEnqueueingTest(SimpleTestCase):
 
     def test_enqueue_duplicatable_on_demand_task(self):
         with patch_auth():
-            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push"):
+            with patch("django_gcp.tasks.clients.cloud_tasks.CloudTasks.push"):
                 MyOnDemandTask().enqueue(a="1")
 
     def test_enqueue_deduplicated_task_raises_exception_on_duplicate(self):
         """Ensures that a unique task cannot be enqueued"""
 
         with patch_auth():
-            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
+            with patch("django_gcp.tasks.clients.cloud_tasks.CloudTasks.push") as patched_push:
                 patched_push.side_effect = AlreadyExists("409 Requested entity already exists")
 
                 with self.assertRaises(DuplicateTaskError):
@@ -129,7 +129,7 @@ class TasksEnqueueingTest(SimpleTestCase):
         payload is rejected by Cloud Tasks rather than renamed
         """
         with patch_auth():
-            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
+            with patch("django_gcp.tasks.clients.cloud_tasks.CloudTasks.push") as patched_push:
                 DeduplicatedOnDemandTask().enqueue(a="1")
 
         # The expected name composes the GCP_TASKS_DELIMITER ("--") and
@@ -145,21 +145,21 @@ class TasksEnqueueingTest(SimpleTestCase):
 
     def test_enqueue_later_with_seconds(self):
         with patch_auth():
-            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
+            with patch("django_gcp.tasks.clients.cloud_tasks.CloudTasks.push") as patched_push:
                 MyOnDemandTask().enqueue_later(when=10, a="1")
 
         self.assertEqual(patched_push.call_args.kwargs["delay_in_seconds"], 10)
 
     def test_enqueue_later_with_timedelta(self):
         with patch_auth():
-            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
+            with patch("django_gcp.tasks.clients.cloud_tasks.CloudTasks.push") as patched_push:
                 MyOnDemandTask().enqueue_later(when=timedelta(minutes=2), a="1")
 
         self.assertEqual(patched_push.call_args.kwargs["delay_in_seconds"], 120)
 
     def test_enqueue_later_with_datetime(self):
         with patch_auth():
-            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
+            with patch("django_gcp.tasks.clients.cloud_tasks.CloudTasks.push") as patched_push:
                 MyOnDemandTask().enqueue_later(when=now() + timedelta(hours=1), a="1")
 
         delay_in_seconds = patched_push.call_args.kwargs["delay_in_seconds"]

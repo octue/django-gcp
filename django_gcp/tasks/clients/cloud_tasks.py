@@ -9,10 +9,10 @@ from google.protobuf import timestamp_pb2
 from googleapiclient.discovery import Resource
 
 from . import exceptions
-from .base import GoogleCloudPilotAPI
+from .base import GoogleCloudClient
 
 
-class CloudTasks(GoogleCloudPilotAPI):
+class CloudTasks(GoogleCloudClient):
     _client_class = tasks_v2.CloudTasksClient
     DEFAULT_METHOD = tasks_v2.HttpMethod.POST
 
