@@ -95,11 +95,13 @@ python manage.py runserver
 We're pretty good on keeping the docs helpful, friendly and up to date. Any contributions should be
 fully documented.
 
-To help develop the docs quickly, we set up a watcher that rebuilds the docs on save. Start it with:
+The docs are written in Markdown and built with [Zensical](https://zensical.org). To develop them with
+live reload, start the dev server and open the URL it prints:
 
 ```
-python docs/watch.py
+uv run --group docs zensical serve
 ```
 
-Once docs are building, the the vscode live server extension (or whatever the equivalent is in your IDE)
-to live-reload `docs/html/index.html` in your browser, then get started!
+Read the Docs builds and publishes the site from `.readthedocs.yaml` on each push. Redirects
+from the old Sphinx page URLs are mapped in `scripts/rtd_redirects.toml`; if you change the
+docs structure, add redirects there and sync them with `python scripts/sync_rtd_redirects.py`.
