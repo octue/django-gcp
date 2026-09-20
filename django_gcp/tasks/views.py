@@ -8,12 +8,23 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
+from django_gcp.auth import OIDCAuthRequiredMixin
+
 logger = logging.getLogger(__name__)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class GoogleCloudTaskView(View):
-    """Endpoints for on-demand and periodic tasks"""
+class GoogleCloudTaskView(OIDCAuthRequiredMixin, View):
+    """Endpoints for on-demand and periodic tasks
+
+    Callers must present a valid OIDC identity token from a service account listed in
+    ``GCP_TASKS_INVOKER_SERVICE_ACCOUNT_EMAILS`` (falling back to
+    ``GCP_INVOKER_SERVICE_ACCOUNT_EMAILS``), unless ``GCP_TASKS_DISABLE_AUTH`` is True or the
+    view is wired with ``as_view(auth_required=False)``.
+    """
+
+    invoker_emails_settings = ("GCP_TASKS_INVOKER_SERVICE_ACCOUNT_EMAILS", "GCP_INVOKER_SERVICE_ACCOUNT_EMAILS")
+    disable_auth_setting = "GCP_TASKS_DISABLE_AUTH"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

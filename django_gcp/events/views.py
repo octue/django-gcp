@@ -7,18 +7,28 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
+from django_gcp.auth import OIDCAuthRequiredMixin
+
 from .signals import event_received
 
 logger = logging.getLogger(__name__)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class GoogleCloudEventsView(View):
+class GoogleCloudEventsView(OIDCAuthRequiredMixin, View):
     """Handles events inbound from Google Cloud services like Pub/Sub by dispatch to a django signal
+
+    Callers must present a valid OIDC identity token from a service account listed in
+    ``GCP_EVENTS_INVOKER_SERVICE_ACCOUNT_EMAILS`` (falling back to
+    ``GCP_INVOKER_SERVICE_ACCOUNT_EMAILS``), unless ``GCP_EVENTS_DISABLE_AUTH`` is True or the
+    view is wired with ``as_view(auth_required=False)``.
 
     Any exceptions thrown by the handlers will be returned to the client as 400s.
 
     """
+
+    invoker_emails_settings = ("GCP_EVENTS_INVOKER_SERVICE_ACCOUNT_EMAILS", "GCP_INVOKER_SERVICE_ACCOUNT_EMAILS")
+    disable_auth_setting = "GCP_EVENTS_DISABLE_AUTH"
 
     def post(self, request, event_kind, event_reference):
         """Handle a POSTed event"""
