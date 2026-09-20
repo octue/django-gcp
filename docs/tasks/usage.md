@@ -34,6 +34,15 @@ triggered by Pub/Sub messages arriving at subscriptions. Neither of these resour
 implicitly: you may wish to manage them directly with Terraform, or you can create them from
 your registered task classes using the `task_manager` management command.
 
+!!! warning
+
+    The `create_scheduler_jobs` and `create_pubsub_subscriptions` actions are planned for
+    removal, because scheduler jobs and subscriptions are infrastructure and should be
+    defined declaratively (for example with Terraform's `google_cloud_scheduler_job` and
+    `google_pubsub_subscription` resources), not created imperatively by the webserver.
+    Prefer Terraform for new projects, and see
+    [issue #114](https://github.com/octue/django-gcp/issues/114) for the removal plan.
+
 The command takes one or more actions — `create_scheduler_jobs` and
 `create_pubsub_subscriptions` — and supports two options:
 
