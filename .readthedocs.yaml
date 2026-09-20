@@ -13,6 +13,10 @@ build:
       - pip install zensical==0.0.63
     build:
       html:
+        # Point site_url at the version being built (e.g. https://django-gcp.readthedocs.io/en/latest/)
+        # so canonical link tags and the sitemap carry the language/version prefix RTD serves under.
+        # Page links are unaffected: zensical emits them as relative URLs.
+        - sed -i "s|^site_url = .*|site_url = \"${READTHEDOCS_CANONICAL_URL}\"|" zensical.toml
         # Strict mode fails the build on a broken internal link rather than publishing it
         - zensical build --clean --strict
     post_build:
