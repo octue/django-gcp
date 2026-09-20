@@ -29,6 +29,29 @@ to the URL of your worker service (see [Deploying workers](workers.md)).
     [Authenticating the server](../../authentication/server.md#locally), it allows you to spin up
     actual real queues and schedules on GCP to get a feel for how this all works.
 
+## `GCP_TASKS_INVOKER_SERVICE_ACCOUNT_EMAILS`
+
+Type: `list` of `string`
+
+Default: absent (falls back to
+[`GCP_INVOKER_SERVICE_ACCOUNT_EMAILS`](../../authentication/endpoints.md#gcp_invoker_service_account_emails))
+
+The allow-list of service account emails permitted to invoke the tasks and subscriber-tasks
+endpoints — typically the service account your queues, scheduler jobs, and push
+subscriptions send with. When both this setting and the shared fallback are absent, every
+caller is rejected. See [Authenticating endpoints](../../authentication/endpoints.md) for
+how verification works.
+
+## `GCP_TASKS_DISABLE_AUTH`
+
+Type: `boolean`
+
+Default: `False`
+
+If set to `True`, the tasks and subscriber-tasks endpoints skip token verification entirely
+and accept every request. Only do this where the endpoints are
+[secured by other means](../../authentication/endpoints.md#disabling-authentication).
+
 ## `GCP_TASKS_RESOURCE_AFFIX`
 
 Type: `string`

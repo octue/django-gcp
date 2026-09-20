@@ -85,6 +85,5 @@ urlpatterns = [
 ```
 
 Using `python manage.py show_urls` you can now see the endpoints for both events and tasks in
-your app. Before exposing these endpoints publicly, read
-[Authenticating events and tasks](authentication/events-and-tasks.md); they do not authenticate
-their callers out of the box.
+your app. These endpoints verify their callers and reject all requests until an allow-list is
+configured — see [Authenticating endpoints](authentication/endpoints.md).

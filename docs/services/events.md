@@ -6,10 +6,9 @@ Pub/Sub push subscriptions or Eventarc.
 Events are communicated using Django's signals framework. They can be handled by any app (not
 just `django-gcp`) simply by creating a signal receiver.
 
-!!! warning
-
-    The events endpoints do not authenticate their callers out of the box. Please read
-    [Authenticating events and tasks](../authentication/events-and-tasks.md) before exposing them.
+The events endpoints verify their callers and reject all requests until an allow-list is
+configured — see [Authenticating endpoints](../authentication/endpoints.md) and
+[Authenticating event pushes](#authenticating-event-pushes) below.
 
 ## Events endpoints
 
@@ -22,6 +21,34 @@ Endpoints are `POST`-only and take two URL parameters, an `event_kind` and an
 
 So, if you `POST` data to `https://your-server.com/django-gcp/events/my-kind/my-reference/`,
 a signal is dispatched with `event_kind="my-kind"` and `event_reference="my-reference"`.
+
+## Authenticating event pushes
+
+The events endpoint requires every request to carry a Google OIDC identity token from an
+allowed caller; how verification works, how to configure senders, and how the settings
+interact are described in [Authenticating endpoints](../authentication/endpoints.md). The
+events-specific settings are the following.
+
+### `GCP_EVENTS_INVOKER_SERVICE_ACCOUNT_EMAILS`
+
+Type: `list` of `string`
+
+Default: absent (falls back to
+[`GCP_INVOKER_SERVICE_ACCOUNT_EMAILS`](../authentication/endpoints.md#gcp_invoker_service_account_emails))
+
+The allow-list of service account emails permitted to invoke the events endpoint — typically
+the service account of your Pub/Sub push subscriptions or Eventarc triggers. When both this
+setting and the shared fallback are absent, every caller is rejected.
+
+### `GCP_EVENTS_DISABLE_AUTH`
+
+Type: `boolean`
+
+Default: `False`
+
+If set to `True`, the events endpoint skips token verification entirely and accepts every
+request. Only do this where the endpoint is
+[secured by other means](../authentication/endpoints.md#disabling-authentication).
 
 ## Creating a receiver
 
@@ -49,8 +76,8 @@ def receive_event(sender, event_kind, event_reference, event_payload, event_para
     # There could be many different event kinds, from your own or other apps, and from
     # django-gcp itself, so make sure you only act on the specific kind(s) you want to handle.
     if event_kind == "something-important":
-        # Here is where you handle the event using whatever logic you want.
-        # CAREFUL: verify the payload is not malicious — see the authentication warning above.
+        # Here is where you handle the event using whatever logic you want. The caller has
+        # already been authenticated, but you should still validate the payload's contents.
         print("DO SOMETHING IMPORTANT WITH THE PAYLOAD:", event_payload)
 
         # Your payload can be from any arbitrary source, and is in the form of decoded JSON.
@@ -88,6 +115,11 @@ get_event_url(
     url_namespace="gcp-events",  # You only need to edit this if you define your own urlpatterns with a different namespace
 )
 ```
+
+Including a secret token in `event_parameters` and checking it in your signal receiver was
+once the recommended way to protect the endpoint. Now that
+[callers are authenticated](#authenticating-event-pushes), such a token is no longer
+necessary, though you may keep one as defence-in-depth.
 
 !!! tip
 

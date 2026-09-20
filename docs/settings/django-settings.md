@@ -14,13 +14,13 @@ from Django settings is indexed separately in
 
 ## Root level
 
-These settings span the library and are described in
-[Getting started](../getting-started.md#setting-up-the-environment).
+These settings span the library; each row links to the full description.
 
-| Setting           | Type               | Default | Details                                                  |
-| ----------------- | ------------------ | ------- | -------------------------------------------------------- |
-| `GCP_PROJECT_ID`  | `string` or `None` | `None`  | [Getting started](../getting-started.md#gcp_project_id)  |
-| `GCP_CREDENTIALS` | credentials object | `None`  | [Getting started](../getting-started.md#gcp_credentials) |
+| Setting                              | Type               | Default                       | Details                                                                                       |
+| ------------------------------------ | ------------------ | ----------------------------- | --------------------------------------------------------------------------------------------- |
+| `GCP_PROJECT_ID`                     | `string` or `None` | `None`                        | [Getting started](../getting-started.md#gcp_project_id)                                       |
+| `GCP_CREDENTIALS`                    | credentials object | `None`                        | [Getting started](../getting-started.md#gcp_credentials)                                      |
+| `GCP_INVOKER_SERVICE_ACCOUNT_EMAILS` | `list`             | absent (all callers rejected) | [Authenticating endpoints](../authentication/endpoints.md#gcp_invoker_service_account_emails) |
 
 ## Storage
 
@@ -38,28 +38,32 @@ module-level settings also apply.
 
 ## Events
 
-| Setting    | Type     | Default                    | Details                                                  |
-| ---------- | -------- | -------------------------- | -------------------------------------------------------- |
-| `BASE_URL` | `string` | required for absolute URLs | [Events](../services/events.md#generating-endpoint-urls) |
+| Setting                                     | Type      | Default                    | Details                                                                   |
+| ------------------------------------------- | --------- | -------------------------- | ------------------------------------------------------------------------- |
+| `BASE_URL`                                  | `string`  | required for absolute URLs | [Events](../services/events.md#generating-endpoint-urls)                  |
+| `GCP_EVENTS_INVOKER_SERVICE_ACCOUNT_EMAILS` | `list`    | absent (shared fallback)   | [Events](../services/events.md#gcp_events_invoker_service_account_emails) |
+| `GCP_EVENTS_DISABLE_AUTH`                   | `boolean` | `False`                    | [Events](../services/events.md#gcp_events_disable_auth)                   |
 
 ## Tasks
 
-| Setting                        | Type               | Default          | Details                                                                      |
-| ------------------------------ | ------------------ | ---------------- | ---------------------------------------------------------------------------- |
-| `GCP_TASKS_DEFAULT_QUEUE_NAME` | `string`           | required         | [Tasks settings](../services/tasks/settings.md#gcp_tasks_default_queue_name) |
-| `GCP_TASKS_DOMAIN`             | `string`           | required         | [Tasks settings](../services/tasks/settings.md#gcp_tasks_domain)             |
-| `GCP_TASKS_RESOURCE_AFFIX`     | `string`           | `None`           | [Tasks settings](../services/tasks/settings.md#gcp_tasks_resource_affix)     |
-| `GCP_TASKS_REGION`             | `string`           | `"europe-west1"` | [Tasks settings](../services/tasks/settings.md#gcp_tasks_region)             |
-| `GCP_TASKS_DELIMITER`          | `string`           | `"--"`           | [Tasks settings](../services/tasks/settings.md#gcp_tasks_delimiter)          |
-| `GCP_TASKS_EAGER_EXECUTE`      | `boolean`          | `False`          | [Tasks settings](../services/tasks/settings.md#gcp_tasks_eager_execute)      |
-| `GCP_TASKS_DISABLE_EXECUTE`    | `boolean`          | `False`          | [Tasks settings](../services/tasks/settings.md#gcp_tasks_disable_execute)    |
-| `GCP_TASKS_EMULATOR_TARGET`    | `string` or `None` | `None`           | [Tasks settings](../services/tasks/settings.md#gcp_tasks_emulator_target)    |
+| Setting                                    | Type               | Default                  | Details                                                                                  |
+| ------------------------------------------ | ------------------ | ------------------------ | ---------------------------------------------------------------------------------------- |
+| `GCP_TASKS_DEFAULT_QUEUE_NAME`             | `string`           | required                 | [Tasks settings](../services/tasks/settings.md#gcp_tasks_default_queue_name)             |
+| `GCP_TASKS_DOMAIN`                         | `string`           | required                 | [Tasks settings](../services/tasks/settings.md#gcp_tasks_domain)                         |
+| `GCP_TASKS_RESOURCE_AFFIX`                 | `string`           | `None`                   | [Tasks settings](../services/tasks/settings.md#gcp_tasks_resource_affix)                 |
+| `GCP_TASKS_REGION`                         | `string`           | `"europe-west1"`         | [Tasks settings](../services/tasks/settings.md#gcp_tasks_region)                         |
+| `GCP_TASKS_DELIMITER`                      | `string`           | `"--"`                   | [Tasks settings](../services/tasks/settings.md#gcp_tasks_delimiter)                      |
+| `GCP_TASKS_EAGER_EXECUTE`                  | `boolean`          | `False`                  | [Tasks settings](../services/tasks/settings.md#gcp_tasks_eager_execute)                  |
+| `GCP_TASKS_DISABLE_EXECUTE`                | `boolean`          | `False`                  | [Tasks settings](../services/tasks/settings.md#gcp_tasks_disable_execute)                |
+| `GCP_TASKS_EMULATOR_TARGET`                | `string` or `None` | `None`                   | [Tasks settings](../services/tasks/settings.md#gcp_tasks_emulator_target)                |
+| `GCP_TASKS_INVOKER_SERVICE_ACCOUNT_EMAILS` | `list`             | absent (shared fallback) | [Tasks settings](../services/tasks/settings.md#gcp_tasks_invoker_service_account_emails) |
+| `GCP_TASKS_DISABLE_AUTH`                   | `boolean`          | `False`                  | [Tasks settings](../services/tasks/settings.md#gcp_tasks_disable_auth)                   |
 
 ## Workflows
 
-| Setting                                        | Type   | Default                       | Details                                                                             |
-| ---------------------------------------------- | ------ | ----------------------------- | ----------------------------------------------------------------------------------- |
-| `GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS` | `list` | absent (all callers rejected) | [Workflows usage](../services/workflows/usage.md#verifying-calls-made-by-workflows) |
+| Setting                                        | Type   | Default                  | Details                                                                                                 |
+| ---------------------------------------------- | ------ | ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS` | `list` | absent (shared fallback) | [Authenticating endpoints](../authentication/endpoints.md#gcp_workflows_invoker_service_account_emails) |
 
 ## Logs
 
