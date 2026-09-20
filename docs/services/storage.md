@@ -173,6 +173,36 @@ You will need to:
     [example server model](https://github.com/octue/django-gcp/blob/main/tests/server/example/models.py)
     (see the instructions in the model and the corresponding migration files).
 
+### Getting BlobField files on the server
+
+Because a `BlobField` uploads directly to the cloud, its file never passes through your
+server. When you do need the contents server-side — most commonly to validate an uploaded
+file before saving the model — use the `blob_to_temporary_file` context manager, which
+downloads the blob to a temporary file (preserving the file extension) and removes that
+file on exit:
+
+```python
+from django_gcp.storage.blob_utils import blob_to_temporary_file
+
+with blob_to_temporary_file(instance, "my_blob_field") as f:
+    if f is not None:  # None when the field is blank
+        validate_contents(f)
+```
+
+Before the model instance is saved, the field value refers to the temporary ingress
+location, and the contents are downloaded from there; after save, they are downloaded from
+the blob's destination path. To work with the blob object itself rather than a local copy
+(for example to stream it, inspect its metadata, or generate signed URLs), use the other
+helpers in `django_gcp.storage.blob_utils`: `get_blob`, `get_blob_name`, `get_path`,
+`get_signed_url`, `get_signed_download_url` and `get_console_url`. All of these are also
+available as methods on models via `django_gcp.storage.blob_utils.BlobFieldMixin`.
+
+!!! warning
+
+    Downloading blob contents on the server reintroduces the memory, disk and time costs
+    that direct-to-cloud upload avoids. Keep server-side processing to small files, or
+    dispatch processing of large files to a [task](tasks/index.md).
+
 ## FileField storage
 
 The storage classes work as a standard drop-in storage backend. Standard file access options
