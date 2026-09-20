@@ -37,6 +37,10 @@ After adding or updating any documentation:
 - review for sensible places to add/update cross references
 - review the documentation structure; does what you've added fit well within the structure or should it be better off elsewhere
 
+### Settings
+
+Any setting added or updated must be fully described in the relevant part of the docs (type, default and behaviour) AND cross-referenced as a row in the settings reference table (docs/settings.md). The table row holds only the type and default, linking to the full description.
+
 ### ADRs
 
 Create a chain of architecture decision records within the documentation; do not create ADRs without checking with the user first.

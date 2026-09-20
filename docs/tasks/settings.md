@@ -1,7 +1,8 @@
 # Tasks settings
 
 There are a number of settings required to enable on-demand and scheduled tasks. We recommend
-you go through the following one by one — they are listed in order of importance.
+you go through the following one by one — they are listed in order of importance. All settings
+across the library are indexed in the [settings reference](../settings.md).
 
 ## `GCP_TASKS_DEFAULT_QUEUE_NAME`
 
@@ -94,3 +95,14 @@ or when testing and debugging task code.
 
 Note that this setting only affects the `enqueue()` and `enqueue_later()` methods; tasks can
 still be executed manually even when it is `True`.
+
+## `GCP_TASKS_EMULATOR_TARGET`
+
+Type: `string` or `None`
+
+Default: `None`
+
+The address (for example `"127.0.0.1:8123"`) of a local Cloud Tasks emulator. When set, tasks
+are sent to the emulator over an insecure gRPC transport instead of to the real Cloud Tasks
+service. When unset, the GCP tasks client constructs its own transport and talks to the real
+service.

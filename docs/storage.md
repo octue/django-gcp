@@ -265,7 +265,29 @@ STORAGES = {
 }
 ```
 
-The full range of options (and their defaults) is as follows.
+The full range of options (and their defaults) is as follows. These per-store options, and
+the library's other settings, are indexed in the [settings reference](settings.md).
+
+### `project_id`
+
+Type: `string` or `None`
+
+Default: `None`
+
+The project this store's bucket belongs to, overriding the root-level
+[`GCP_PROJECT_ID`](projects.md#gcp_project_id) setting for this store. If neither is set,
+the project is inferred from the credentials.
+
+### `credentials`
+
+Type: a `google.auth` credentials object, or `None`
+
+Default: `None`
+
+An explicit credentials object for this store, overriding the root-level
+[`GCP_CREDENTIALS`](projects.md#gcp_credentials) setting. Usually left unset in favour of
+environment-based authentication (see
+[Authenticating the server](authentication/server.md)).
 
 ### `gzip`
 
@@ -403,6 +425,39 @@ return a URL that does not expire. Files are signed by the credentials provided 
 The value is handled by the underlying
 [Google library](https://googlecloudplatform.github.io/google-cloud-python/latest/storage/blobs.html#google.cloud.storage.blob.Blob.generate_signed_url),
 which supports `timedelta`, `datetime`, or integer seconds since epoch.
+
+## BlobField settings
+
+Unlike the per-store options above, the following are root-level Django settings governing
+`BlobField` behaviour across all stores.
+
+### `GCP_STORAGE_OVERRIDE_BLOBFIELD_VALUE`
+
+Type: `boolean`
+
+Default: `False`
+
+When `True`, values assigned to a `BlobField` are stored directly, bypassing the ingress
+(upload-then-move) process. This is intended for migrations and programmatic operations
+where the blob is already in its destination location — for example, the operations in
+`django_gcp.storage.operations` toggle it with `override_settings` while uploading blobs
+directly. Leave it `False` in normal operation.
+
+### `GCP_STORAGE_BLOBFIELD_MAX_SIZE_BYTES`
+
+Type: `integer`
+
+Default: unlimited
+
+The maximum size, in bytes, of a file accepted by a `BlobField` direct upload.
+
+### Test-only callback overrides
+
+`GCP_STORAGE_OVERRIDE_GET_DESTINATION_PATH_CALLBACK` and
+`GCP_STORAGE_OVERRIDE_UPDATE_ATTRIBUTES_CALLBACK` (both default `None`) replace every
+`BlobField`'s `get_destination_path` and `update_attributes` callbacks respectively. They
+exist because patching a field's callback in a test framework is a struggle; do not use
+them outside tests.
 
 ## Cleaning up temporary uploads
 
