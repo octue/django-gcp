@@ -1,0 +1,41 @@
+[project]
+site_name = "Django GCP"
+site_url = "https://django-gcp.readthedocs.io/"
+site_description = "Utilities to run Django on Google Cloud Platform."
+repo_url = "https://github.com/octue/django-gcp"
+docs_dir = "docs"
+site_dir = "site"
+nav = [
+  { "Home" = "index.md" },
+  { "Getting started" = "getting-started.md" },
+  { "Authentication" = [
+    { "Overview" = "authentication/index.md" },
+    { "Authenticating the server" = "authentication/server.md" },
+    { "Authenticating events and tasks" = "authentication/events-and-tasks.md" },
+  ] },
+  { "Storage" = "storage.md" },
+  { "Events" = "events.md" },
+  { "Tasks" = [
+    { "About" = "tasks/index.md" },
+    { "Usage" = "tasks/usage.md" },
+    { "Settings" = "tasks/settings.md" },
+    { "Workers" = "tasks/workers.md" },
+  ] },
+  { "Workflows" = [
+    { "About" = "workflows/index.md" },
+    { "Usage" = "workflows/usage.md" },
+    { "Tips" = "workflows/tips.md" },
+  ] },
+  { "Logs" = "logs.md" },
+  { "Cloud Run" = "cloud-run.md" },
+  { "Projects" = "projects.md" },
+  { "Settings reference" = "settings.md" },
+  { "Version history" = "version-history.md" },
+  { "License" = "license.md" },
+  { "Conventions" = [
+    { "Documentation" = "conventions/documentation.md" },
+    { "Branching" = "conventions/git-branching.md" },
+    { "Commits and versioning" = "conventions/git-commits-and-versioning.md" },
+    { "Pull requests" = "conventions/git-pull-requests.md" },
+  ] },
+]

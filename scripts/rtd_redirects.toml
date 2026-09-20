@@ -1,0 +1,28 @@
+# Read the Docs page redirects from the old Sphinx page URLs to the Zensical site structure.
+# Each entry maps an old path (relative to the version root, e.g. /en/latest) to its new
+# location. Sync these to RTD with `python scripts/sync_rtd_redirects.py` (see that file
+# for authentication requirements).
+
+[redirects]
+"/index.html" = "/"
+"/getting_started.html" = "/getting-started/"
+"/authentication.html" = "/authentication/"
+"/authentication_server.html" = "/authentication/server/"
+"/authentication_events_and_tasks.html" = "/authentication/events-and-tasks/"
+"/storage.html" = "/storage/"
+"/events.html" = "/events/"
+"/tasks.html" = "/tasks/"
+"/tasks_about.html" = "/tasks/"
+"/tasks_usage.html" = "/tasks/usage/"
+"/tasks_settings.html" = "/tasks/settings/"
+"/tasks_workers.html" = "/tasks/workers/"
+"/workflows.html" = "/workflows/"
+"/workflows_about.html" = "/workflows/"
+"/workflows_usage.html" = "/workflows/usage/"
+"/workflows_tips.html" = "/workflows/tips/"
+"/logs.html" = "/logs/"
+"/cloud_run.html" = "/cloud-run/"
+"/projects.html" = "/projects/"
+"/version_history.html" = "/version-history/"
+"/license.html" = "/license/"
+"/api.html" = "/"
