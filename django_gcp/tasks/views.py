@@ -3,6 +3,7 @@ import logging
 from typing import Any, Dict
 
 from django.apps import apps
+from django.conf import settings
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -41,9 +42,11 @@ class GoogleCloudTaskView(OIDCAuthRequiredMixin, View):
         try:
             task_class = self.tasks[task_name]
         except KeyError:
-            status = 404
-            result = {"error": f"Task {task_name} not found", "available_tasks": list(self.tasks)}
-            return self._prepare_response(status=status, payload=result)
+            result = {"error": f"Task {task_name} not found"}
+            # Listing the registered tasks to an unknown caller is an information leak
+            if getattr(settings, "DEBUG", False):
+                result["available_tasks"] = list(self.tasks)
+            return self._prepare_response(status=404, payload=result)
 
         task = task_class()
         try:
