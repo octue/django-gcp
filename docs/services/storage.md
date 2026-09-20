@@ -245,6 +245,28 @@ option below):
 12
 ```
 
+### Controlling generated URLs
+
+Keyword arguments passed to `url()` are forwarded to the underlying
+[`Blob.generate_signed_url`](https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.blob.Blob#google_cloud_storage_blob_Blob_generate_signed_url)
+call, giving control over the signed URL. For example, pass
+`response_disposition="attachment"` to make the browser download the file instead of
+displaying it inline:
+
+```python
+>>> default_storage.url("storage_test", response_disposition="attachment")
+'https://storage.googleapis.com/test-media/storage_test?...&response-content-disposition=attachment'
+```
+
+The store settings supply defaults for `expiration`, `version` and (where a custom endpoint
+is configured) `bucket_bound_hostname`; passing any of those keywords explicitly overrides
+the store default for that call. These keyword arguments only apply to signed URLs; they
+are ignored for stores that return public (unsigned) URLs (see the `default_acl` and
+`querystring_auth` options below).
+
+For models using a `BlobField`, the helper functions in `django_gcp.storage.blob_utils`
+(for example `get_signed_download_url`) provide the same capability from a model instance.
+
 ## Storage settings options
 
 Each store can be set up with different options, passed via the `OPTIONS` dict for that alias

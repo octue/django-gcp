@@ -399,6 +399,77 @@ class GCloudStorageTests(GCloudTestCase):
             self.assertEqual(url, "http://signed_url")
             blob.generate_signed_url.assert_called_with(expiration=expiration, version="v4")
 
+    def test_url_signed_with_extra_kwargs(self):
+        """Keyword arguments to url() pass through to generate_signed_url
+
+        Enables e.g. direct-download links via response_disposition
+        (https://github.com/octue/django-gcp/issues/73).
+        """
+        secret_filename = "secret_file.txt"
+        self.storage._bucket = mock.MagicMock()
+        blob = mock.MagicMock()
+        blob.generate_signed_url = mock.MagicMock(return_value="http://signed_url")
+        self.storage._bucket.blob.return_value = blob
+
+        url = self.storage.url(secret_filename, response_disposition="attachment")
+        self.assertEqual(url, "http://signed_url")
+        blob.generate_signed_url.assert_called_with(
+            expiration=timedelta(seconds=86400),
+            version="v4",
+            response_disposition="attachment",
+        )
+
+    def test_url_signed_with_extra_kwargs_custom_endpoint(self):
+        """Keyword arguments to url() pass through to generate_signed_url with a custom endpoint"""
+        with override_settings(
+            STORAGES=storages_with_default(
+                {
+                    "bucket_name": self.bucket_name,
+                    "custom_endpoint": "https://example.com",
+                }
+            )
+        ):
+            self.storage._bucket = mock.MagicMock()
+            blob = mock.MagicMock()
+            blob.generate_signed_url = mock.MagicMock(return_value="http://signed_url")
+            self.storage._bucket.blob.return_value = blob
+
+            url = self.storage.url(self.filename, response_disposition="attachment")
+            self.assertEqual(url, "http://signed_url")
+            blob.generate_signed_url.assert_called_with(
+                bucket_bound_hostname="https://example.com",
+                expiration=timedelta(seconds=86400),
+                version="v4",
+                response_disposition="attachment",
+            )
+
+    def test_url_public_ignores_extra_kwargs(self):
+        """Keyword arguments to url() are ignored for public (unsigned) URLs"""
+        url = f"https://example.com/mah-bukkit/{self.filename}"
+
+        with override_settings(
+            STORAGES=storages_with_default({"bucket_name": self.bucket_name, "querystring_auth": False})
+        ):
+            self.storage._bucket = mock.MagicMock()
+            blob = mock.MagicMock()
+            blob.public_url = url
+            blob.generate_signed_url = mock.MagicMock(return_value="http://signed_url")
+            self.storage._bucket.blob.return_value = blob
+
+            self.assertEqual(self.storage.url(self.filename, response_disposition="attachment"), url)
+            blob.generate_signed_url.assert_not_called()
+
+    def test_url_signed_with_expiration_override(self):
+        """An expiration keyword argument to url() overrides the store's expiration setting"""
+        expiration = timedelta(seconds=60)
+        self.storage._bucket = mock.MagicMock()
+        blob = mock.MagicMock()
+        blob.generate_signed_url = mock.MagicMock(return_value="http://signed_url")
+        self.storage._bucket.blob.return_value = blob
+
+        self.assertEqual(self.storage.url(self.filename, expiration=expiration), "http://signed_url")
+        blob.generate_signed_url.assert_called_with(expiration=expiration, version="v4")
+
     def test_custom_endpoint(self):
         with override_settings(
             STORAGES=storages_with_default(
