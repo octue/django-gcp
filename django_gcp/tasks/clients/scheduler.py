@@ -5,13 +5,13 @@ from typing import Dict, Generator
 from google.api_core.exceptions import NotFound
 from google.cloud import scheduler
 
-from .base import GoogleCloudPilotAPI
+from .base import GoogleCloudClient
 
 DEFAULT_TIMEZONE = os.environ.get("TIMEZONE", "Europe/London")  # UTC
 MAX_TIMEOUT = 30 * 60  # max allowed to HTTP endpoints is 30 minutes
 
 
-class CloudScheduler(GoogleCloudPilotAPI):
+class CloudScheduler(GoogleCloudClient):
     _client_class = scheduler.CloudSchedulerClient
     DEFAULT_METHOD = scheduler.HttpMethod.POST
 
@@ -96,12 +96,6 @@ class CloudScheduler(GoogleCloudPilotAPI):
         for job in self.client.list_jobs(parent=parent):
             if job.name.split("/jobs/")[-1].startswith(prefix):
                 yield job
-
-    def get(self, name: str, project_id: str = None) -> scheduler.Job:
-        job_name = self._job_path(job=name, project_id=project_id)
-        return self.client.get_job(
-            name=job_name,
-        )
 
     async def delete(self, name: str, project_id: str = None) -> None:
         job_name = self._job_path(job=name, project_id=project_id)

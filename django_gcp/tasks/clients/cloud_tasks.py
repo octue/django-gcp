@@ -1,23 +1,22 @@
 # Reference: https://googleapis.dev/python/cloudtasks/latest/tasks_v2/cloud_tasks.html
 from datetime import datetime, timedelta
-from typing import Dict, Union
+from typing import Dict
 import uuid
 
 from google.api_core.exceptions import FailedPrecondition, NotFound
 from google.cloud import tasks_v2
 from google.protobuf import timestamp_pb2
-from googleapiclient.discovery import Resource
 
-from . import exceptions
-from .base import GoogleCloudPilotAPI
+from django_gcp.exceptions import TaskQueueDeletedRecentlyError, TaskQueueDoesNotExistError
+
+from .base import GoogleCloudClient
 
 
-class CloudTasks(GoogleCloudPilotAPI):
+class CloudTasks(GoogleCloudClient):
     _client_class = tasks_v2.CloudTasksClient
     DEFAULT_METHOD = tasks_v2.HttpMethod.POST
 
-    def _build_client(self, **kwargs) -> Union[Resource, _client_class]:
-        kwargs.update(self._get_client_extra_kwargs())
+    def _build_client(self, **kwargs) -> tasks_v2.CloudTasksClient:
         # Add credentials unless using a custom transport (where they should be supplied directly)
         if "transport" not in kwargs.keys():
             kwargs["credentials"] = self.credentials
@@ -101,31 +100,15 @@ class CloudTasks(GoogleCloudPilotAPI):
             response = self.client.create_task(parent=queue_path, task=task)
 
         except NotFound as exc:
-            raise exceptions.DoesNotExist(resource) from exc
+            raise TaskQueueDoesNotExistError(resource) from exc
 
         except FailedPrecondition as exc:
             resource = f"Queue {queue_name}"
             if "a queue with this name existed recently" in exc.message:
-                raise exceptions.DeletedRecently(resource) from exc
+                raise TaskQueueDeletedRecentlyError(resource) from exc
             raise
 
         return response
-
-    def _create_queue(
-        self,
-        queue_name: str,
-        project_id: str = None,
-    ) -> tasks_v2.Queue:
-        parent = self._parent_path(project_id=project_id)
-        queue_path = self._queue_path(queue=queue_name, project_id=project_id)
-
-        queue = tasks_v2.Queue(
-            name=queue_path,
-        )
-        return self.client.create_queue(
-            parent=parent,
-            queue=queue,
-        )
 
 
 __all__ = ("CloudTasks",)

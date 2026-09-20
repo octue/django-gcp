@@ -46,6 +46,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # Stores the current request in a thread local so the structured logs handler can
+    # attach request and trace context to every log entry emitted during that request
+    "google.cloud.logging_v2.handlers.middleware.RequestMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",

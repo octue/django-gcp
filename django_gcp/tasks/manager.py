@@ -8,8 +8,7 @@ import grpc
 from django_gcp import exceptions
 
 from . import tasks
-from ._pilot.pubsub import CloudSubscriber
-from ._pilot.scheduler import CloudScheduler
+from .clients import CloudScheduler, CloudSubscriber
 
 logger = logging.getLogger(__name__)
 

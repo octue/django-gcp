@@ -1,6 +1,6 @@
 [project]
 name = "django-gcp"
-version = "0.27.0"
+version = "0.28.0"
 description = "Utilities to run Django on Google Cloud Platform"
 authors = [{name="Tom Clark"}]
 license = "MIT"
@@ -19,7 +19,6 @@ requires-python = ">=3.12,<4"
 dependencies = [
 "Django>=5.2,<6.2",
 "python-dateutil>=2,<3",
-"google-api-python-client>=2,<3",
 "google-auth>=2.6,<3",
 "google-cloud-error-reporting>=1.9,<2",
 "google-cloud-pubsub>=2,<3",
@@ -91,7 +90,7 @@ packages = [
   "django_gcp.metadata",
   "django_gcp.storage",
   "django_gcp.tasks",
-  "django_gcp.tasks._pilot",
+  "django_gcp.tasks.clients",
   "django_gcp.workflows",
 ]
 

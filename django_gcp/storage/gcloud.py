@@ -298,9 +298,17 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):  # pylint: disable=abst
         created = blob.time_created
         return created if getattr(settings, "USE_TZ") else timezone.make_naive(created)
 
-    def url(self, name):
+    def url(self, name, **kwargs):
         """
         Return public url or a signed url for the Blob.
+
+        Any keyword arguments pass through to ``Blob.generate_signed_url``, allowing
+        control over the generated URL (for example ``response_disposition="attachment"``
+        to force a browser download). Store settings supply defaults for ``expiration``,
+        ``version`` and (where a custom endpoint is configured) ``bucket_bound_hostname``;
+        pass those keywords explicitly to override them per-call. All keyword arguments
+        are ignored for public (unsigned) URLs.
+
         This DOES NOT check for existance of Blob - that makes codes too slow
         for many use cases.
         """
@@ -318,14 +326,12 @@ class GoogleCloudStorage(CompressStorageMixin, Storage):  # pylint: disable=abst
                 storage_base_url=self.settings.custom_endpoint,
                 quoted_name=_quote(name, safe=b"/~"),
             )
-        elif not self.settings.custom_endpoint:
-            return blob.generate_signed_url(expiration=self.settings.expiration, version="v4")
         else:
-            return blob.generate_signed_url(
-                bucket_bound_hostname=self.settings.custom_endpoint,
-                expiration=self.settings.expiration,
-                version="v4",
-            )
+            kwargs.setdefault("expiration", self.settings.expiration)
+            kwargs.setdefault("version", "v4")
+            if self.settings.custom_endpoint:
+                kwargs.setdefault("bucket_bound_hostname", self.settings.custom_endpoint)
+            return blob.generate_signed_url(**kwargs)
 
     def get_available_name(self, name, max_length=None):
         name = clean_name(name)
