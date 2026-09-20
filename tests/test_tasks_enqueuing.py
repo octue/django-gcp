@@ -6,16 +6,20 @@
 # Disabled because gcloud api dynamically constructed
 # pylint: disable=no-member
 
+from datetime import timedelta
 import json
 from unittest.mock import patch
 
+from django.apps import apps
 from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
+from django.utils.timezone import now
 from google.api_core.exceptions import AlreadyExists
 
 from django_gcp.events.utils import make_pubsub_message
 from django_gcp.exceptions import DuplicateTaskError, IncompatibleSettingsError, IncorrectTaskUsageError
 from django_gcp.tasks import OnDemandTask
+from django_gcp.tasks.tasks import short_sha
 from tests.server.example.tasks import (
     DeduplicatedOnDemandTask,
     FailingOnDemandTask,
@@ -117,3 +121,88 @@ class TasksEnqueueingTest(SimpleTestCase):
 
         self.assertIsNone(result)
         patched_run.assert_called_once()
+
+    def test_enqueue_deduplicated_task_pushes_unique_task_name(self):
+        """The pushed task name of a deduplicated task combines the payload sha (as a
+        prefix, to keep task IDs binomially distributed for queue efficiency) with the
+        task slug and the resource affix, with uniquification disabled so that a repeated
+        payload is rejected by Cloud Tasks rather than renamed
+        """
+        with patch_auth():
+            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
+                DeduplicatedOnDemandTask().enqueue(a="1")
+
+        # The expected name composes the GCP_TASKS_DELIMITER ("--") and
+        # GCP_TASKS_RESOURCE_AFFIX ("django-gcp") values from the test server settings
+        payload = json.dumps({"a": "1"})
+        patched_push.assert_called_once_with(
+            queue_name="example-primary",
+            url="http://127.0.0.1:8000/example-django-gcp/tasks/DeduplicatedOnDemandTask",
+            payload=payload,
+            task_name=f"{short_sha(payload)}--deduplicatedondemandtask--django-gcp",
+            unique=False,
+        )
+
+    def test_enqueue_later_with_seconds(self):
+        with patch_auth():
+            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
+                MyOnDemandTask().enqueue_later(when=10, a="1")
+
+        self.assertEqual(patched_push.call_args.kwargs["delay_in_seconds"], 10)
+
+    def test_enqueue_later_with_timedelta(self):
+        with patch_auth():
+            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
+                MyOnDemandTask().enqueue_later(when=timedelta(minutes=2), a="1")
+
+        self.assertEqual(patched_push.call_args.kwargs["delay_in_seconds"], 120)
+
+    def test_enqueue_later_with_datetime(self):
+        with patch_auth():
+            with patch("django_gcp.tasks._pilot.tasks.CloudTasks.push") as patched_push:
+                MyOnDemandTask().enqueue_later(when=now() + timedelta(hours=1), a="1")
+
+        delay_in_seconds = patched_push.call_args.kwargs["delay_in_seconds"]
+        self.assertAlmostEqual(delay_in_seconds, 3600, delta=5)
+
+    def test_enqueue_later_with_unsupported_type_raises(self):
+        with self.assertRaises(ValueError):
+            MyOnDemandTask().enqueue_later(when="tomorrow", a="1")
+
+
+class TasksRegistrationTest(SimpleTestCase):
+    """Tests that the task manager registers the example project's tasks by kind
+
+    The exact-set assertions are deliberate canaries: registering a task class of the
+    wrong kind, or leaking an abstract class into a registry, must fail these tests.
+    Adding a task to the example project requires updating the corresponding set here.
+    """
+
+    def setUp(self):
+        self.manager = apps.get_app_config("django_gcp").task_manager
+
+    def test_registered_on_demand_tasks(self):
+        self.assertEqual(
+            set(self.manager.on_demand_tasks),
+            {"MyOnDemandTask", "DeduplicatedOnDemandTask", "FailingOnDemandTask", "ProcessBlobTask"},
+        )
+
+    def test_registered_periodic_tasks(self):
+        self.assertEqual(set(self.manager.periodic_tasks), {"MyPeriodicTask"})
+
+    def test_registered_subscriber_tasks(self):
+        self.assertEqual(set(self.manager.subscriber_tasks), {"MySubscriberTask"})
+
+    def test_abstract_tasks_are_not_registered(self):
+        """Abstract task classes are templates for concrete tasks and must not be
+        registered (registration would create queues, schedules or subscriptions for them)
+        """
+        registered = {
+            *self.manager.on_demand_tasks,
+            *self.manager.periodic_tasks,
+            *self.manager.subscriber_tasks,
+        }
+        self.assertNotIn("BaseAbstractTask", registered)
+        self.assertNotIn("OnDemandTask", registered)
+        self.assertNotIn("PeriodicTask", registered)
+        self.assertNotIn("SubscriberTask", registered)
