@@ -264,12 +264,48 @@ environment variable.
 ## Verifying calls made by workflows
 
 Multi-step workflows often need to call back into Django between steps (for example to fetch
-state a Cloud Run job cannot return). Cloud Workflows can authenticate those calls with an
-OIDC identity token (`auth: {type: OIDC, audience: <url>}`), and you verify that token
-in-app using the common `django_gcp.auth` API — the `oidc_required` decorator and
-`verify_oidc_token` function — configured with the
-`GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS` setting. See
-[Authenticating endpoints](../../authentication/endpoints.md#workflow-called-endpoints).
+state a Cloud Run job cannot return). Cloud Workflows authenticates those calls with an OIDC
+identity token when the calling step declares one:
+
+```yaml
+- fetch_pending:
+    call: http.get
+    args:
+      url: https://your-server.com/hooks/pending-items
+      auth:
+        type: OIDC
+        audience: https://your-server.com/hooks/pending-items
+```
+
+Verify that token in-app by decorating the called view, keeping a workflows-specific
+allow-list with the shared setting as fallback:
+
+```python
+from django.http import JsonResponse
+from django_gcp.auth import oidc_required
+
+
+@oidc_required(settings_names=("GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS", "GCP_INVOKER_SERVICE_ACCOUNT_EMAILS"))
+def pending_items(request):
+    # request.oidc_claims carries the verified token claims
+    return JsonResponse({"pending": [...]})
+```
+
+This is one use case of the general pattern for protecting your own views — see
+[Adding authenticated endpoints](../../authentication/adding-authenticated-endpoints.md)
+for the full API (`verify_oidc_token`, `OIDCAuthRequiredMixin`, and per-endpoint overrides).
+
+### `GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS`
+
+Type: `list` of `string`
+
+Default: absent (falls back to
+[`GCP_INVOKER_SERVICE_ACCOUNT_EMAILS`](../../authentication/endpoints.md#gcp_invoker_service_account_emails)
+when used via the decorator pattern above)
+
+The allow-list of service account emails permitted to call your workflow-called endpoints.
+Typically this holds the email of the service account your workflows are deployed with. When
+both this setting and the shared fallback are absent, every caller is rejected.
 
 ## Best practices
 

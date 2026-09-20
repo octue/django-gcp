@@ -46,10 +46,11 @@ present, so a service-specific setting overrides the shared one:
 - The events endpoint consults
   [`GCP_EVENTS_INVOKER_SERVICE_ACCOUNT_EMAILS`](../services/events.md#gcp_events_invoker_service_account_emails),
   then [`GCP_INVOKER_SERVICE_ACCOUNT_EMAILS`](#gcp_invoker_service_account_emails).
-- [Workflow-called endpoints](#workflow-called-endpoints) that you protect with the
-  documented decorator pattern consult
-  [`GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS`](#gcp_workflows_invoker_service_account_emails),
-  then [`GCP_INVOKER_SERVICE_ACCOUNT_EMAILS`](#gcp_invoker_service_account_emails).
+- [Endpoints you add yourself](adding-authenticated-endpoints.md) consult whichever
+  settings you configure them with, defaulting to
+  [`GCP_INVOKER_SERVICE_ACCOUNT_EMAILS`](#gcp_invoker_service_account_emails) — for
+  example, [workflow-called endpoints](../services/workflows/usage.md#verifying-calls-made-by-workflows)
+  consult `GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS`, then the shared setting.
 
 If none of the consulted settings is present, the allow-list is empty and every caller is
 rejected.
@@ -64,19 +65,20 @@ The shared fallback allow-list for all OIDC-gated endpoints. Each entry is the e
 service account permitted to invoke the endpoints. When this setting is absent and no
 service-specific setting is present either, every caller is rejected.
 
-## Senders created by `django-gcp`
+## Enabling OIDC authentication of senders
 
-If your Cloud Tasks queues, Cloud Scheduler jobs (for periodic tasks), and Pub/Sub push
-subscriptions (for `SubscriberTask` subclasses) were created by `django-gcp`, no sender
-changes are needed: those senders already attach an OIDC token whose audience matches the
-endpoint URL. Such deployments only need the allow-list settings above.
+Every sender must attach an OIDC identity token, for a service account in your allow-list,
+to the requests it makes. A subscription, queue, or job configured without OIDC
+authentication — for example one created through the console, `gcloud`, Terraform, or other
+application code — sends no token (or a token for the wrong service account or audience),
+so its requests are rejected.
 
-## Senders created outside `django-gcp`
+!!! note
 
-Subscriptions, queues, and jobs created by other means — the console, `gcloud`, Terraform,
-or other application code — send no token (or a token for the wrong service account or
-audience), so their requests will be rejected after upgrading. Update each sender to attach
-an OIDC token for a service account in your allow-list.
+    Senders created using `django-gcp` — Cloud Tasks tasks, Cloud Scheduler jobs for
+    periodic tasks, and Pub/Sub push subscriptions for `SubscriberTask` subclasses —
+    already have OIDC authentication enabled, with an audience matching the endpoint URL.
+    Those deployments only need the allow-list settings above.
 
 For a Pub/Sub push subscription, with `gcloud`:
 
@@ -133,45 +135,6 @@ where the proxy rewrites the host header), and ensure
 visible scheme and host. Otherwise the reconstructed URI has the wrong scheme or host, and
 valid tokens are rejected with `401 Unauthorized`.
 
-## Workflow-called endpoints
-
-Multi-step workflows often call back into Django between steps, and Cloud Workflows can
-authenticate those calls with an OIDC identity token
-(`auth: {type: OIDC, audience: <url>}`; see
-[Using Cloud Workflows](../services/workflows/usage.md)). Because the called views are your
-own, you protect them yourself with the `oidc_required` decorator:
-
-```python
-from django.http import JsonResponse
-from django_gcp.auth import oidc_required
-
-
-@oidc_required(settings_names=("GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS", "GCP_INVOKER_SERVICE_ACCOUNT_EMAILS"))
-def pending_items(request):
-    # request.oidc_claims carries the verified token claims
-    return JsonResponse({"pending": [...]})
-```
-
-Used bare (`@oidc_required`), the decorator reads its allow-list from
-[`GCP_INVOKER_SERVICE_ACCOUNT_EMAILS`](#gcp_invoker_service_account_emails) alone; the
-`settings_names` tuple above keeps a workflows-specific allow-list with the shared setting
-as fallback. You can also pass `allowed_service_account_emails=[...]` to fix the allow-list
-per-endpoint, or call `verify_oidc_token(request)` directly where a decorator does not fit
-(it returns a `(claims, error_response)` pair). Class-based views can mix in
-`OIDCAuthRequiredMixin`, which is how the built-in endpoints are protected.
-
-### `GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS`
-
-Type: `list` of `string`
-
-Default: absent (falls back to
-[`GCP_INVOKER_SERVICE_ACCOUNT_EMAILS`](#gcp_invoker_service_account_emails) when used via
-the decorator pattern above)
-
-The allow-list of service account emails permitted to call your workflow-called endpoints.
-Typically this holds the email of the service account your workflows are deployed with. When
-both this setting and the shared fallback are absent, every caller is rejected.
-
 ## Disabling authentication
 
 Verification can be switched off per service with
@@ -203,5 +166,5 @@ urlpatterns = [
     infrastructure ingress restriction combined with IAM invoker permissions, so that
     unauthenticated requests never reach Django. Do not disable it merely because an
     externally created subscription, queue, or job does not yet send a token: update the
-    sender instead (see [above](#senders-created-outside-django-gcp)), because a disabled
-    endpoint is open to anyone who can reach it.
+    sender instead (see [above](#enabling-oidc-authentication-of-senders)), because a
+    disabled endpoint is open to anyone who can reach it.

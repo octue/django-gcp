@@ -61,9 +61,9 @@ module-level settings also apply.
 
 ## Workflows
 
-| Setting                                        | Type   | Default                  | Details                                                                                                 |
-| ---------------------------------------------- | ------ | ------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS` | `list` | absent (shared fallback) | [Authenticating endpoints](../authentication/endpoints.md#gcp_workflows_invoker_service_account_emails) |
+| Setting                                        | Type   | Default                  | Details                                                                                        |
+| ---------------------------------------------- | ------ | ------------------------ | ---------------------------------------------------------------------------------------------- |
+| `GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS` | `list` | absent (shared fallback) | [Workflows usage](../services/workflows/usage.md#gcp_workflows_invoker_service_account_emails) |
 
 ## Logs
 
