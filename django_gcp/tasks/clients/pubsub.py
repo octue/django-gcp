@@ -10,8 +10,6 @@ from .base import GoogleCloudClient
 
 class CloudPublisher(GoogleCloudClient):
     _client_class = pubsub_v1.PublisherClient
-    _service_name = "Cloud Pub/Sub"
-    _google_managed_service = True
 
     async def create_topic(
         self,
@@ -80,8 +78,6 @@ class CloudPublisher(GoogleCloudClient):
 
 class CloudSubscriber(GoogleCloudClient):
     _client_class = pubsub_v1.SubscriberClient
-    _service_name = "Cloud Pub/Sub"
-    _google_managed_service = True
 
     async def list_subscriptions(
         self,
