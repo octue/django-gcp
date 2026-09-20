@@ -19,7 +19,6 @@ requires-python = ">=3.12,<4"
 dependencies = [
 "Django>=5.2,<6.2",
 "python-dateutil>=2,<3",
-"google-api-python-client>=2,<3",
 "google-auth>=2.6,<3",
 "google-cloud-error-reporting>=1.9,<2",
 "google-cloud-pubsub>=2,<3",
