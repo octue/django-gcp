@@ -39,7 +39,7 @@ After adding or updating any documentation:
 
 ### Settings
 
-Any setting added or updated must be fully described in the relevant part of the docs (type, default and behaviour) AND cross-referenced as a row in the settings reference table (docs/settings.md). The table row holds only the type and default, linking to the full description.
+Any setting added or updated must be fully described in the relevant part of the docs (type, default and behaviour) AND cross-referenced as a row in the settings reference table (docs/settings/django-settings.md). The table row holds only the type and default, linking to the full description.
 
 ### ADRs
 

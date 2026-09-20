@@ -19,8 +19,8 @@ Required user actions when upgrading:
 
 1. Replace the legacy settings with a single `STORAGES` dict. Each former extra-stores entry
    becomes a top-level alias under `STORAGES` — there is no separate "extra" wrapper anymore.
-   See [Storage](storage.md) for the new format and
-   [Configuration in 0.24 and below](storage.md#configuration-in-024-and-below) for the old.
+   See [Storage](services/storage.md) for the new format and
+   [Configuration in 0.24 and below](services/storage.md#configuration-in-024-and-below) for the old.
 2. Rename `BlobField(store_key="media")` to `BlobField(store_key="default")` and
    `store_key="static"` to `store_key="staticfiles"` in every model. Custom store keys keep
    their names.

@@ -288,7 +288,7 @@ GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS = ["workflows@my-project.iam.gservi
 With the setting absent, every caller is rejected. Pass `allowed_service_account_emails` to
 the decorator (or to `verify_workflow_oidc_token(request)` directly) to override the setting
 per-endpoint. For the wider context on securing endpoints, see
-[Authenticating events and tasks](../authentication/events-and-tasks.md).
+[Authenticating events and tasks](../../authentication/events-and-tasks.md).
 
 ## Best practices
 

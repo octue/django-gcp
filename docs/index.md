@@ -3,12 +3,12 @@
 `django-gcp` is a library of tools to help you deploy and use Django on Google Cloud Platform.
 Helpers are provided for:
 
-- [Cloud Storage](https://cloud.google.com/storage) (see [Storage](storage.md)),
-- [Events from Pub/Sub and Eventarc](https://cloud.google.com/pubsub) (see [Events](events.md)),
-- [Structured Cloud Logging](https://cloud.google.com/logging) and [Error Reporting](https://cloud.google.com/error-reporting) (see [Logs](logs.md)),
-- [Cloud Run metadata](https://cloud.google.com/run/docs/container-contract#metadata-server) (see [Cloud Run](cloud-run.md)),
-- [Cloud Tasks](https://cloud.google.com/tasks) and [Cloud Scheduler](https://cloud.google.com/scheduler) (see [Tasks](tasks/index.md)), and
-- [Cloud Workflows](https://cloud.google.com/workflows) (see [Workflows](workflows/index.md)).
+- [Cloud Storage](https://cloud.google.com/storage) (see [Storage](services/storage.md)),
+- [Events from Pub/Sub and Eventarc](https://cloud.google.com/pubsub) (see [Events](services/events.md)),
+- [Structured Cloud Logging](https://cloud.google.com/logging) and [Error Reporting](https://cloud.google.com/error-reporting) (see [Logs](services/logs.md)),
+- [Cloud Run metadata](https://cloud.google.com/run/docs/container-contract#metadata-server) (see [Cloud Run](services/cloud-run.md)),
+- [Cloud Tasks](https://cloud.google.com/tasks) and [Cloud Scheduler](https://cloud.google.com/scheduler) (see [Tasks](services/tasks/index.md)), and
+- [Cloud Workflows](https://cloud.google.com/workflows) (see [Workflows](services/workflows/index.md)).
 
 !!! note
 

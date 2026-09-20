@@ -45,5 +45,5 @@ Read on:
 !!! warning
 
     Task endpoints do not authenticate their callers out of the box. Please read
-    [Authenticating events and tasks](../authentication/events-and-tasks.md) before exposing
+    [Authenticating events and tasks](../../authentication/events-and-tasks.md) before exposing
     them.

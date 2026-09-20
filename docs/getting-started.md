@@ -28,6 +28,43 @@ INSTALLED_APPS = [
 ]
 ```
 
+## Setting up the environment
+
+Your server authenticates to GCP with Service Account Credentials or Application Default
+Credentials — on Google infrastructure these are usually picked up automatically, and
+elsewhere you point the `GOOGLE_APPLICATION_CREDENTIALS` environment variable at a
+credentials file. See [Authenticating the server](authentication/server.md) for the full
+options, including local development and GitHub Actions.
+
+Two root-level Django settings span the library, both usually left unset:
+
+### `GCP_PROJECT_ID`
+
+Type: `string` or `None`
+
+Default: `None`
+
+The Google Cloud project ID. In most cases this can be left unset, because the project is
+inferred from your credentials. Set it explicitly when the inference is wrong — for example,
+when your service account has privileges across several projects and resources must be
+accessed in a specific one. It can be overridden per storage store with the
+[`project_id` option](services/storage.md#project_id).
+
+### `GCP_CREDENTIALS`
+
+Type: a `google.auth` credentials object, or `None`
+
+Default: `None`
+
+An explicit credentials object. In most deployments you should leave this unset and
+authenticate via the environment instead (see
+[Authenticating the server](authentication/server.md)). It can be overridden per storage
+store with the [`credentials` option](services/storage.md#credentials).
+
+Everything the library reads from your Django configuration and from the process environment
+is indexed under [Django settings](settings/django-settings.md) and
+[Environment variables](settings/environment-variables.md).
+
 ## Add the endpoints
 
 !!! tip

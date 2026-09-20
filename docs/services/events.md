@@ -9,12 +9,12 @@ just `django-gcp`) simply by creating a signal receiver.
 !!! warning
 
     The events endpoints do not authenticate their callers out of the box. Please read
-    [Authenticating events and tasks](authentication/events-and-tasks.md) before exposing them.
+    [Authenticating events and tasks](../authentication/events-and-tasks.md) before exposing them.
 
 ## Events endpoints
 
 If you have `django_gcp` installed correctly (see
-[Add the endpoints](getting-started.md#add-the-endpoints)), running
+[Add the endpoints](../getting-started.md#add-the-endpoints)), running
 `python manage.py show_urls` will show the endpoints for events.
 
 Endpoints are `POST`-only and take two URL parameters, an `event_kind` and an

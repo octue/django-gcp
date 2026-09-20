@@ -9,15 +9,15 @@ This module provides helpers for working with
 2. A `BlobField` with an associated widget to facilitate direct uploads and provide more
    powerful ways of working with GCS features, including metadata and revisions.
 
-![Direct upload widget](images/direct-upload-widget.png)
+![Direct upload widget](../images/direct-upload-widget.png)
 
 _The widget provides a better user experience for blankable and overwriting options._
 
 ## Installation and authentication
 
-First, follow the instructions to [install](getting-started.md),
-[authenticate](authentication/index.md), and (if necessary)
-[set your project](projects.md).
+First, follow the instructions to [install](../getting-started.md),
+[authenticate](../authentication/index.md), and (if necessary)
+[set your project](../getting-started.md#gcp_project_id).
 
 ## Create bucket(s)
 
@@ -48,7 +48,7 @@ infrastructure-as-code, manually create two buckets in your project:
 
     The buckets for a staging environment in one of our apps look like this:
 
-    ![Buckets configuration](images/buckets.png)
+    ![Buckets configuration](../images/buckets.png)
 
 ## Set up media and static storage
 
@@ -266,7 +266,7 @@ STORAGES = {
 ```
 
 The full range of options (and their defaults) is as follows. These per-store options, and
-the library's other settings, are indexed in the [settings reference](settings.md).
+the library's other settings, are indexed in the [settings reference](../settings/django-settings.md).
 
 ### `project_id`
 
@@ -275,7 +275,7 @@ Type: `string` or `None`
 Default: `None`
 
 The project this store's bucket belongs to, overriding the root-level
-[`GCP_PROJECT_ID`](projects.md#gcp_project_id) setting for this store. If neither is set,
+[`GCP_PROJECT_ID`](../getting-started.md#gcp_project_id) setting for this store. If neither is set,
 the project is inferred from the credentials.
 
 ### `credentials`
@@ -285,9 +285,9 @@ Type: a `google.auth` credentials object, or `None`
 Default: `None`
 
 An explicit credentials object for this store, overriding the root-level
-[`GCP_CREDENTIALS`](projects.md#gcp_credentials) setting. Usually left unset in favour of
+[`GCP_CREDENTIALS`](../getting-started.md#gcp_credentials) setting. Usually left unset in favour of
 environment-based authentication (see
-[Authenticating the server](authentication/server.md)).
+[Authenticating the server](../authentication/server.md)).
 
 ### `gzip`
 
@@ -420,7 +420,7 @@ Default: `timedelta(seconds=86400)`
 
 The time a generated URL is valid before expiration; the default is one day. Public files
 return a URL that does not expire. Files are signed by the credentials provided during
-[authentication](authentication/index.md).
+[authentication](../authentication/index.md).
 
 The value is handled by the underlying
 [Google library](https://googlecloudplatform.github.io/google-cloud-python/latest/storage/blobs.html#google.cloud.storage.blob.Blob.generate_signed_url),
