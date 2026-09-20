@@ -97,12 +97,6 @@ class CloudScheduler(GoogleCloudPilotAPI):
             if job.name.split("/jobs/")[-1].startswith(prefix):
                 yield job
 
-    def get(self, name: str, project_id: str = None) -> scheduler.Job:
-        job_name = self._job_path(job=name, project_id=project_id)
-        return self.client.get_job(
-            name=job_name,
-        )
-
     async def delete(self, name: str, project_id: str = None) -> None:
         job_name = self._job_path(job=name, project_id=project_id)
         return self.client.delete_job(

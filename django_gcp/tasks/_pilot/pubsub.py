@@ -1,13 +1,9 @@
 # https://googleapis.dev/python/pubsub/latest/index.html
-import base64
-from dataclasses import dataclass
-import json
-from typing import Any, AsyncIterator, Callable, Dict, Union
+from typing import Any, AsyncIterator, Dict
 
 from google.api_core.exceptions import AlreadyExists, NotFound
 from google.cloud import pubsub_v1
-from google.protobuf.field_mask_pb2 import FieldMask
-from google.pubsub_v1 import PushConfig, Subscription, Topic, types
+from google.pubsub_v1 import PushConfig, Subscription, types
 
 from .base import GoogleCloudPilotAPI
 
@@ -42,28 +38,6 @@ class CloudPublisher(GoogleCloudPilotAPI):
             topic = await self.get_topic(topic_id=topic_id, project_id=project_id)
         return topic
 
-    async def update_topic(
-        self,
-        topic_id: str,
-        project_id: str = None,
-        labels: Dict[str, str] = None,
-    ) -> types.Topic:
-        topic_path = self.client.topic_path(
-            project=project_id or self.project_id,
-            topic=topic_id,
-            labels=labels,
-        )
-        topic_obj = types.Topic(
-            name=topic_path,
-            labels=labels,
-        )
-        return self.client.update_topic(
-            request=types.UpdateTopicRequest(
-                topic=topic_obj,
-                update_mask=FieldMask(paths=["labels"]),
-            ),
-        )
-
     async def get_topic(self, topic_id: str, project_id: str = None):
         topic_path = self.client.topic_path(
             project=project_id or self.project_id,
@@ -72,16 +46,6 @@ class CloudPublisher(GoogleCloudPilotAPI):
         return self.client.get_topic(
             topic=topic_path,
         )
-
-    async def list_topics(self, prefix: str = "", suffix: str = "", project_id: str = None) -> AsyncIterator[Topic]:
-        project_path = self._project_path(project_id=project_id)
-        topics = self.client.list_topics(
-            project=project_path,
-        )
-        for topic in topics:
-            name = topic.name.split("/topics/")[-1]
-            if name.startswith(prefix) and name.endswith(suffix):
-                yield topic
 
     async def publish(
         self,
@@ -267,49 +231,8 @@ class CloudSubscriber(GoogleCloudPilotAPI):
                 use_oidc_auth=use_oidc_auth,
             )
 
-    async def subscribe(self, topic_id: str, subscription_id: str, callback: Callable, project_id: str = None):
-        await self.create_subscription(
-            topic_id=topic_id,
-            subscription_id=subscription_id,
-            project_id=project_id,
-        )
-
-        subscription_path = self.client.subscription_path(
-            project=project_id or self.project_id,
-            subscription=subscription_id,
-        )
-        future = self.client.subscribe(
-            subscription=subscription_path,
-            callback=callback,
-        )
-        future.result()
-
-
-@dataclass
-class Message:
-    id: str
-    data: Any
-    attributes: Dict[str, Any]
-    subscription: str
-
-    @classmethod
-    def load(cls, body: Union[str, bytes, Dict], parser: Callable = json.loads) -> "Message":
-        # https://cloud.google.com/pubsub/docs/push#receiving_messages
-        if isinstance(body, bytes):
-            body = body.decode()
-        if isinstance(body, str):
-            body = json.loads(body)
-
-        return Message(
-            id=body["message"]["messageId"],
-            attributes=body["message"]["attributes"],
-            subscription=body["subscription"],
-            data=parser(base64.b64decode(body["message"]["data"]).decode("utf-8")),
-        )
-
 
 __all__ = (
     "CloudPublisher",
     "CloudSubscriber",
-    "Message",
 )

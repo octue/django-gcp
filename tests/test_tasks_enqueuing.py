@@ -16,7 +16,6 @@ from google.api_core.exceptions import AlreadyExists
 from django_gcp.events.utils import make_pubsub_message
 from django_gcp.exceptions import DuplicateTaskError, IncompatibleSettingsError, IncorrectTaskUsageError
 from django_gcp.tasks import OnDemandTask
-from django_gcp.tasks._pilot.mocker import patch_auth
 from tests.server.example.tasks import (
     DeduplicatedOnDemandTask,
     FailingOnDemandTask,
@@ -25,6 +24,7 @@ from tests.server.example.tasks import (
     MySubscriberTask,
 )
 
+from ._utils import patch_auth
 from .test_events_utils import DEFAULT_SUBSCRIPTION
 
 

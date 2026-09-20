@@ -111,21 +111,5 @@ class CloudTasks(GoogleCloudPilotAPI):
 
         return response
 
-    def _create_queue(
-        self,
-        queue_name: str,
-        project_id: str = None,
-    ) -> tasks_v2.Queue:
-        parent = self._parent_path(project_id=project_id)
-        queue_path = self._queue_path(queue=queue_name, project_id=project_id)
-
-        queue = tasks_v2.Queue(
-            name=queue_path,
-        )
-        return self.client.create_queue(
-            parent=parent,
-            queue=queue,
-        )
-
 
 __all__ = ("CloudTasks",)

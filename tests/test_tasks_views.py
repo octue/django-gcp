@@ -13,10 +13,9 @@ from django.test import RequestFactory, SimpleTestCase, override_settings
 from django.urls import reverse
 
 from django_gcp.events.utils import make_pubsub_message
-from django_gcp.tasks._pilot.mocker import patch_auth
 from django_gcp.tasks.views import GoogleCloudTaskView
 
-from ._utils import authenticated_oidc_caller
+from ._utils import authenticated_oidc_caller, patch_auth
 from .test_events_utils import DEFAULT_SUBSCRIPTION
 
 INVOKER_EMAIL = "invoker@test-project.iam.gserviceaccount.com"
