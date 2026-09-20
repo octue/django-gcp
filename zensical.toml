@@ -11,7 +11,8 @@ nav = [
   { "Authentication" = [
     { "Overview" = "authentication/index.md" },
     { "Authenticating the server" = "authentication/server.md" },
-    { "Authenticating events and tasks" = "authentication/events-and-tasks.md" },
+    { "Authenticating endpoints" = "authentication/endpoints.md" },
+    { "Adding authenticated endpoints" = "authentication/adding-authenticated-endpoints.md" },
   ] },
   { "Services" = [
     { "Overview" = "services/index.md" },

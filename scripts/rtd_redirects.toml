@@ -10,7 +10,7 @@
 "/getting_started.html" = "/getting-started/"
 "/authentication.html" = "/authentication/"
 "/authentication_server.html" = "/authentication/server/"
-"/authentication_events_and_tasks.html" = "/authentication/events-and-tasks/"
+"/authentication_events_and_tasks.html" = "/authentication/endpoints/"
 "/storage.html" = "/services/storage/"
 "/events.html" = "/services/events/"
 "/tasks.html" = "/services/tasks/"
@@ -43,3 +43,6 @@
 "/cloud-run/" = "/services/cloud-run/"
 "/projects/" = "/getting-started/"
 "/settings/" = "/settings/django-settings/"
+
+# Pages renamed in 0.27.0, when endpoint authentication was built in
+"/authentication/events-and-tasks/" = "/authentication/endpoints/"

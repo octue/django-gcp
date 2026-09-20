@@ -264,31 +264,48 @@ environment variable.
 ## Verifying calls made by workflows
 
 Multi-step workflows often need to call back into Django between steps (for example to fetch
-state a Cloud Run job cannot return). Cloud Workflows can authenticate those calls with an
-OIDC identity token (`auth: {type: OIDC, audience: <url>}`); platform IAM may gate the
-intended route, but if the same application is also served publicly you must verify the token
-in-app as well. `django_gcp` provides both a view decorator and the underlying function:
+state a Cloud Run job cannot return). Cloud Workflows authenticates those calls with an OIDC
+identity token when the calling step declares one:
+
+```yaml
+- fetch_pending:
+    call: http.get
+    args:
+      url: https://your-server.com/hooks/pending-items
+      auth:
+        type: OIDC
+        audience: https://your-server.com/hooks/pending-items
+```
+
+Verify that token in-app by decorating the called view, keeping a workflows-specific
+allow-list with the shared setting as fallback:
 
 ```python
-from django_gcp.workflows import workflow_oidc_required
+from django.http import JsonResponse
+from django_gcp.auth import oidc_required
 
-@workflow_oidc_required
+
+@oidc_required(settings_names=("GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS", "GCP_INVOKER_SERVICE_ACCOUNT_EMAILS"))
 def pending_items(request):
-    # request.workflow_oidc_claims carries the verified token claims
+    # request.oidc_claims carries the verified token claims
     return JsonResponse({"pending": [...]})
 ```
 
-Verification requires a valid signature, an audience exactly matching the request's absolute
-URI, and a verified email in the allowed caller list, configured as:
+This is one use case of the general pattern for protecting your own views — see
+[Adding authenticated endpoints](../../authentication/adding-authenticated-endpoints.md)
+for the full API (`verify_oidc_token`, `OIDCAuthRequiredMixin`, and per-endpoint overrides).
 
-```python
-GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS = ["workflows@my-project.iam.gserviceaccount.com"]
-```
+### `GCP_WORKFLOWS_INVOKER_SERVICE_ACCOUNT_EMAILS`
 
-With the setting absent, every caller is rejected. Pass `allowed_service_account_emails` to
-the decorator (or to `verify_workflow_oidc_token(request)` directly) to override the setting
-per-endpoint. For the wider context on securing endpoints, see
-[Authenticating events and tasks](../../authentication/events-and-tasks.md).
+Type: `list` of `string`
+
+Default: absent (falls back to
+[`GCP_INVOKER_SERVICE_ACCOUNT_EMAILS`](../../authentication/endpoints.md#gcp_invoker_service_account_emails)
+when used via the decorator pattern above)
+
+The allow-list of service account emails permitted to call your workflow-called endpoints.
+Typically this holds the email of the service account your workflows are deployed with. When
+both this setting and the shared fallback are absent, every caller is rejected.
 
 ## Best practices
 

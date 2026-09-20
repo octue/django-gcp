@@ -42,8 +42,5 @@ Read on:
 - [Settings](settings.md)
 - [Deploying workers](workers.md)
 
-!!! warning
-
-    Task endpoints do not authenticate their callers out of the box. Please read
-    [Authenticating events and tasks](../../authentication/events-and-tasks.md) before exposing
-    them.
+Task endpoints verify their callers and reject all requests until an allow-list is
+configured — see [Authenticating endpoints](../../authentication/endpoints.md).

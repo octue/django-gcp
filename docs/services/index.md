@@ -14,6 +14,5 @@ service (or a small family of them). They are independent: use only the ones you
 - **[Logs](logs.md)** — structured Cloud Logging and Error Reporting handlers.
 - **[Cloud Run](cloud-run.md)** — a wrapper for the Cloud Run metadata server.
 
-Before using the events or tasks endpoints, read
-[Authenticating events and tasks](../authentication/events-and-tasks.md); they do not
-authenticate their callers out of the box.
+The events and tasks endpoints verify their callers and reject all requests until an
+allow-list is configured — see [Authenticating endpoints](../authentication/endpoints.md).
