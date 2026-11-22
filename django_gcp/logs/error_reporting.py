@@ -27,6 +27,9 @@ class GoogleErrorReportingHandler(StreamHandler):
         super().__init__(*args, **kwargs)
 
     def emit(self, record):
+        if self.custom_handler_client is None:
+            return
+
         try:
             # Apply any formatters
             msg = self.format(record)
@@ -39,13 +42,8 @@ class GoogleErrorReportingHandler(StreamHandler):
         except (KeyboardInterrupt, SystemExit):
             raise
 
-        except Exception as e:
+        except Exception:
             self.handleError(record)
-            if self.custom_handler_client:
-                self.custom_handler_client.report_exception()
-            self.stream.write("Exception in custom logging handler - GoogleErrorReportingHandler")
-            self.stream.write(e)
-            self.flush()
 
     @property
     def error_reporting_service_name(self):

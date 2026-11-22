@@ -2,6 +2,7 @@
 # pylint: disable=missing-docstring
 # pylint: disable=protected-access
 
+import io
 import json
 import logging
 from unittest import mock
@@ -9,7 +10,10 @@ from unittest import mock
 from django.test import RequestFactory, SimpleTestCase
 from google.cloud.logging_v2.handlers.middleware.request import _thread_locals as request_thread_locals
 
-from django_gcp.logs import GoogleStructuredLogsHandler
+from django_gcp.logs import (
+    GoogleErrorReportingHandler,
+    GoogleStructuredLogsHandler,
+)
 
 
 def make_record(msg, args=None, pathname="/django/core/servers/basehttp.py", **extra):
@@ -144,3 +148,45 @@ class TestGoogleStructuredLogsHandler(SimpleTestCase):
         payload = self.format_record(record)
         self.assertEqual(payload["httpRequest"], {})
         self.assertEqual(payload["message"], "A plain message")
+
+
+def make_error_record(message="It broke"):
+    return logging.LogRecord("myapp", logging.ERROR, __file__, 1, message, None, None)
+
+
+class TestGoogleErrorReportingHandler(SimpleTestCase):
+    def make_handler(self, client):
+        with mock.patch("django_gcp.logs.error_reporting.error_reporting.Client", return_value=client):
+            return GoogleErrorReportingHandler(stream=io.StringIO())
+
+    def test_record_is_reported_with_its_formatted_message(self):
+        client = mock.MagicMock()
+        handler = self.make_handler(client)
+        handler.setFormatter(logging.Formatter("%(levelname)s %(message)s"))
+
+        handler.handle(make_error_record())
+
+        client.report.assert_called_once_with("ERROR It broke")
+
+    def test_records_are_skipped_without_raising_when_the_client_could_not_be_created(self):
+        with mock.patch(
+            "django_gcp.logs.error_reporting.error_reporting.Client", side_effect=RuntimeError("No credentials")
+        ):
+            handler = GoogleErrorReportingHandler(stream=io.StringIO())
+
+        with mock.patch.object(handler, "handleError") as handle_error:
+            handler.handle(make_error_record())
+
+        handle_error.assert_not_called()
+
+    def test_a_failed_report_is_passed_to_handle_error_and_does_not_raise(self):
+        client = mock.MagicMock()
+        client.report.side_effect = RuntimeError("The API is unavailable")
+        handler = self.make_handler(client)
+        record = make_error_record()
+
+        with mock.patch.object(handler, "handleError") as handle_error:
+            handler.handle(record)
+
+        handle_error.assert_called_once_with(record)
+        client.report_exception.assert_not_called()
