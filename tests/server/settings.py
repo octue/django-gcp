@@ -112,7 +112,7 @@ GCP_ERROR_REPORTING_SERVICE_NAME = "django-gcp-example"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": True,
-    "root": {"handlers": ["gcp_structured_logging", "gcp_error_reporting"]},
+    "root": {"handlers": ["console", "gcp_structured_logging", "gcp_error_reporting"]},
     "formatters": {
         "verbose": {"format": "%(levelname)s %(asctime)s %(module)s %(message)s"},
     },
@@ -144,15 +144,8 @@ LOGGING = {
         },
     },
     "loggers": {
-        "django": {
-            "handlers": ["console", "gcp_structured_logging", "gcp_error_reporting"],
-            "level": "INFO",
-        },
-        "django.server": {
-            "handlers": ["console", "gcp_structured_logging", "gcp_error_reporting"],
-            "level": "INFO",
-            "propagate": False,
-        },
+        "django": {"level": "INFO", "propagate": True},
+        "django.server": {"level": "INFO", "propagate": True},
     },
 }
 

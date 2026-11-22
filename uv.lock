@@ -385,7 +385,7 @@ wheels = [
 
 [[package]]
 name = "django-gcp"
-version = "0.28.0"
+version = "0.29.0"
 source = { editable = "." }
 dependencies = [
     { name = "django" },
@@ -1534,7 +1534,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ea/c3/17bd69cfbb3a3e965e867f23bae357675357203eb17aad0605de429f7942/zensical-0.0.63-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:069af2ee0254eaa7099faad908f0ae0017c151ef0160b21a039d08efaa61b38a", size = 14255818, upload-time = "2026-09-19T12:29:20.874Z" },
     { url = "https://files.pythonhosted.org/packages/c7/55/4b0397fc1acf2fec14e40c0d2b29000b58ffd79a88eafb02bc910ac57192/zensical-0.0.63-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:6ec02283d946569f68fdd1ab4a1dd2de560c0ad540874d5ecd4a4f1e96bdbe1d", size = 14000456, upload-time = "2026-09-19T12:29:23.393Z" },
     { url = "https://files.pythonhosted.org/packages/83/59/42f0acd63eadf3654918caf5b24c60d63efecc0486e81474bbcab97bfdf1/zensical-0.0.63-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:af2711ff1397338c730cc9232f687066da7181751257f317877501b1b77a44ea", size = 14273842, upload-time = "2026-09-19T12:29:26.007Z" },
-    { url = "https://files.pythonhosted.org/packages/d3/94/16e063e3b5afe48e553ab86bc21a3c66554eedf8f58e879e07f2140277d7/zensical-0.0.63-cp310-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:f1afb0e2819a588d956c1684c90e23fc0c7efc89e1ec141403a9fb41b75b1993", size = 14296845, upload-time = "2026-09-19T12:29:28.575Z" },
     { url = "https://files.pythonhosted.org/packages/be/cc/123b3c094aeba073d092354b196ac08e6bed36460a78b7cff50e63152ad0/zensical-0.0.63-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:925b3dd8bb6812b780f5e00828c42bd1eebd675b1eb6b4a58135926bb716bdde", size = 14554473, upload-time = "2026-09-19T12:29:30.588Z" },
     { url = "https://files.pythonhosted.org/packages/bb/26/425698bb072f7ce521e23d33a9701b27868cbf648f969379637d21cdab5f/zensical-0.0.63-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:6365bce465a7f6755533eaa80aa20c8a48d1b39fa7b12cd394eece3921e2c530", size = 14448833, upload-time = "2026-09-19T12:29:33.018Z" },
     { url = "https://files.pythonhosted.org/packages/54/f5/8117a427df0d9b99569a552672649e51a8218c54b3daa0a57c669221a368/zensical-0.0.63-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:63706419125f4c46461b322c8aaed1bbc3b917dd389ecf29601d713fc962bfb6", size = 14782142, upload-time = "2026-09-19T12:29:35.72Z" },

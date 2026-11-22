@@ -2,14 +2,27 @@
 # pylint: disable=missing-docstring
 # pylint: disable=protected-access
 
+from collections import Counter
+import copy
+import io
 import json
 import logging
+import logging.config
+import os
+import sys
+import threading
 from unittest import mock
 
+from django.conf import settings
 from django.test import RequestFactory, SimpleTestCase
+from django.utils.log import DEFAULT_LOGGING
 from google.cloud.logging_v2.handlers.middleware.request import _thread_locals as request_thread_locals
 
-from django_gcp.logs import GoogleStructuredLogsHandler
+from django_gcp.logs import (
+    ForegroundGoogleErrorReportingHandler,
+    GoogleErrorReportingHandler,
+    GoogleStructuredLogsHandler,
+)
 
 
 def make_record(msg, args=None, pathname="/django/core/servers/basehttp.py", **extra):
@@ -144,3 +157,219 @@ class TestGoogleStructuredLogsHandler(SimpleTestCase):
         payload = self.format_record(record)
         self.assertEqual(payload["httpRequest"], {})
         self.assertEqual(payload["message"], "A plain message")
+
+
+def make_error_record(message="It broke"):
+    return logging.LogRecord("myapp", logging.ERROR, __file__, 1, message, None, None)
+
+
+class FakeClient:
+    def __init__(self):
+        self.reported = []
+        self.threads = []
+        self.started = threading.Event()
+        self.may_finish = threading.Event()
+        self.may_finish.set()
+        self.failures_left = 0
+
+    def report(self, message):
+        self.started.set()
+        self.may_finish.wait(timeout=10)
+        if self.failures_left:
+            self.failures_left -= 1
+            raise RuntimeError("The report could not be sent")
+        self.threads.append(threading.get_ident())
+        self.reported.append(message)
+
+
+class TestGoogleErrorReportingHandler(SimpleTestCase):
+    def setUp(self):
+        self.client = FakeClient()
+        self.handlers = []
+
+    def tearDown(self):
+        self.client.may_finish.set()
+        for handler in self.handlers:
+            handler.close()
+
+    def make_handler(self, handler_class=GoogleErrorReportingHandler, **kwargs):
+        with mock.patch("django_gcp.logs.error_reporting.error_reporting.Client", return_value=self.client):
+            handler = handler_class(stream=io.StringIO(), **kwargs)
+        handler.setFormatter(logging.Formatter("%(levelname)s %(message)s"))
+        self.handlers.append(handler)
+        return handler
+
+    def test_record_is_reported_with_its_formatted_message(self):
+        handler = self.make_handler()
+
+        handler.handle(make_error_record())
+        handler.close()
+
+        self.assertEqual(self.client.reported, ["ERROR It broke"])
+
+    def test_records_are_skipped_without_raising_when_the_client_could_not_be_created(self):
+        with mock.patch(
+            "django_gcp.logs.error_reporting.error_reporting.Client", side_effect=RuntimeError("No credentials")
+        ):
+            handler = GoogleErrorReportingHandler(stream=io.StringIO())
+        self.handlers.append(handler)
+
+        with mock.patch.object(handler, "handleError") as handle_error:
+            handler.handle(make_error_record())
+
+        handle_error.assert_not_called()
+        self.assertIsNone(handler.listener)
+
+    def test_the_logging_thread_does_not_wait_for_the_report(self):
+        self.client.may_finish.clear()
+        handler = self.make_handler()
+
+        handler.handle(make_error_record("First"))
+
+        self.assertTrue(self.client.started.wait(timeout=5))
+        self.assertEqual(self.client.reported, [])
+        self.client.may_finish.set()
+        handler.close()
+        self.assertEqual(self.client.reported, ["ERROR First"])
+        self.assertNotIn(threading.get_ident(), self.client.threads)
+
+    def test_no_listener_runs_until_a_record_arrives(self):
+        handler = self.make_handler()
+        self.assertIsNone(handler.listener)
+
+        handler.handle(make_error_record())
+
+        self.assertIsNotNone(handler.listener)
+
+    def test_closing_the_handler_sends_the_reports_still_pending(self):
+        handler = self.make_handler()
+        for number in range(3):
+            handler.handle(make_error_record(f"Report {number}"))
+
+        handler.close()
+
+        self.assertEqual(self.client.reported, ["ERROR Report 0", "ERROR Report 1", "ERROR Report 2"])
+
+    def test_closing_does_not_wait_for_a_report_that_does_not_finish(self):
+        self.client.may_finish.clear()
+        handler = self.make_handler(shutdown_seconds=0.2)
+        handler.handle(make_error_record())
+        self.assertTrue(self.client.started.wait(timeout=5))
+
+        closer = threading.Thread(target=handler.close)
+        closer.start()
+        closer.join(timeout=5)
+
+        self.assertFalse(closer.is_alive())
+
+    def test_records_beyond_the_pending_limit_are_counted_and_dropped(self):
+        self.client.may_finish.clear()
+        handler = self.make_handler(pending_reports_limit=1)
+        handler.handle(make_error_record("Being sent"))
+        self.assertTrue(self.client.started.wait(timeout=5))
+
+        handler.handle(make_error_record("Waiting"))
+        handler.handle(make_error_record("Dropped"))
+
+        self.assertEqual(handler.dropped_reports, 1)
+        self.client.may_finish.set()
+        handler.close()
+        self.assertEqual(self.client.reported, ["ERROR Being sent", "ERROR Waiting"])
+
+    def test_a_failed_report_is_passed_to_handle_error_and_counted_and_later_reports_are_still_sent(self):
+        self.client.failures_left = 1
+        handler = self.make_handler()
+
+        with mock.patch.object(handler, "handleError") as handle_error:
+            handler.handle(make_error_record("Fails"))
+            handler.handle(make_error_record("Sent"))
+            handler.close()
+
+        self.assertEqual(handler.failed_reports, 1)
+        self.assertEqual(handle_error.call_count, 1)
+        self.assertEqual(handle_error.call_args.args[0].getMessage(), "ERROR Fails")
+        self.assertEqual(self.client.reported, ["ERROR Sent"])
+
+    def test_the_report_carries_the_formatted_traceback_and_no_live_exception(self):
+        handler = self.make_handler()
+        try:
+            raise ValueError("Bad value")
+        except ValueError:
+            record = logging.LogRecord("myapp", logging.ERROR, __file__, 1, "It broke", None, sys.exc_info())
+
+        handler.handle(record)
+        handler.close()
+
+        self.assertIn("ValueError: Bad value", self.client.reported[0])
+        self.assertIsNotNone(record.exc_info)
+
+    def test_a_forked_process_starts_its_own_listener(self):
+        handler = self.make_handler()
+        handler.handle(make_error_record())
+        parent_listener = handler.listener
+
+        with mock.patch("django_gcp.logs.error_reporting.os.getpid", return_value=os.getpid() + 1):
+            handler.handle(make_error_record())
+            child_listener = handler.listener
+            handler.close()
+
+        self.assertIsNot(child_listener, parent_listener)
+        parent_listener.stop(1)
+
+    def test_the_foreground_handler_reports_in_the_logging_thread_before_returning(self):
+        handler = self.make_handler(ForegroundGoogleErrorReportingHandler)
+
+        handler.handle(make_error_record())
+
+        self.assertEqual(self.client.reported, ["ERROR It broke"])
+        self.assertEqual(self.client.threads, [threading.get_ident()])
+        self.assertIsNone(handler.listener)
+
+    def test_a_failed_foreground_report_is_passed_to_handle_error_and_does_not_raise(self):
+        self.client.failures_left = 1
+        handler = self.make_handler(ForegroundGoogleErrorReportingHandler)
+        record = make_error_record()
+
+        with mock.patch.object(handler, "handleError") as handle_error:
+            handler.handle(record)
+
+        handle_error.assert_called_once_with(record)
+
+
+class TestExampleLoggingConfiguration(SimpleTestCase):
+    def handlers_called_by_an_error(self, logger_name):
+        calls = Counter()
+
+        def counting(handler_name):
+            class Counting(logging.Handler):
+                def emit(self, record):
+                    calls[handler_name] += 1
+
+            return Counting
+
+        config = copy.deepcopy(settings.LOGGING)
+        for handler_name, handler_config in config["handlers"].items():
+            handler_config.pop("class")
+            handler_config.pop("filters", None)
+            handler_config["()"] = counting(handler_name)
+
+        root = logging.getLogger()
+        loggers = [logger for logger in root.manager.loggerDict.values() if isinstance(logger, logging.Logger)]
+        root_state = (root.handlers[:], root.level)
+        states = [(logger, logger.handlers[:], logger.level, logger.propagate, logger.disabled) for logger in loggers]
+        try:
+            logging.config.dictConfig(DEFAULT_LOGGING)
+            logging.config.dictConfig(config)
+            logging.getLogger(logger_name or None).error("Probe")
+        finally:
+            root.handlers[:], root.level = root_state
+            for logger, handlers, level, propagate, disabled in states:
+                logger.handlers[:] = handlers
+                logger.level, logger.propagate, logger.disabled = level, propagate, disabled
+        return calls
+
+    def test_each_handler_receives_an_error_once_whichever_logger_records_it(self):
+        expected = {handler_name: 1 for handler_name in settings.LOGGING["handlers"]}
+        for logger_name in ("", "myapp", "django", "django.request", "django.security", "django.server"):
+            with self.subTest(logger=logger_name):
+                self.assertEqual(dict(self.handlers_called_by_an_error(logger_name)), expected)
