@@ -17,6 +17,7 @@ from tests.server.example.models import (
     ExampleBlankBlobFieldModel,
     ExampleBlobFieldModel,
     ExampleCallbackBlobFieldModel,
+    ExampleReadOnlyBlobFieldModel,
     ExampleUpdateAttributesBlobFieldModel,
 )
 
@@ -100,6 +101,12 @@ class TestBlobFieldAdmin(StorageOperationsMixin, TestCase):
     def test_add_view_loads_normally(self):
         response = self.client.get(get_admin_add_view_url(ExampleBlobFieldModel))
         self.assertEqual(response.status_code, 200)
+
+    def test_add_view_with_read_only_and_create_only_fields(self):
+        response = self.client.get(get_admin_add_view_url(ExampleReadOnlyBlobFieldModel))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "gcp-wrapper gcp-readonly-wrapper")
+        self.assertContains(response, 'class="gcp-file-input"', count=1)
 
     def test_add_view_has_presigned_url(self):
         """The add view must have a presigned URL available in the context for uploading to a temporary path"""
