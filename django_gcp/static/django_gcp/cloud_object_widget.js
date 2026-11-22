@@ -124,7 +124,7 @@ function hasSelected(wrapper) {
 
 $(document).ready(function($) {
   // Update the visibility of form field elements
-  $(".gcp-wrapper").each(function(i, wrapper) {
+  $(".gcp-wrapper:not(.gcp-readonly-wrapper)").each(function(i, wrapper) {
     restoreExisting($(wrapper));
     clearSelected($(wrapper));
   });
@@ -166,7 +166,7 @@ $(document).ready(function($) {
     // Get a list of the uploads required
     var wrappers_to_upload = [];
     $(submitEvent.target)
-      .find(".gcp-wrapper")
+      .find(".gcp-wrapper:not(.gcp-readonly-wrapper)")
       .each(function(i, wrapper) {
         if (
           $(wrapper)

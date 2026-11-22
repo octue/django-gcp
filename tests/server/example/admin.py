@@ -101,20 +101,10 @@ class ExampleReadOnlyBlobFieldModelAdmin(BlobFieldModelAdminMixin, ModelAdmin):
     https://forum.djangoproject.com/t/feature-request-discussion-custom-rendering-for-readonly-fields-in-admin/32009
     """
 
-    # NOTE: You can't currently mix and match create_only_blob_fields and
-    # read_only_blob_fields, it works but there's something in the file
-    # selection that fails to work when the other field has been swapped out.
-    #
-    # See: https://github.com/octue/django-gcp/issues/76
-    #
-    # To reproduce, do this:
-    # fields = ["category", "example_read_only_blob", "example_create_only_blob"]
-    # create_only_blob_fields = ["example_create_only_blob"]
-    # read_only_blob_fields = ["example_read_only_blob"]
-
-    fields = ["category", "example_create_only_blob"]
+    fields = ["category", "example_read_only_blob", "example_create_only_blob"]
     readonly_fields = []  # Dont add them to admin's readonly_fields
     create_only_blob_fields = ["example_create_only_blob"]
+    read_only_blob_fields = ["example_read_only_blob"]
 
     # You need to do this for each of the blob fields on the model
     def example_create_only_blob__readonly(self, obj):
