@@ -2,15 +2,20 @@
 # pylint: disable=missing-docstring
 # pylint: disable=protected-access
 
+from collections import Counter
+import copy
 import io
 import json
 import logging
+import logging.config
 import os
 import sys
 import threading
 from unittest import mock
 
+from django.conf import settings
 from django.test import RequestFactory, SimpleTestCase
+from django.utils.log import DEFAULT_LOGGING
 from google.cloud.logging_v2.handlers.middleware.request import _thread_locals as request_thread_locals
 
 from django_gcp.logs import (
@@ -329,3 +334,42 @@ class TestGoogleErrorReportingHandler(SimpleTestCase):
             handler.handle(record)
 
         handle_error.assert_called_once_with(record)
+
+
+class TestExampleLoggingConfiguration(SimpleTestCase):
+    def handlers_called_by_an_error(self, logger_name):
+        calls = Counter()
+
+        def counting(handler_name):
+            class Counting(logging.Handler):
+                def emit(self, record):
+                    calls[handler_name] += 1
+
+            return Counting
+
+        config = copy.deepcopy(settings.LOGGING)
+        for handler_name, handler_config in config["handlers"].items():
+            handler_config.pop("class")
+            handler_config.pop("filters", None)
+            handler_config["()"] = counting(handler_name)
+
+        root = logging.getLogger()
+        loggers = [logger for logger in root.manager.loggerDict.values() if isinstance(logger, logging.Logger)]
+        root_state = (root.handlers[:], root.level)
+        states = [(logger, logger.handlers[:], logger.level, logger.propagate, logger.disabled) for logger in loggers]
+        try:
+            logging.config.dictConfig(DEFAULT_LOGGING)
+            logging.config.dictConfig(config)
+            logging.getLogger(logger_name or None).error("Probe")
+        finally:
+            root.handlers[:], root.level = root_state
+            for logger, handlers, level, propagate, disabled in states:
+                logger.handlers[:] = handlers
+                logger.level, logger.propagate, logger.disabled = level, propagate, disabled
+        return calls
+
+    def test_each_handler_receives_an_error_once_whichever_logger_records_it(self):
+        expected = {handler_name: 1 for handler_name in settings.LOGGING["handlers"]}
+        for logger_name in ("", "myapp", "django", "django.request", "django.security", "django.server"):
+            with self.subTest(logger=logger_name):
+                self.assertEqual(dict(self.handlers_called_by_an_error(logger_name)), expected)
