@@ -1,6 +1,6 @@
 [project]
 name = "django-gcp"
-version = "0.29.0"
+version = "0.29.1"
 description = "Utilities to run Django on Google Cloud Platform"
 authors = [{name="Tom Clark"}]
 license = "MIT"
@@ -80,19 +80,8 @@ force-sort-within-sections = true
 # Allow variables from use of `import *` in settings files
 "tests/server/settings*" = ["F403", "F405"]
 
-[tool.setuptools]
-packages = [
-  "django_gcp",
-  "django_gcp.events",
-  "django_gcp.logs",
-  "django_gcp.management",
-  "django_gcp.management.commands",
-  "django_gcp.metadata",
-  "django_gcp.storage",
-  "django_gcp.tasks",
-  "django_gcp.tasks.clients",
-  "django_gcp.workflows",
-]
+[tool.setuptools.packages.find]
+include = ["django_gcp*"]
 
 [tool.setuptools.package-data]
 django_gcp = [
